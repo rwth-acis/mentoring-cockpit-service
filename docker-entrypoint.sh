@@ -26,11 +26,11 @@ export SERVICE=${SERVICE_NAME}.${SERVICE_CLASS}@${SERVICE_VERSION}
 
 # configure service properties
 function set_in_service_config {
-    sed -i "s?${1}[[:blank:]]*=.*?${1}=${2}?g" ${SERVICE_PROPERTY_FILE}
+    sed -i "s#${1}[[:blank:]]*=.*#${1}=${2}#g" ${SERVICE_PROPERTY_FILE}
 }
 set_in_service_config mcToken ${MC_TOKEN}
 set_in_service_config courseURL ${COURSE_URL}
-set_in_service_config lrsDomain "${LRS_DOMAIN}"
+set_in_service_config lrsDomain ${LRS_DOMAIN}
 set_in_service_config lrsAuth "${LRS_AUTH}"
 
 
