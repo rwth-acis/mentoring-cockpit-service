@@ -30,7 +30,7 @@ function set_in_service_config {
 }
 set_in_service_config mcToken ${MC_TOKEN}
 set_in_service_config courseURL ${COURSE_URL}
-set_in_service_config lrsDomain ${LRS_DOMAIN}
+set_in_service_config lrsDomain "${LRS_DOMAIN}"
 set_in_service_config lrsAuth "${LRS_AUTH}"
 
 
