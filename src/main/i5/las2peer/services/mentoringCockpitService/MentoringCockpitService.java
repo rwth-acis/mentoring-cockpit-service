@@ -99,10 +99,14 @@ public class MentoringCockpitService extends RESTService {
 		
 		JSONObject nameObj = new JSONObject();
 		nameObj.put("$first","$statement.actor.name");
+
+		JSONObject courseNameObj = new JSONObject();
+		courseNameObj.put("$first","$statement.object.definition.description.en-US");
 		
 		JSONObject actorObj = new JSONObject();
 		actorObj.put("name", nameObj);
 		actorObj.put("_id", "$statement.actor.mbox");
+		actorObj.put("courseName", courseNameObj);
 		
 		JSONObject groupObj = new JSONObject();
 		groupObj.put("$group", actorObj);
