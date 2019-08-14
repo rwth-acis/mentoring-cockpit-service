@@ -15,23 +15,33 @@ export SERVICE_CLASS=$(awk -F "=" '/service.class/ {print $2}' etc/ant_configura
 export SERVICE=${SERVICE_NAME}.${SERVICE_CLASS}@${SERVICE_VERSION}
 
 # check mandatory variables
-[[ -z "${MC_TOKEN}" ]] && \
-    echo "Mandatory variable MC_TOKEN is not set. Add -e MC_TOKEN=mcToken to your arguments." && exit 1
-[[ -z "${COURSE_URL}" ]] && \
-    echo "Mandatory variable COURSE_URL is not set. Add -e COURSE_URL=courseURL to your arguments." && exit 1
 [[ -z "${LRS_DOMAIN}" ]] && \
     echo "Mandatory variable LRS_DOMAIN is not set. Add -e LRS_DOMAIN=lrsDomain to your arguments." && exit 1
 [[ -z "${LRS_AUTH}" ]] && \
     echo "Mandatory variable LRS_AUTH is not set. Add -e LRS_AUTH=lrsAuth to your arguments." && exit 1
+[[ -z "${MYSQL_USER}" ]] && \
+    echo "Mandatory variable MYSQL_USER is not set. Add -e MYSQL_USER=mysqlUser to your arguments." && exit 1
+[[ -z "${MYSQL_PASSWORD}" ]] && \
+    echo "Mandatory variable MYSQL_PASSWORD is not set. Add -e MYSQL_PASSWORD=mysqlPassword to your arguments." && exit 1
+[[ -z "${MYSQL_HOST}" ]] && \
+    echo "Mandatory variable MYSQL_HOST is not set. Add -e MYSQL_HOST=mysqlHost to your arguments." && exit 1
+[[ -z "${MYSQL_PORT}" ]] && \
+    echo "Mandatory variable MYSQL_PORT is not set. Add -e MYSQL_PORT=mysqlPort to your arguments." && exit 1
+[[ -z "${MYSQL_DATABASE}" ]] && \
+    echo "Mandatory variable MYSQL_DATABASE is not set. Add -e MYSQL_DATABASE=mysqlDatabase to your arguments." && exit 1
+
 
 # configure service properties
 function set_in_service_config {
     sed -i "s#${1}[[:blank:]]*=.*#${1}=${2}#g" ${SERVICE_PROPERTY_FILE}
 }
-set_in_service_config mcToken ${MC_TOKEN}
-set_in_service_config courseURL ${COURSE_URL}
 set_in_service_config lrsDomain ${LRS_DOMAIN}
 set_in_service_config lrsAuth "${LRS_AUTH}"
+set_in_service_config mysqlUser ${MYSQL_USER}
+set_in_service_config mysqlPassword ${MYSQL_PASSWORD}
+set_in_service_config mysqlHost ${MYSQL_HOST}
+set_in_service_config mysqlPort ${MYSQL_PORT}
+set_in_service_config mysqlDatabase ${MYSQL_DATABASE}
 
 
 # wait for any bootstrap host to be available

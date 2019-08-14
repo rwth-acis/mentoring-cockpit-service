@@ -14,6 +14,8 @@
         <!-- JUnit -->
         <dependency org="junit" name="junit" rev="4.12" conf="platform->*" />
         
+        <dependency org="mysql" name="mysql-connector-java" rev="8.0.13" />
+        
         <dependency org="com.googlecode.json-simple" name="json-simple" rev="1.1" />
 
         <!-- service dependencies -->
