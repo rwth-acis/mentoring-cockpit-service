@@ -231,14 +231,10 @@ public class MentoringCockpitService extends RESTService {
 		
 		JSONObject nameObj = new JSONObject();
 		nameObj.put("$first","$statement.actor.name");
-
-		JSONObject courseNameObj = new JSONObject();
-		courseNameObj.put("$first","$statement.object.definition.description.en-US");
 		
 		JSONObject actorObj = new JSONObject();
 		actorObj.put("name", nameObj);
 		actorObj.put("_id", "$statement.actor.mbox");
-		actorObj.put("courseName", courseNameObj);
 		
 		JSONObject groupObj = new JSONObject();
 		groupObj.put("$group", actorObj);
@@ -276,6 +272,7 @@ public class MentoringCockpitService extends RESTService {
 		projectObj.put("statement.object", 1);
 		projectObj.put("statement.result.score.scaled", 1);
 		projectObj.put("statement.timestamp", 1);
+		projectObj.put("statement.result.response", 1);
 		JSONObject project = new JSONObject();
 		project.put("$project", projectObj);
 		
@@ -297,6 +294,9 @@ public class MentoringCockpitService extends RESTService {
 		pushObj.put("objectId", "$statement.object.id");
 		pushObj.put("name", "$statement.object.definition.name.en-US");
 		pushObj.put("score", "$statement.result.score.scaled");
+		pushObj.put("description", "$statement.object.definition.description.en-US");
+		pushObj.put("feedback", "$statement.result.response");
+
 		JSONObject push = new JSONObject();
 		push.put("$push", pushObj);
 		groupObj.put("results", push);
