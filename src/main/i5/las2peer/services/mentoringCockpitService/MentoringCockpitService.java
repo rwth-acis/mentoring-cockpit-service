@@ -30,7 +30,6 @@ import io.swagger.annotations.SwaggerDefinition;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 
-// TODO Adjust the following configuration
 @Api
 @SwaggerDefinition(
 		info = @Info(
