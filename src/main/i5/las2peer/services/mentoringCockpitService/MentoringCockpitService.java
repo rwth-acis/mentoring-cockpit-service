@@ -230,17 +230,36 @@ public class MentoringCockpitService extends RESTService {
 		
 		JSONObject nameObj = new JSONObject();
 		nameObj.put("$first","$statement.actor.name");
+
+		JSONObject averageScoreObj = new JSONObject();
+		averageScoreObj.put("$avg", "$statement.result.score.scaled");
 		
 		JSONObject actorObj = new JSONObject();
 		actorObj.put("name", nameObj);
 		actorObj.put("_id", "$statement.actor.mbox");
+		actorObj.put("averageScore", averageScoreObj);
 		
 		JSONObject groupObj = new JSONObject();
 		groupObj.put("$group", actorObj);
+
+		JSONObject avgSort = new JSONObject();
+		avgSort.put("averageScore", 1);
+
+		JSONObject sortObj = new JSONObject();
+		sortObj.put("$sort", avgSort);
+
+		JSONObject project = new JSONObject();
+		project.put("_id", 1);
+		project.put("name", 1);
+
+		JSONObject projectObj = new JSONObject();
+		projectObj.put("$project", project);
 		
 		JSONArray arr = new JSONArray();
 		arr.add(matchObj);
 		arr.add(groupObj);
+		arr.add(sortObj);
+		arr.add(projectObj);
 		
 		StringBuilder sb = new StringBuilder();
 		for (byte b : arr.toString().getBytes()) {

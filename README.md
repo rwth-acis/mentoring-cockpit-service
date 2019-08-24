@@ -52,9 +52,9 @@ To start the moodle-data-proxy service, follow the [Starting-A-las2peer-Network 
 Getting the data in the Front-end application
 -----------------------
 
-To get the student data to the Front-end, a RESTful GET requests are offered by the service. 
+To get the student data to the Front-end, RESTful GET requests are offered by the service. 
 
-To get a JSON list of courses where a tutor has access rights:
+To get a JSON list of courses, where a tutor has access rights:
 ```
 GET <service-address>/mentoring/<tutor-sub>/courseList.
 ```
