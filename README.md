@@ -56,17 +56,17 @@ To get the student data to the Front-end, RESTful GET requests are offered by th
 
 To get a JSON list of courses, where a tutor has access rights:
 ```
-GET <service-address>/mentoring/<tutor-sub>/courseList.
+GET <service-address>/mentoring/<tutor-sub>/courseList
 ```
 
 To get a JSON list of students enrolled in a course:
 ```
-GET <service-address>/mentoring/<tutor-sub>/<encoded-courselink>/students.
+GET <service-address>/mentoring/<tutor-sub>/<encoded-courselink>/students
 ```
  
 To get a JSON list of students' results in a course:
 ```
-GET <service-address>/mentoring/<tutor-sub>/<encoded-courselink>/results.
+GET <service-address>/mentoring/<tutor-sub>/<encoded-courselink>/results
 ```
 
 Therefore, replace *service-address* with your service address and *turor-sub* with the tutor sub specified in the MySQL database.
