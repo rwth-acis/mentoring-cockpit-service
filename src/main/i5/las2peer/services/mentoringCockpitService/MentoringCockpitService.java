@@ -169,7 +169,7 @@ public class MentoringCockpitService extends RESTService {
 			JSONArray courseArr = new JSONArray();
 			
 			Statement stmt=con.createStatement();
-			ResultSet rs=stmt.executeQuery("select COURSELINK, COURSENAME from ACCESS where SUB = \"8914-a3843d4243cd\"");
+			ResultSet rs=stmt.executeQuery("select COURSELINK, COURSENAME from ACCESS where SUB = '" + sub +'");
 			while(rs.next()) {
 				JSONObject course = new JSONObject();
 				course.put("name", rs.getString("COURSENAME"));
