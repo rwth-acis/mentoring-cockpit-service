@@ -251,6 +251,7 @@ public class MentoringCockpitService extends RESTService {
 		JSONObject project = new JSONObject();
 		project.put("_id", 1);
 		project.put("name", 1);
+		project.put("averageScore", 1);
 
 		JSONObject projectObj = new JSONObject();
 		projectObj.put("$project", project);
