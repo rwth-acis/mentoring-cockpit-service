@@ -24,7 +24,7 @@ Statements in Learning Record Stores (LRS) are very rich and half of the informa
 
 Service setup
 -------------
-To set up the service configure the [property file](etc/i5.las2peer.services.mentoringCockpitService.MentoringCockService.properties) file with your database credentials and Learning Locker authentication.
+To set up the service configure the [property](etc/i5.las2peer.services.mentoringCockpitService.MentoringCockService.properties) file with your database credentials and Learning Locker authentication.
 ```INI
 lrsDomain = http://exampleDomain/api/statements/aggregate?
 lrsAuth = Basic exampleauth

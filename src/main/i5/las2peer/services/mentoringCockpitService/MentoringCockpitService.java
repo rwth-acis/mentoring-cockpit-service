@@ -151,6 +151,37 @@ public class MentoringCockpitService extends RESTService {
 		else return Response.ok().entity(courseList).build();
 	}
 
+	/**
+	 * A function that is called by the Mentoring Cockpit to get a list of sensor data a tutor can see. 
+	 *
+	 * @param sub an identification string of the tutor
+	 *
+	 * @param courseEncoded a hex encoded string of the course URL
+	 * 
+	 * @return a response message with the data or error message
+	 * 
+	 */
+	@GET
+	@Path("/{sub}/{courseEncoded}/sensor")
+	@Produces(MediaType.TEXT_PLAIN)
+	@ApiResponses(
+			value = { @ApiResponse(
+					code = HttpURLConnection.HTTP_OK,
+					message = "Connection works") })
+	public Response getSensorDataList(@PathParam("sub") String sub, @PathParam("courseEncoded") String courseEncoded) {
+		String courseList = getCourseListFromMysql(sub).replace("\\", "");
+		String course = convertHexToString(courseEncoded);
+		if(courseList.equals("Error")) {
+			return Response.status(500).entity("An error occured with the MySQL database").build();
+		} else if(courseList.contains(course)) {
+			String response = getSensorData();
+			return Response.ok().entity(response).build();
+		} else {
+			return Response.status(401).entity("Unauthorized").build();
+		}
+	}
+
+
 	
 	/**
 	 * A function that gets all the courses a tutor can see from a MySQL database. 
@@ -335,6 +366,43 @@ public class MentoringCockpitService extends RESTService {
 		
 		return LRSconnect(sb.toString());
 	}
+
+	/**
+	 * A function that gets sensor data 
+	 * 
+	 * @return JSONArray converted to a String, containing the data
+	 * 
+	 */
+	private String getSensorData() {
+		JSONObject match = new JSONObject();
+		match.put("statement.verb.id", "http://example.com/xapi/performed");
+		
+		JSONObject matchObj = new JSONObject();
+		matchObj.put("$match", match);
+		
+
+		JSONObject project = new JSONObject();
+		project.put("_id", "$statement.actor.mbox");
+		project.put("verb", "$statement.verb.display.en-US");
+		project.put("objectDesc", "$statement.object.definition.description.en-US");
+		project.put("objectName", "$statement.object.definition.name.en-US");
+
+
+		JSONObject projectObj = new JSONObject();
+		projectObj.put("$project", project);
+		
+		JSONArray arr = new JSONArray();
+		arr.add(matchObj);
+		arr.add(projectObj);
+		
+		StringBuilder sb = new StringBuilder();
+		for (byte b : arr.toString().getBytes()) {
+			sb.append("%" + String.format("%02X", b));
+		}
+		
+		return LRSconnect(sb.toString());
+	}
+
 	
 	/**
 	 * A function connects to the LRS and requests data
