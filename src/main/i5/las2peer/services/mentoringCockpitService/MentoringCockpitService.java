@@ -383,17 +383,29 @@ public class MentoringCockpitService extends RESTService {
 
 		JSONObject project = new JSONObject();
 		project.put("_id", "$statement.actor.mbox");
-		project.put("verb", "$statement.verb.display.en-US");
 		project.put("objectDesc", "$statement.object.definition.description.en-US");
 		project.put("objectName", "$statement.object.definition.name.en-US");
 
 
 		JSONObject projectObj = new JSONObject();
 		projectObj.put("$project", project);
+
+		JSONObject pushObj = new JSONObject();
+		pushObj.put("objectDesc", "$objectDesc");
+		pushObj.put("objectName": "$objectName");
+
+		JSONObject actions = new JSONObject();
+		actions.put("$push", pushObj);
+
+		JSONObject group = new JSONObject();
+		group.put("_id", "$_id");
+		group.put("actions", actions);
+
 		
 		JSONArray arr = new JSONArray();
 		arr.add(matchObj);
 		arr.add(projectObj);
+		arr.add(group);
 		
 		StringBuilder sb = new StringBuilder();
 		for (byte b : arr.toString().getBytes()) {
