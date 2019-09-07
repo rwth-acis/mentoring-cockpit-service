@@ -401,11 +401,14 @@ public class MentoringCockpitService extends RESTService {
 		group.put("_id", "$_id");
 		group.put("actions", actions);
 
+		JSONObject groupObj = JSONObject();
+		groupObj.put("$group", group);
+
 		
 		JSONArray arr = new JSONArray();
 		arr.add(matchObj);
 		arr.add(projectObj);
-		arr.add(group);
+		arr.add(groupObj);
 		
 		StringBuilder sb = new StringBuilder();
 		for (byte b : arr.toString().getBytes()) {
