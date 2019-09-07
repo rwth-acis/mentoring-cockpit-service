@@ -401,7 +401,7 @@ public class MentoringCockpitService extends RESTService {
 		group.put("_id", "$_id");
 		group.put("actions", actions);
 
-		JSONObject groupObj = JSONObject();
+		JSONObject groupObj = new JSONObject();
 		groupObj.put("$group", group);
 
 		
