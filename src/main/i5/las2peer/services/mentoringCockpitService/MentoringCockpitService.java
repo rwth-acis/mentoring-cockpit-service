@@ -392,7 +392,7 @@ public class MentoringCockpitService extends RESTService {
 
 		JSONObject pushObj = new JSONObject();
 		pushObj.put("objectDesc", "$objectDesc");
-		pushObj.put("objectName": "$objectName");
+		pushObj.put("objectName", "$objectName");
 
 		JSONObject actions = new JSONObject();
 		actions.put("$push", pushObj);
