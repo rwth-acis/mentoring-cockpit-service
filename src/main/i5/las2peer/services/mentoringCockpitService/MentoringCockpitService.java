@@ -2,25 +2,24 @@ package i5.las2peer.services.mentoringCockpitService;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
+import java.util.Base64;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import i5.las2peer.api.Context;
 import i5.las2peer.api.ManualDeployment;
 import i5.las2peer.restMapper.RESTService;
 import i5.las2peer.restMapper.annotations.ServicePath;
+import i5.las2peer.security.AgentContext;
+import i5.las2peer.security.AgentImpl;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -29,6 +28,9 @@ import io.swagger.annotations.Info;
 import io.swagger.annotations.SwaggerDefinition;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
+import net.minidev.json.JSONValue;
+import net.minidev.json.parser.ParseException;
+import java.util.Properties;
 
 @Api
 @SwaggerDefinition(
@@ -58,6 +60,8 @@ public class MentoringCockpitService extends RESTService {
 	private String mysqlHost;
 	private String mysqlPort;
 	private String mysqlDatabase;
+	private static String userEmail;
+	private String lrsClientURL;
 	
 	
 	/**
@@ -145,7 +149,8 @@ public class MentoringCockpitService extends RESTService {
 			value = { @ApiResponse(
 					code = HttpURLConnection.HTTP_OK,
 					message = "Connection works") })
-	public Response getCourseList(@PathParam("sub") String sub) {
+	public Response getCourseList(@PathParam("sub") String sub, @HeaderParam("email") String email) {
+		userEmail = email;
 		String courseList = getCourseListFromMysql(sub);
 		if(courseList.equals("Error")) return Response.status(500).entity("An error occured with the Mysql database").build();
 		else return Response.ok().entity(courseList).build();
@@ -427,30 +432,123 @@ public class MentoringCockpitService extends RESTService {
 	 * @return JSONArray converted to a String, containing the data
 	 * 
 	 */
-	private String LRSconnect(String pipeline) {
+	private String LRSconnect(String pipeline)  {
 		StringBuffer response = new StringBuffer();
+		String clientKey;
+		String clientSecret;
+		Object clientId = null;
 		try {
-			URL url = new URL(lrsDomain + "pipeline=" + pipeline);
-			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-			conn.setRequestMethod("GET");
-			conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-			conn.setRequestProperty("Authorization", lrsAuth);
-			
-			BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-			
-			String inputLine;
-			
-			while ((inputLine = in.readLine()) != null) {
-				response.append(inputLine);
-			}
-			in.close();
-			conn.disconnect();
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
+			clientId = searchIfClientExists();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
 		}
+
+		//If Client exists in LRS
+		if(!(clientId).equals("noClientExists")) {
+			clientKey = (String) ((JSONObject) clientId).get("basic_key");
+			clientSecret = (String) ((JSONObject) clientId).get("basic_secret");
+			lrsAuth = Base64.getEncoder().encodeToString((clientKey + ":" + clientSecret).getBytes());
+
+			try {
+				URL url = new URL(lrsDomain + "pipeline=" + pipeline);
+				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+				conn.setRequestMethod("GET");
+				conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+				conn.setRequestProperty("Authorization", "Basic " + lrsAuth);
+
+				BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+
+				String inputLine;
+
+				while ((inputLine = in.readLine()) != null) {
+					response.append(inputLine);
+				}
+				in.close();
+				conn.disconnect();
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		return response.toString();
+		}
+		else {
+			return String.valueOf(Response.status(500).entity("Client does not exist in LRS").build());
+		}
 	}
 
+	/*
+	* Checks if LRS client of the respective moodle token is available or not
+	* */
+
+	private Object searchIfClientExists() throws IOException, ParseException {
+		String moodleToken = "";
+		URL url = null;
+		try{
+			Connection con = connectToDatabase();
+			Statement stmt=con.createStatement();
+			ResultSet rs=stmt.executeQuery("select MOODLE_TOKEN from moodle_lrs_mapping where EMAIL = '" + userEmail + "'");
+			while(rs.next()) {
+				moodleToken = rs.getString("moodle_token");
+			}
+			con.close();
+
+			try {
+				String clientURL = lrsClientURL;
+				url = new URL(clientURL);
+				HttpURLConnection conn = null;
+				conn = (HttpURLConnection) url.openConnection();
+				conn.setDoOutput(true);
+				conn.setDoInput(true);
+				conn.setRequestMethod("GET");
+				conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+				conn.setRequestProperty("X-Experience-API-Version","1.0.3");
+				conn.setRequestProperty("Authorization", lrsAuth);
+				conn.setRequestProperty("Cache-Control", "no-cache");
+				conn.setUseCaches(false);
+
+				InputStream is = conn.getInputStream();
+				BufferedReader rd = new BufferedReader(new InputStreamReader(is));
+				String line;
+				StringBuilder response = new StringBuilder();
+				while((line = rd.readLine()) != null) {
+					response.append(line);
+				}
+				Object obj= JSONValue.parse(response.toString());
+
+				for(int i = 0 ; i < ((JSONArray ) obj).size(); i ++) {
+					JSONObject client = (JSONObject) ((JSONArray) obj).get(i);
+					if(client.get("title").equals(moodleToken)) {
+						return client.get("api");
+					}
+				}
+			}  catch (MalformedURLException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+		} catch(Exception e) {
+			System.out.println(e);
+			return "Error";
+		}
+
+		return "noClientExists";
+	}
+
+	private Connection connectToDatabase(){
+		Connection con = null;
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			con = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase,
+					mysqlUser, mysqlPassword);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		return con;
+	}
 }
