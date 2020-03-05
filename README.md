@@ -7,7 +7,7 @@ Other related repositories for the bachelor thesis can be found here: [Mentoring
 
 Database
 ---------
-Access rights are stored in a MySQL database. You can find an sql file for setting up the database in the [etc](etc) folder. You'll have to fill and mange the database yourself. For example:
+There are two tables for Mentoring cockpit service in MySQL database. One table is the ACCESS table that contains access rights of the tutors. For example:
 
 | SUB  | COURSELINK | COURSENAME |
 | ------------- | ------------- | ------------- |
@@ -16,6 +16,14 @@ Access rights are stored in a MySQL database. You can find an sql file for setti
 | tutor2-sub  | http://example-lms/example-course2  | Course2 |
 |  ... | ...  | ... |
 
+The second table is MOODLE_LRS_MAPPING table which contains the moodle access token (Client ID) for LRS and email address of the tutors.
+
+| moodle_token  | email |
+| ------------- | ------------- |
+| token1 | abc@xyz.com |
+|  ... | ...  | ... |
+
+You can find an sql file for setting up the database in the [etc](etc) folder. You'll have to fill and mange the database yourself. 
 
 Learning Locker Aggregation HTTP interface
 -------------------------------------
@@ -33,6 +41,7 @@ mysqlPassword = examplepass
 mysqlHost = localhost
 mysqlPort = 3306
 mysqlDatabase = exampledb
+lrsClientUrl = http://exampleDomain/api/v2/client/
 ```
 
 Build
@@ -87,6 +96,6 @@ Then you can run the image like this:
 docker run -e LRS_DOMAIN=lrsDomain -e LRS_AUTH=lrsAuth -e MYSQL_USER=mysqlUser -e MYSQL_PASSWORD=mysqlPassword -e MYSQL_HOST=mysqlHost -e MYSQL_PORT=mysqlPort -e MYSQL_DATABASE=mysqlDatabase -p 9011:9011 mentoring-cockpit-service
 ```
 
-Replace *lrsDomain* with your Learning Locker domain, *lrsAuth* with the corresponding authentication, *mysqlUser* with the MySQL user name, *mysqlPassword* with the MySQL password, *mysqlHost* with the MySQL host, *mysqlPort* with the MySQL port, and *mysqlDatabase* with the MySQL database name. 
+Replace *lrsDomain* with your Learning Locker domain, *lrsAuth* with the corresponding authentication, *mysqlUser* with the MySQL user name, *mysqlPassword* with the MySQL password, *mysqlHost* with the MySQL host, *mysqlPort* with the MySQL port,*mysqlDatabase* with the MySQL database name and *lrsClientUrl* with the learning locker client URL. 
 
 *Do not forget to persist you database data*
