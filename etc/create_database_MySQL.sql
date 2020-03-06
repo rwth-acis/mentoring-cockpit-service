@@ -7,3 +7,11 @@ CREATE TABLE ACCESS (
 	SUB VARCHAR(255) NOT NULL,
 	PRIMARY KEY(SUB, COURSELINK)
 );
+
+DROP TABLE IF EXISTS moodle_lrs_mapping;
+
+CREATE TABLE moodle_lrs_mapping (
+  moodle_token varchar(255) NOT NULL,
+  email varchar(255) NOT NULL,
+  PRIMARY KEY (email)
+)
