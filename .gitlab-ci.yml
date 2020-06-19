@@ -2,7 +2,6 @@ variables:
   DOCKER_DRIVER: overlay2
   DOCKER_HOST: tcp://localhost:2375
   K8S_STABLE_VERSION_URL: https://storage.googleapis.com/kubernetes-release/release/v1.17.0/bin/linux/amd64/kubectl
-
 build:
   stage: build
   image: docker:18.09
@@ -13,6 +12,8 @@ build:
     - docker build -t "rwthacis/mentoring-cockpit-service" .
     - docker login -u "$DOCKER_USER" -p "$DOCKER_PW" https://index.docker.io/v1/
     - docker push "tech4comp/wb-webcomp:master"
+  environment:
+    name: staging
 
 deploy:
   stage: deploy
@@ -22,3 +23,5 @@ deploy:
   script:
     - apk add --no-cache curl jq
     - sh deploy.sh
+  environment:
+    name: staging
