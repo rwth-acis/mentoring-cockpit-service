@@ -6,7 +6,7 @@
             "app": "mentoring-cockpit-service"
         },
         "name": "mentoring-cockpit-service",
-        "namespace": "mentoring-cockpit"
+        "namespace": "mztud-test"
     },
     "spec": {
         "replicas": 1,
