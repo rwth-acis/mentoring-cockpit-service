@@ -10,9 +10,7 @@ build:
   script:
     - export DOCKER_HOST="tcp://localhost:2375"
     - docker build -t "rwthacis/mentoring-cockpit-service" .
-    - echo "$DOCKER_ACIS_USER"
-    - docker login -u "$DOCKER_ACIS_USER" -p "$DOCKER_ACIS_PW" https://index.docker.io/v1/
-    - docker push "tech4comp/wb-webcomp:master"
+    - sh push-to-dockerhub.sh
   environment:
     name: deploy
 
