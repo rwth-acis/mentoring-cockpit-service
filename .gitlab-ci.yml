@@ -8,6 +8,7 @@ build:
   services:
     - docker:18.09-dind
   script:
+    - apk add curl jq
     - export DOCKER_HOST="tcp://localhost:2375"
     - docker build -t "rwthacis/mentoring-cockpit-service" .
     - sh push-to-dockerhub.sh
