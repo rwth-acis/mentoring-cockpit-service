@@ -6,4 +6,4 @@ DOCKER_PW=$(echo $DOCKER_DATA | jq -r .DOCKER_ACIS_PW | base64 -d)
 DOCKER_USER=$(echo $DOCKER_DATA | jq -r .DOCKER_ACIS_USER | base64 -d)
 
 docker login -u "$DOCKER_USER" -p "$DOCKER_PW" https://index.docker.io/v1/
-docker push "rwthacis/mentoring-cockpit-service:develop"
+docker push "rwthacis/mentoring-cockpit:develop"

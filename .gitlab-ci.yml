@@ -10,7 +10,7 @@ build:
   script:
     - apk add curl jq
     - export DOCKER_HOST="tcp://localhost:2375"
-    - docker build -t "rwthacis/mentoring-cockpit-service:develop" .
+    - docker build -t "rwthacis/mentoring-cockpit:develop" .
     - sh push-to-dockerhub.sh
   environment:
     name: deploy
