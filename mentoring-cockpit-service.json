@@ -1,0 +1,143 @@
+{
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "metadata": {
+        "labels": {
+            "app": "mentoring-cockpit-service"
+        },
+        "name": "mentoring-cockpit-service",
+        "namespace": "mztud-test"
+    },
+    "spec": {
+        "replicas": 1,
+        "selector": {
+            "matchLabels": {
+                "app": "mentoring-cockpit-service"
+            }
+        },
+        "template": {
+            "metadata": {
+                "labels": {
+                    "app": "mentoring-cockpit-service"
+                }
+            },
+            "spec": {
+                "affinity": {
+                    "nodeAffinity": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                            "nodeSelectorTerms": [
+                                {
+                                    "matchExpressions": [
+                                        {
+                                            "key": "kubernetes.io/hostname",
+                                            "operator": "NotIn",
+                                            "values": [
+                                                "lnv-90225"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+		},
+                "containers": [
+                    {
+                        "env": [
+                            {
+                                "name": "LAS2PEER_PORT",
+                                "value": "31018"
+                            },
+                            {
+                                "name": "LRS_DOMAIN",
+                                "value": "http://137.226.232.175:32654/api/statements/aggregate?"
+                            },
+                            {
+                                "name": "LRS_AUTH",
+                                "value": "Basic NWU0NTg0YTgwODIzYzNkMGU1MDg5YTQyOWVjYmUyOTRmZjg4ODgyZDo0ZWVhYjcxNTc2Y2E2NWE5MDJhMDFmOTY5ODk1NDkzYzM4YmRjYzI3"
+                            },
+                            {
+                                "name": "MYSQL_USER",
+                                "value": "root"
+                            },
+                            {
+                                "name": "MYSQL_PASSWORD",
+                                "value": "password"
+                            },
+                            {
+                                "name": "MYSQL_HOST",
+                                "value": "10.103.213.251"
+                            },
+                            {
+                                "name": "MYSQL_PORT",
+                                "value": "3306"
+                            },
+                            {
+                                "name": "MYSQL_DATABASE",
+                                "value": "MCMON"
+                            },
+                            {
+                                "name": "BOOTSTRAP",
+                                "value": "tech4comp.dbis.rwth-aachen.de:31011"
+                            },
+                            {
+                                "name": "WALLET",
+                                "value": "1"
+                            },
+                            {
+                                "name": "NODE_ID_SEED",
+                                "value": "9"
+                            },
+                            {
+                                "name": "LAS2PEER_ETH_HOST",
+                                "value": "las2peer-ethnet.mobsos:8545"
+                            }
+                        ],
+                        "image": "rwthacis/mentoring-cockpit:develop",
+                        "imagePullPolicy": "Always",
+                        "name": "mentoring-cockpit-service",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/src/node-storage",
+                                "name": "mentoring-cockpit-pastry-persistent-storage"
+                            },
+                            {
+                                "mountPath": "/src/etc/nodeInfo.xml",
+                                "name": "node-info-volume",
+                                "subPath": "nodeInfo.xml"
+                            },
+                            {
+                                "mountPath": "/src/etc/i5.las2peer.registry.data.RegistryConfiguration.properties",
+                                "name": "registry-config-volume",
+                                "subPath": "registry-config.properties"
+                            }
+                        ]
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "mentoring-cockpit-pastry-persistent-storage",
+                        "persistentVolumeClaim": {
+                            "claimName": "las2peer-nodestorage-pv-claim"
+                        }
+                    },
+                    {
+                        "configMap": {
+                            "defaultMode": 420,
+                            "name": "registry-config"
+                        },
+                        "name": "registry-config-volume"
+                    },
+                    {
+                        "configMap": {
+                            "defaultMode": 420,
+                            "name": "node-info"
+                        },
+                        "name": "node-info-volume"
+                    }
+                ]
+            }
+        }
+    }
+}
+

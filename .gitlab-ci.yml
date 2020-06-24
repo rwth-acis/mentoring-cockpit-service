@@ -1,0 +1,27 @@
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_HOST: tcp://localhost:2375
+  K8S_STABLE_VERSION_URL: https://storage.googleapis.com/kubernetes-release/release/v1.17.0/bin/linux/amd64/kubectl
+build:
+  stage: build
+  image: docker:18.09
+  services:
+    - docker:18.09-dind
+  script:
+    - apk add curl jq
+    - export DOCKER_HOST="tcp://localhost:2375"
+    - docker build -t "rwthacis/mentoring-cockpit:develop" .
+    - sh push-to-dockerhub.sh
+  environment:
+    name: deploy
+
+deploy:
+  stage: deploy
+  image: alpine
+  environment:
+    name: deploy
+  script:
+    - apk add --no-cache curl jq
+    - sh deploy.sh
+  environment:
+    name: deploy
