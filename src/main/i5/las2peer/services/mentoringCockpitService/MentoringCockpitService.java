@@ -1,9 +1,6 @@
 package i5.las2peer.services.mentoringCockpitService;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -13,6 +10,7 @@ import java.util.Base64;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 import i5.las2peer.api.Context;
 import i5.las2peer.api.ManualDeployment;
@@ -30,6 +28,11 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
 import net.minidev.json.parser.ParseException;
+import org.knowm.xchart.BitmapEncoder;
+import org.knowm.xchart.XYChart;
+import org.knowm.xchart.XYSeries;
+import org.knowm.xchart.style.markers.SeriesMarkers;
+
 import java.util.Properties;
 
 @Api
@@ -72,7 +75,51 @@ public class MentoringCockpitService extends RESTService {
 	public MentoringCockpitService() {
 		setFieldValues();
 	}
-	
+
+    /**
+     * A function that is called by the Mentoring Cockpit to get students extended statistics in a course.
+     *
+     * @param tutorSub an identification string of the tutor
+     *
+     * @param courseEncoded a hex encoded string of the course URL
+     *
+     * @param studentSub an identification string of the student
+     *
+     * @return an application octet stream, error message or unauthorized message
+     *
+     */
+    @GET
+    @Path("/mwb/{tutorsub}/{courseEncoded}/{studentsub}/extendedstatistics")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @ApiResponses(
+            value = { @ApiResponse(
+                    code = HttpURLConnection.HTTP_OK,
+                    message = "Connection works") })
+    public Response getMWBExtendedStatistics(@PathParam("tutorsub") String tutorSub, @PathParam("courseEncoded") String courseEncoded, @PathParam("studentsub") String studentSub) {
+    	// build sample graph
+		double[] yData = new double[] { 2.0, 1.0, 0.0 };
+
+		// Create Chart
+		XYChart chart = new XYChart(500, 400);
+		chart.setTitle("Sample Chart for " + studentSub);
+		chart.setXAxisTitle("X");
+		chart.setXAxisTitle("Y");
+		XYSeries series = chart.addSeries("y(x)", null, yData);
+		series.setMarker(SeriesMarkers.CIRCLE);
+
+		// build png image
+		StreamingOutput output = new StreamingOutput() {
+			@Override
+			public void write(OutputStream out) throws IOException {
+				BitmapEncoder.saveBitmap(chart, out, BitmapEncoder.BitmapFormat.PNG);
+			}
+		};
+
+		// filename
+		String filename = "MWB-" + studentSub + ".png";
+
+		return Response.ok(output).header("Content-Disposition", "attachment, filename=\"" + filename + "\"").build();
+	}
 	
 	/**
 	 * A function that is called by the Mentoring Cockpit to get a student list of a course. 

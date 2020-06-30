@@ -10,13 +10,15 @@
     </publications>
     <dependencies>
         <!-- las2peer core -->
-        <dependency org="i5" name="las2peer-bundle" rev="${core.version}" changing="true" conf="platform->*" />
+        <dependency org="i5" name="las2peer-bundle" rev="0.8.3" changing="true" conf="platform->*" />
         <!-- JUnit -->
         <dependency org="junit" name="junit" rev="4.12" conf="platform->*" />
         
         <dependency org="mysql" name="mysql-connector-java" rev="8.0.13" />
         
         <dependency org="com.googlecode.json-simple" name="json-simple" rev="1.1" />
+
+        <dependency org="org.knowm.xchart" name="xchart" rev="3.6.4" />
 
         <!-- service dependencies -->
         <!-- Add service dependencies here -->
