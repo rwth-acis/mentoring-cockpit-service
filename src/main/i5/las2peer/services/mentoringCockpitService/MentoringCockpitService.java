@@ -118,7 +118,7 @@ public class MentoringCockpitService extends RESTService {
 		// filename
 		String filename = "MWB-" + studentSub + ".png";
 
-		return Response.ok(output).header("Content-Disposition", "attachment, filename=\"" + filename + "\"").build();
+		return Response.ok(output).header("Content-Disposition", "attachment; filename=\"" + filename + "\"").build();
 	}
 	
 	/**
