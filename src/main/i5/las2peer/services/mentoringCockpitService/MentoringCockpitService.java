@@ -5,7 +5,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -18,6 +20,9 @@ import i5.las2peer.restMapper.RESTService;
 import i5.las2peer.restMapper.annotations.ServicePath;
 import i5.las2peer.security.AgentContext;
 import i5.las2peer.security.AgentImpl;
+import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
+import i5.las2peer.services.mentoringCockpitService.Model.Course;
+import i5.las2peer.services.mentoringCockpitService.Model.MoodleCourse;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -65,6 +70,7 @@ public class MentoringCockpitService extends RESTService {
 	private String mysqlDatabase;
 	private static String userEmail;
 	private String lrsClientURL;
+	public HashMap<String, Course> courses;
 	
 	
 	/**
@@ -74,6 +80,8 @@ public class MentoringCockpitService extends RESTService {
 	 */
 	public MentoringCockpitService() {
 		setFieldValues();
+		this.userEmail = "askabot@fakemail.de";
+		courses = new HashMap<String, Course>();
 	}
 
     /**
@@ -246,13 +254,13 @@ public class MentoringCockpitService extends RESTService {
 	private String getCourseListFromMysql(String sub) {
 		try{
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			Connection con=DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase,
+			Connection con = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase,
 					mysqlUser, mysqlPassword);
 			
 			JSONArray courseArr = new JSONArray();
 			
-			Statement stmt=con.createStatement();
-			ResultSet rs=stmt.executeQuery("select COURSELINK, COURSENAME from ACCESS where SUB = '" + sub + "'");
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("select COURSELINK, COURSENAME from ACCESS where SUB = '" + sub + "'");
 			while(rs.next()) {
 				JSONObject course = new JSONObject();
 				course.put("name", rs.getString("COURSENAME"));
@@ -479,7 +487,7 @@ public class MentoringCockpitService extends RESTService {
 	 * @return JSONArray converted to a String, containing the data
 	 * 
 	 */
-	private String LRSconnect(String pipeline)  {
+	public String LRSconnect(String pipeline)  {
 		StringBuffer response = new StringBuffer();
 		String clientKey;
 		String clientSecret;
@@ -490,20 +498,23 @@ public class MentoringCockpitService extends RESTService {
 			e.printStackTrace();
 		} catch (ParseException e) {
 			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-
+		
 		//If Client exists in LRS
 		if(!(clientId).equals("noClientExists")) {
 			clientKey = (String) ((JSONObject) clientId).get("basic_key");
 			clientSecret = (String) ((JSONObject) clientId).get("basic_secret");
-			lrsAuth = Base64.getEncoder().encodeToString((clientKey + ":" + clientSecret).getBytes());
+			String auth = Base64.getEncoder().encodeToString((clientKey + ":" + clientSecret).getBytes());
 
 			try {
 				URL url = new URL(lrsDomain + "pipeline=" + pipeline);
 				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 				conn.setRequestMethod("GET");
 				conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-				conn.setRequestProperty("Authorization", "Basic " + lrsAuth);
+				conn.setRequestProperty("Authorization","Basic " + auth);
+				//System.out.println("DEBUG --- URL: " + conn.getURL().toString());
 
 				BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 
@@ -518,8 +529,8 @@ public class MentoringCockpitService extends RESTService {
 				e.printStackTrace();
 			} catch (IOException e) {
 				e.printStackTrace();
-			}
-		return response.toString();
+			} 
+			return response.toString();
 		}
 		else {
 			return String.valueOf(Response.status(500).entity("Client does not exist in LRS").build());
@@ -535,10 +546,12 @@ public class MentoringCockpitService extends RESTService {
 		URL url = null;
 		try{
 			Connection con = connectToDatabase();
-			Statement stmt=con.createStatement();
-			ResultSet rs=stmt.executeQuery("select MOODLE_TOKEN from moodle_lrs_mapping where EMAIL = '" + userEmail + "'");
+			Statement stmt = con.createStatement();
+			System.out.println("DEBUG --- Email: " + userEmail);
+			ResultSet rs = stmt.executeQuery("select MOODLE_TOKEN from moodle_lrs_mapping where EMAIL = '" + userEmail + "'");
 			while(rs.next()) {
 				moodleToken = rs.getString("moodle_token");
+				System.out.println("DEBUG --- Token: " + moodleToken);
 			}
 			con.close();
 
@@ -597,5 +610,26 @@ public class MentoringCockpitService extends RESTService {
 			e.printStackTrace();
 		}
 		return con;
+	}
+	
+	public void createCourses() {
+		try{
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			System.out.println("DEBUG --- Connection: " + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase);
+			Connection con = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase,
+					mysqlUser, mysqlPassword);
+			
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("select COURSELINK from ACCESS");
+			while(rs.next()) {
+				String link = rs.getString("COURSELINK");
+				String courseid = link.split("id=")[1];
+				MoodleCourse course = new MoodleCourse(courseid, link, this);
+				courses.put(courseid, course);
+			}
+			con.close();
+		} catch(Exception e) {
+			System.out.println(e);
+		}
 	}
 }
