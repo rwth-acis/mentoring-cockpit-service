@@ -15,5 +15,5 @@ CREATE TABLE moodle_lrs_mapping (
   PRIMARY KEY (email)
 );
 
-INSERT INTO moodle_lrs_mapping VALUES ('LMS Chatbot', 'askabot@fakemail.de');
+INSERT INTO moodle_lrs_mapping VALUES ('MC Store', 'askabot@fakemail.de');
 INSERT INTO ACCESS VALUES ('LMSBot', 'https://moodle.tech4comp.dbis.rwth-aachen.de/course/view.php?id=18', 'askabot');

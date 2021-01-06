@@ -2,30 +2,52 @@ package i5.las2peer.services.mentoringCockpitService.Model;
 
 import i5.las2peer.services.mentoringCockpitService.MentoringCockpitService;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
+import i5.las2peer.services.mentoringCockpitService.SuggestionEvaluators.SuggestionEvaluator;
+
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.HashMap;
+import java.util.TimeZone;
 
 public abstract class Course {
 	protected String courseid;
 	protected String courseURL;
-	protected HashMap<String, User> users;
+	protected HashMap<String, MoodleUser> users;
 	protected HashMap<String, Resource> resources;
 	protected HashMap<String, Theme> themes;
 	protected MentoringCockpitService service;
+	protected SuggestionEvaluator suggestionEvaluator;
+	protected long lastUpdated = 0;
 	
 	public Course(String courseid, String courseURL, MentoringCockpitService service) {
 		this.courseid = courseid;
 		this.courseURL = courseURL;
-		this.users = new HashMap<String, User>();
+		this.users = new HashMap<String, MoodleUser>();
 		this.resources = new HashMap<String, Resource>();
 		this.themes = new HashMap<String, Theme>();
 		this.service = service;
+		this.lastUpdated = 0;
+		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+		updateKnowledgeBase(lastUpdated);
 	}
 	
-	public abstract void createUsers();
+	protected void setTimeToCurrent() {
+		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+		Instant instant = timestamp.toInstant();
+		lastUpdated = instant.getEpochSecond();
+	}
 	
-	public abstract void createResources();
+	public abstract void updateKnowledgeBase(long since);
 	
-	public abstract void createThemes();
+	public abstract void createUsers(long since);
+	
+	public abstract void createResources(long since);
+	
+	public abstract void createThemes(long since);
+	
+	public abstract void createLinks(long since);
+	
+	public abstract String getSuggestion(String email, String courseid);
 
 	public String getCourseid() {
 		return courseid;
@@ -43,11 +65,11 @@ public abstract class Course {
 		this.courseURL = courseURL;
 	}
 
-	public HashMap<String, User> getUsers() {
+	public HashMap<String, MoodleUser> getUsers() {
 		return users;
 	}
 
-	public void setUsers(HashMap<String, User> users) {
+	public void setUsers(HashMap<String, MoodleUser> users) {
 		this.users = users;
 	}
 

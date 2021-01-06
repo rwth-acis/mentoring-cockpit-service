@@ -2,6 +2,8 @@ package i5.las2peer.services.mentoringCockpitService;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import org.junit.After;
 import org.junit.Before;
@@ -9,11 +11,15 @@ import org.junit.Test;
 
 import i5.las2peer.api.p2p.ServiceNameVersion;
 import i5.las2peer.connectors.webConnector.WebConnector;
+import i5.las2peer.connectors.webConnector.client.ClientResponse;
+import i5.las2peer.connectors.webConnector.client.MiniClient;
 import i5.las2peer.p2p.LocalNode;
 import i5.las2peer.p2p.LocalNodeManager;
 import i5.las2peer.security.UserAgentImpl;
 import i5.las2peer.services.mentoringCockpitService.Model.Course;
+import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
 import i5.las2peer.testing.MockAgentFactory;
+import net.minidev.json.JSONObject;
 
 /**
  * Example Test Class demonstrating a basic JUnit test structure.
@@ -88,16 +94,33 @@ public class ServiceTest {
 	 */
 	@Test
 	public void testCourseCreation() {
-		System.out.println("DEBUG --- Testing starts");
-		MentoringCockpitService service = new MentoringCockpitService();
-		service.createCourses();
-		if (!service.courses.isEmpty()) {
-			System.out.println("DEBUG --- Course" + service.courses.keySet().toString());
-			System.out.println("DEBUG --- Success");
-		}
-		service.courses.get("18").createUsers();
-		System.out.println("DEBUG --- Users: " + service.courses.get("18").getUsers().keySet().toString());
-		service.courses.get("18").createResources();
-		System.out.println("DEBUG --- Resources: " + service.courses.get("18").getResources().keySet().toString());
+		// Connect to service
+		MiniClient c = new MiniClient();
+		c.setLogin(testAgent.getIdentifier(), testPass);
+		c.setConnectorEndpoint(connector.getHttpEndpoint());
+		
+		JSONObject body = new JSONObject();
+		body.put("email", "damatta.developer@gmail.com");
+		body.put("courseid", "18");
+		
+		ClientResponse response = c.sendRequest("POST", mainPath + "getSuggestion", body.toJSONString());
+		System.out.println(response.getResponse());
+		
+		
+//		System.out.println("DEBUG --- Testing starts");
+//		MentoringCockpitService service = new MentoringCockpitService();
+//		service.createCourses();
+//		if (!service.courses.isEmpty()) {
+//			System.out.println("DEBUG --- Course" + service.courses.keySet().toString());
+//			System.out.println("DEBUG --- Success");
+//		}
+//	
+//		service.courses.get("18").createUsers();
+//		System.out.println("DEBUG --- Users: " + service.courses.get("18").getUsers().keySet().toString());
+//		service.courses.get("18").createResources();
+//		System.out.println("DEBUG --- Resources: " + service.courses.get("18").getResources().keySet().toString());
+//		service.courses.get("18").createRelations();
+//		System.out.println("DEBUG --- Completed: " + service.courses.get("18").getUsers().get("damatta.developer@gmail.com").getCompletedResources().keySet().toString());
+//		System.out.println("DEBUG --- Grade: " + service.courses.get("18").getUsers().get("damatta.developer@gmail.com").getGrades().get("https://moodle.tech4comp.dbis.rwth-aachen.demod/quiz/view.php?id=200").toString());
 	}
 }

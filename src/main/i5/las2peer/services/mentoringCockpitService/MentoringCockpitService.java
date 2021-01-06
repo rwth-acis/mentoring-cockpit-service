@@ -32,6 +32,7 @@ import io.swagger.annotations.SwaggerDefinition;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
+import net.minidev.json.parser.JSONParser;
 import net.minidev.json.parser.ParseException;
 import org.knowm.xchart.BitmapEncoder;
 import org.knowm.xchart.XYChart;
@@ -82,6 +83,7 @@ public class MentoringCockpitService extends RESTService {
 		setFieldValues();
 		this.userEmail = "askabot@fakemail.de";
 		courses = new HashMap<String, Course>();
+		createCourses();
 	}
 
     /**
@@ -547,11 +549,11 @@ public class MentoringCockpitService extends RESTService {
 		try{
 			Connection con = connectToDatabase();
 			Statement stmt = con.createStatement();
-			System.out.println("DEBUG --- Email: " + userEmail);
+			//System.out.println("DEBUG --- Email: " + userEmail);
 			ResultSet rs = stmt.executeQuery("select MOODLE_TOKEN from moodle_lrs_mapping where EMAIL = '" + userEmail + "'");
 			while(rs.next()) {
 				moodleToken = rs.getString("moodle_token");
-				System.out.println("DEBUG --- Token: " + moodleToken);
+				//System.out.println("DEBUG --- Token: " + moodleToken);
 			}
 			con.close();
 
@@ -615,7 +617,7 @@ public class MentoringCockpitService extends RESTService {
 	public void createCourses() {
 		try{
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			System.out.println("DEBUG --- Connection: " + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase);
+			//System.out.println("DEBUG --- Connection: " + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase);
 			Connection con = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase,
 					mysqlUser, mysqlPassword);
 			
@@ -631,5 +633,32 @@ public class MentoringCockpitService extends RESTService {
 		} catch(Exception e) {
 			System.out.println(e);
 		}
+	}
+	
+	/**
+     * A function that is called by a chatbot to generate a suggestion for a user.
+     *
+     * @body Request body of the chatbot
+     *
+     */
+    @POST
+    @Path("/getSuggestion")
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiResponses(
+            value = { @ApiResponse(
+                    code = HttpURLConnection.HTTP_OK,
+                    message = "Connection works") })
+    public Response getSuggestion(String body) {
+    	JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
+    	try {
+    		JSONObject bodyObj = (JSONObject) parser.parse(body);
+    		String email = bodyObj.getAsString("email");
+    		String courseid = bodyObj.getAsString("courseid");
+    		return Response.status(200).entity(this.courses.get(courseid).getSuggestion(email, courseid)).build();
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		return Response.status(400).entity("Error").build();
+    	}
+    	
 	}
 }

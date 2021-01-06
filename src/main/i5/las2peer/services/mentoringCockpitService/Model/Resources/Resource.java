@@ -11,7 +11,7 @@ public abstract class Resource {
 		this.url = url;
 	}
 	
-	public abstract String getSuggestionText();
+	public abstract String getSuggestionText(String email);
 	
 	public abstract String getSuggestionItemText();
 	
