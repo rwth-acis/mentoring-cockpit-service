@@ -5,7 +5,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 
@@ -18,9 +17,6 @@ import i5.las2peer.api.Context;
 import i5.las2peer.api.ManualDeployment;
 import i5.las2peer.restMapper.RESTService;
 import i5.las2peer.restMapper.annotations.ServicePath;
-import i5.las2peer.security.AgentContext;
-import i5.las2peer.security.AgentImpl;
-import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
 import i5.las2peer.services.mentoringCockpitService.Model.Course;
 import i5.las2peer.services.mentoringCockpitService.Model.MoodleCourse;
 import io.swagger.annotations.Api;
@@ -38,8 +34,6 @@ import org.knowm.xchart.BitmapEncoder;
 import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYSeries;
 import org.knowm.xchart.style.markers.SeriesMarkers;
-
-import java.util.Properties;
 
 @Api
 @SwaggerDefinition(
@@ -81,7 +75,7 @@ public class MentoringCockpitService extends RESTService {
 	 */
 	public MentoringCockpitService() {
 		setFieldValues();
-		this.userEmail = "askabot@fakemail.de";
+		userEmail = "askabot@fakemail.de"; //TODO: remove this
 		courses = new HashMap<String, Course>();
 		createCourses();
 	}
@@ -635,30 +629,42 @@ public class MentoringCockpitService extends RESTService {
 		}
 	}
 	
-	/**
-     * A function that is called by a chatbot to generate a suggestion for a user.
-     *
-     * @body Request body of the chatbot
-     *
-     */
-    @POST
-    @Path("/getSuggestion")
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiResponses(
-            value = { @ApiResponse(
-                    code = HttpURLConnection.HTTP_OK,
-                    message = "Connection works") })
-    public Response getSuggestion(String body) {
-    	JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
-    	try {
-    		JSONObject bodyObj = (JSONObject) parser.parse(body);
-    		String email = bodyObj.getAsString("email");
-    		String courseid = bodyObj.getAsString("courseid");
-    		return Response.status(200).entity(this.courses.get(courseid).getSuggestion(email, courseid)).build();
-    	} catch (Exception e) {
-    		e.printStackTrace();
-    		return Response.status(400).entity("Error").build();
-    	}
-    	
+	@Override
+	protected void initResources() {
+		getResourceConfig().register(Suggestions.class);
 	}
+	
+	@Path("/suggestions")
+	public static class Suggestions {
+		MentoringCockpitService service = (MentoringCockpitService) Context.get().getService();
+		
+		/**
+	     * A function that is called by a chatbot to generate a suggestion for a user.
+	     *
+	     * @body Request body of the chatbot
+	     *
+	     */
+	    @POST
+	    @Path("/getSuggestion")
+	    @Produces(MediaType.APPLICATION_JSON)
+	    @ApiResponses(
+	            value = { @ApiResponse(
+	                    code = HttpURLConnection.HTTP_OK,
+	                    message = "Connection works") })
+	    public Response getSuggestion(String body) {
+	    	JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
+	    	try {
+	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
+	    		String email = bodyObj.getAsString("email");
+	    		String courseid = bodyObj.getAsString("courseid");
+	    		return Response.status(200).entity(this.service.courses.get(courseid).getSuggestion(email, courseid)).build();
+	    	} catch (Exception e) {
+	    		e.printStackTrace();
+	    		return Response.status(400).entity("Error").build();
+	    	}
+	    	
+		}
+	}
+	
+	
 }

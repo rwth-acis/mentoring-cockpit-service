@@ -1,9 +1,11 @@
 package i5.las2peer.services.mentoringCockpitService.Model.Resources;
 
+import i5.las2peer.services.mentoringCockpitService.Suggestion.SuggestionReason;
+
 public abstract class Resource {
-	private String id;
-	private String name;
-	private String url;
+	protected String id;
+	protected String name;
+	protected String url;
 	
 	public Resource(String id, String name, String url) {
 		this.id = id;
@@ -11,7 +13,7 @@ public abstract class Resource {
 		this.url = url;
 	}
 	
-	public abstract String getSuggestionText(String email);
+	public abstract String getSuggestionText(SuggestionReason reason);
 	
 	public abstract String getSuggestionItemText();
 	

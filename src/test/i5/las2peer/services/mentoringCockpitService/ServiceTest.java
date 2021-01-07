@@ -16,6 +16,7 @@ import i5.las2peer.connectors.webConnector.client.MiniClient;
 import i5.las2peer.p2p.LocalNode;
 import i5.las2peer.p2p.LocalNodeManager;
 import i5.las2peer.security.UserAgentImpl;
+import i5.las2peer.services.mentoringCockpitService.Interactions.UserResourceInteraction;
 import i5.las2peer.services.mentoringCockpitService.Model.Course;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
 import i5.las2peer.testing.MockAgentFactory;
@@ -94,17 +95,26 @@ public class ServiceTest {
 	 */
 	@Test
 	public void testCourseCreation() {
+//		try {
+//			while (true) {Thread.sleep(1000);}
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+		
 		// Connect to service
 		MiniClient c = new MiniClient();
 		c.setLogin(testAgent.getIdentifier(), testPass);
 		c.setConnectorEndpoint(connector.getHttpEndpoint());
-		
 		JSONObject body = new JSONObject();
-		body.put("email", "damatta.developer@gmail.com");
-		body.put("courseid", "18");
 		
-		ClientResponse response = c.sendRequest("POST", mainPath + "getSuggestion", body.toJSONString());
-		System.out.println(response.getResponse());
+		for (int i = 0; i < 6; i++) {
+			
+			body.put("email", "damatta.developer@gmail.com");
+			body.put("courseid", "18");
+			ClientResponse response = c.sendRequest("POST", mainPath + "suggestions/getSuggestion", body.toJSONString());
+			System.out.println(response.getResponse());
+		}
+		
 		
 		
 //		System.out.println("DEBUG --- Testing starts");

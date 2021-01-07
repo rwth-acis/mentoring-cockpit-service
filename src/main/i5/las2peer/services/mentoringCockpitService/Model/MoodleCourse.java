@@ -1,12 +1,19 @@
 package i5.las2peer.services.mentoringCockpitService.Model;
 
 import java.time.Instant;
+import java.util.ArrayList;
 
 import i5.las2peer.services.mentoringCockpitService.MentoringCockpitService;
-import i5.las2peer.services.mentoringCockpitService.Links.Completed;
+import i5.las2peer.services.mentoringCockpitService.Interactions.Completed;
+import i5.las2peer.services.mentoringCockpitService.Interactions.UserResourceInteraction;
+import i5.las2peer.services.mentoringCockpitService.Interactions.Viewed;
+import i5.las2peer.services.mentoringCockpitService.Model.Resources.CompletableResource;
+import i5.las2peer.services.mentoringCockpitService.Model.Resources.File;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Quiz;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
-import i5.las2peer.services.mentoringCockpitService.SuggestionEvaluators.MoodleSuggestionEvaluator;
+import i5.las2peer.services.mentoringCockpitService.Suggestion.MoodleSuggestionEvaluator;
+import i5.las2peer.services.mentoringCockpitService.Suggestion.Suggestion;
+import i5.las2peer.services.mentoringCockpitService.Model.Resources.Hyperlink;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
@@ -14,23 +21,31 @@ import net.minidev.json.parser.JSONParser;
 public class MoodleCourse extends Course {
 
 	public MoodleCourse(String courseid, String courseURL, MentoringCockpitService service) {
-		super(courseid, courseURL, service);
-		this.suggestionEvaluator = new MoodleSuggestionEvaluator();
+		super(courseid, courseURL, service, new MoodleSuggestionEvaluator(0, 1));
 	}
 	
 	@Override
 	public void updateKnowledgeBase(long since) {
 		setTimeToCurrent();
-		createUsers(since);
+		newResources.clear();
+		
 		createResources(since);
+		createUsers(since);
+		createInteractions(since);
 		createThemes(since);
-		createLinks(since);
 	}
 
 	@Override
 	public String getSuggestion(String email, String courseid) {
 		updateKnowledgeBase(lastUpdated);
-		return users.get(email).getSuggestion(courseid);
+		Suggestion suggestion =  users.get(email).getSuggestion();
+		if (suggestion != null) {
+			System.out.println("DEBUG --- Priority: " + suggestion.getPriority());
+			return suggestion.getSuggestionText();
+		} else {
+			return "No suggestions available";
+		}
+		
 	}
 	
 	@Override
@@ -43,7 +58,7 @@ public class MoodleCourse extends Course {
 		match.put("statement.stored", gtObject);
 		JSONObject matchObj = new JSONObject();
 		matchObj.put("$match", match);
-		System.out.println("DEBUG --- Query: " + gtObject.getAsString("$gt"));
+		
 		
 		
 		// Project
@@ -133,7 +148,7 @@ public class MoodleCourse extends Course {
 		
 		String res = service.LRSconnect(sb.toString());
 		
-		//System.out.println("DEBUG --- Resources: " + res);
+		
 		
 		JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 		try {
@@ -142,7 +157,11 @@ public class MoodleCourse extends Course {
 			for (int i = 0; i < data.size(); i++) {
 				JSONObject resourceObj = (JSONObject) data.get(i);
 				if (resourceObj.getAsString("_id").contains("quiz")) {
-					resources.put(resourceObj.getAsString("_id"), new Quiz(resourceObj.getAsString("_id"), resourceObj.getAsString("name"), resourceObj.getAsString("_id"), 10));
+					resources.put(resourceObj.getAsString("_id"), new Quiz(resourceObj.getAsString("_id"), resourceObj.getAsString("name"), resourceObj.getAsString("_id")));
+				} else if (resourceObj.getAsString("_id").contains("resource")) {
+					resources.put(resourceObj.getAsString("_id"), new File(resourceObj.getAsString("_id"), resourceObj.getAsString("name"), resourceObj.getAsString("_id")));
+				} else if (resourceObj.getAsString("_id").contains("url")) {
+					resources.put(resourceObj.getAsString("_id"), new Hyperlink(resourceObj.getAsString("_id"), resourceObj.getAsString("name"), resourceObj.getAsString("_id")));
 				}
 			}
 		} catch (Exception e) {
@@ -157,7 +176,7 @@ public class MoodleCourse extends Course {
 	}
 
 	@Override
-	public void createLinks(long since) {
+	public void createInteractions(long since) {
 		// Match
 		JSONObject match = new JSONObject();
 		match.put("statement.context.extensions.https://tech4comp&46;de/xapi/context/extensions/courseInfo.courseid", Integer.parseInt(courseid));
@@ -207,23 +226,35 @@ public class MoodleCourse extends Course {
 			for (int i = 0; i < data.size(); i++) {
 				JSONObject dataObj = (JSONObject) data.get(i);
 				JSONObject relationObj = (JSONObject) dataObj.get("_id");
-				MoodleUser user = users.get(relationObj.getAsString("userid"));
+				User user = users.get(relationObj.getAsString("userid"));
 				Resource resource = resources.get(relationObj.getAsString("objectid"));
 				String verb = relationObj.getAsString("verb");
 				long timestamp = Instant.parse(relationObj.getAsString("timestamp")).getEpochSecond();
 				
-				//TODO: Add more verbs
-				if (verb.contains("completed")) {
-					JSONObject resultObject = (JSONObject) relationObj.get("result");
-					if (Boolean.parseBoolean(resultObject.getAsString("completion"))) {
-						Quiz quiz = (Quiz) resource;
-						JSONObject scoreObject = (JSONObject) resultObject.get("score");
-						Completed completedLink = new Completed(timestamp, user, quiz, Double.parseDouble(scoreObject.getAsString("scaled")));
-						user.getCompletedResources().put(quiz.getId(), completedLink);
-						quiz.getUsers().put(user.getEmail(), completedLink);
+				if (resource != null) {
+					//TODO: Add more verbs
+					UserResourceInteraction interaction = null;
+					if (verb.contains("completed")) {
+						JSONObject resultObject = (JSONObject) relationObj.get("result");
+						if (Boolean.parseBoolean(resultObject.getAsString("completion"))) {
+							CompletableResource completableResource = (CompletableResource) resource;
+							JSONObject scoreObject = (JSONObject) resultObject.get("score");
+							interaction = new Completed(timestamp, user, completableResource, Double.parseDouble(scoreObject.getAsString("scaled")));
+						}
+					} else if (verb.contains("viewed")) {
+						interaction = new Viewed(timestamp, user, resource);
 					}
-				} else if (verb.contains("")) {
 					
+					// Add interactions to interaction lists
+					if (interaction != null) {
+						if (!user.getInteractionLists().containsKey(resource.getId())) {
+							user.getInteractionLists().put(resource.getId(), new ArrayList<UserResourceInteraction>());
+						}
+						user.getInteractionLists().get(resource.getId()).add(interaction);
+					}
+					
+					// Add resource to user's newly interacted resource list
+					user.getRecentlyInteractedResources().add(resource);
 				}
 			}
 		} catch (Exception e) {
