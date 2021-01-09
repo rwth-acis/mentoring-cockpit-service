@@ -109,7 +109,7 @@ public class ServiceTest {
 		
 		for (int i = 0; i < 6; i++) {
 			
-			body.put("email", "damatta.developer@gmail.com");
+			body.put("userid", "151");
 			body.put("courseid", "18");
 			ClientResponse response = c.sendRequest("POST", mainPath + "suggestions/getSuggestion", body.toJSONString());
 			System.out.println(response.getResponse());

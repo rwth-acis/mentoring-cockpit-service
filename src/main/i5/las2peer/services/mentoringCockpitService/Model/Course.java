@@ -51,7 +51,7 @@ public abstract class Course {
 	
 	public abstract void createInteractions(long since);
 	
-	public abstract String getSuggestion(String email, String courseid);
+	public abstract String getSuggestion(String userid, String courseid);
 
 	public String getCourseid() {
 		return courseid;

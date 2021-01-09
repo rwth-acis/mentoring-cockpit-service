@@ -655,9 +655,11 @@ public class MentoringCockpitService extends RESTService {
 	    	JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 	    	try {
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
-	    		String email = bodyObj.getAsString("email");
+	    		String userid = bodyObj.getAsString("userid");
 	    		String courseid = bodyObj.getAsString("courseid");
-	    		return Response.status(200).entity(this.service.courses.get(courseid).getSuggestion(email, courseid)).build();
+	    		JSONObject returnObj = new JSONObject();
+	    		returnObj.put("text", this.service.courses.get(courseid).getSuggestion(userid, courseid));
+	    		return Response.status(200).entity(returnObj).build();
 	    	} catch (Exception e) {
 	    		e.printStackTrace();
 	    		return Response.status(400).entity("Error").build();

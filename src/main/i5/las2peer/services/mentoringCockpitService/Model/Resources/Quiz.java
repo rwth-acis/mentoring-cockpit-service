@@ -14,7 +14,7 @@ public class Quiz extends CompletableResource {
 			case NOT_COMPLETED:
 				return "You still haven't completed the quiz " + this.getName();
 			case NOT_MAX_GRADE:
-				return "You can try improving your grade in the quiz " + this.getName();
+				return "You can try improving your grade in the quiz <a href=' " + url + "'>" + this.getName() + "</a>";
 			default:
 				return "Error";
 		}

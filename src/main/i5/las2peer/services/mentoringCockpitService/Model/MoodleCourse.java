@@ -36,9 +36,9 @@ public class MoodleCourse extends Course {
 	}
 
 	@Override
-	public String getSuggestion(String email, String courseid) {
+	public String getSuggestion(String userid, String courseid) {
 		updateKnowledgeBase(lastUpdated);
-		Suggestion suggestion =  users.get(email).getSuggestion();
+		Suggestion suggestion =  users.get(userid).getSuggestion();
 		if (suggestion != null) {
 			System.out.println("DEBUG --- Priority: " + suggestion.getPriority());
 			return suggestion.getSuggestionText();
@@ -64,7 +64,7 @@ public class MoodleCourse extends Course {
 		// Project
 		JSONObject project = new JSONObject();
 		project.put("_id", "$statement.actor.account.name");
-		project.put("email", "$statement.actor.account.name");
+		project.put("userid", "$statement.actor.account.name");
 		project.put("name", "$statement.actor.name");
 		JSONObject projectObj = new JSONObject();
 		projectObj.put("$project", project);
@@ -72,12 +72,12 @@ public class MoodleCourse extends Course {
 		// Group
 		JSONObject groupObject = new JSONObject();
 		JSONObject group = new JSONObject();
-		JSONObject emailObject = new JSONObject();
+		JSONObject idObject = new JSONObject();
 		JSONObject nameObject = new JSONObject();
-		emailObject.put("$first", "$email");
+		idObject.put("$first", "$userid");
 		nameObject.put("$first", "$name");
 		group.put("_id", "$_id");
-		group.put("email", emailObject);
+		group.put("userid", idObject);
 		group.put("name", nameObject);
 		groupObject.put("$group", group);
 		
@@ -94,14 +94,14 @@ public class MoodleCourse extends Course {
 		
 		String res = service.LRSconnect(sb.toString());
 		
-		System.out.println("DEBUG --- Users: " + res);
+		//System.out.println("DEBUG --- Users: " + res);
 		
 		JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 		try {
 			JSONArray data = (JSONArray) parser.parse(res);
 			for (int i = 0; i < data.size(); i++) {
 				JSONObject userObj = (JSONObject) data.get(i);
-				users.put(userObj.getAsString("email"), new MoodleUser(userObj.getAsString("email"), userObj.getAsString("name"), this));
+				users.put(userObj.getAsString("userid"), new MoodleUser(userObj.getAsString("userid"), userObj.getAsString("name"), this));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -222,6 +222,7 @@ public class MoodleCourse extends Course {
 		JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 		try {
 			JSONArray data = (JSONArray) parser.parse(res);
+			
 			//System.out.println("DEBUG --- Size: " + data.size());
 			for (int i = 0; i < data.size(); i++) {
 				JSONObject dataObj = (JSONObject) data.get(i);

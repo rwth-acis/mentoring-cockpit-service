@@ -55,7 +55,6 @@ public class MoodleSuggestionEvaluator extends SuggestionEvaluator {
 			if (interaction instanceof Completed) {
 				Completed completed = (Completed) interaction;
 				if (completed.getGrade() > res) {
-					System.out.println("DEBUG --- HI");
 					res = completed.getGrade();
 				}
 			}
