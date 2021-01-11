@@ -71,7 +71,7 @@ done
 echo "${MYSQL_HOST}:${MYSQL_PORT} is available. Continuing..."
 
 # Create and migrate the database on first run
-if ! mysql -h${MYSQL_HOST} -P${MYSQL_PORT} -u${MYSQL_USER} -p${MYSQL_PASSWORD} -e "desc ${MYSQL_DATABASE}.MESSAGE" > /dev/null 2>&1; then
+if ! mysql -h${MYSQL_HOST} -P${MYSQL_PORT} -u${MYSQL_USER} -p${MYSQL_PASSWORD} -e "desc ${MYSQL_DATABASE}.ACCESS" > /dev/null 2>&1; then
     echo "Creating database schema..."
     mysql -h${MYSQL_HOST} -P${MYSQL_PORT} -u${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE} < ${CREATE_DB_SQL}
 fi
