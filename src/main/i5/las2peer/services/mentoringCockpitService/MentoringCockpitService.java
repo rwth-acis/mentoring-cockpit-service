@@ -20,10 +20,12 @@ import i5.las2peer.restMapper.annotations.ServicePath;
 import i5.las2peer.services.mentoringCockpitService.Model.Course;
 import i5.las2peer.services.mentoringCockpitService.Model.MoodleCourse;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Contact;
 import io.swagger.annotations.Info;
+import io.swagger.annotations.License;
 import io.swagger.annotations.SwaggerDefinition;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
@@ -634,6 +636,21 @@ public class MentoringCockpitService extends RESTService {
 		getResourceConfig().register(Suggestions.class);
 	}
 	
+	@Api(
+			value = "Suggestion resource")
+	@SwaggerDefinition(
+			info = @Info(
+					title = "Mentoring Cockpit Service",
+					version = "1.0.0",
+					description = "",
+					termsOfService = "",
+					contact = @Contact(
+							name = "Leonardo da Matta",
+							url = "",
+							email = "leonardo.matta@rwth-aachen.de"),
+					license = @License(
+							name = "",
+							url = "")))
 	@Path("/suggestions")
 	public static class Suggestions {
 		MentoringCockpitService service = (MentoringCockpitService) Context.get().getService();
@@ -646,7 +663,11 @@ public class MentoringCockpitService extends RESTService {
 	     */
 	    @POST
 	    @Path("/getSuggestion")
+		@Consumes(MediaType.TEXT_PLAIN)
 	    @Produces(MediaType.APPLICATION_JSON)
+	    @ApiOperation(
+				value = "REPLACE THIS WITH AN APPROPRIATE FUNCTION NAME",
+				notes = "REPLACE THIS WITH YOUR NOTES TO THE FUNCTION")
 	    @ApiResponses(
 	            value = { @ApiResponse(
 	                    code = HttpURLConnection.HTTP_OK,
@@ -655,10 +676,11 @@ public class MentoringCockpitService extends RESTService {
 	    	JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 	    	try {
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
-	    		String userid = bodyObj.getAsString("userid");
+	    		String userid = bodyObj.getAsString("user");
 	    		String courseid = bodyObj.getAsString("courseid");
 	    		JSONObject returnObj = new JSONObject();
 	    		returnObj.put("text", this.service.courses.get(courseid).getSuggestion(userid, courseid));
+	    		returnObj.put("closeContext", "true");
 	    		return Response.status(200).entity(returnObj).build();
 	    	} catch (Exception e) {
 	    		e.printStackTrace();
