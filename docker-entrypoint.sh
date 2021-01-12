@@ -8,6 +8,7 @@ if [[ ! -z "${DEBUG}" ]]; then
 fi
 
 # set some helpful variables
+export CREATE_DB_SQL='etc/create_database_MySQL.sql'
 export SERVICE_PROPERTY_FILE='etc/i5.las2peer.services.mentoringCockpitService.MentoringCockpitService.properties'
 export SERVICE_VERSION=$(awk -F "=" '/service.version/ {print $2}' etc/ant_configuration/service.properties)
 export SERVICE_NAME=$(awk -F "=" '/service.name/ {print $2}' etc/ant_configuration/service.properties)
