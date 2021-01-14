@@ -1,5 +1,10 @@
 package i5.las2peer.services.mentoringCockpitService.Model;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.time.Instant;
 import java.util.ArrayList;
 
@@ -13,6 +18,9 @@ import i5.las2peer.services.mentoringCockpitService.Model.Resources.Quiz;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.MoodleSuggestionEvaluator;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.Suggestion;
+import i5.las2peer.services.mentoringCockpitService.Suggestion.TextFormatter;
+import i5.las2peer.services.mentoringCockpitService.Themes.Theme;
+import i5.las2peer.services.mentoringCockpitService.Themes.ThemeResourceLink;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Hyperlink;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
@@ -45,9 +53,17 @@ public class MoodleCourse extends Course {
 		} else {
 			return "No suggestions available";
 		}
-		
 	}
-	
+
+	@Override
+	public String getThemeSuggestions(String themeid, String courseid) {
+		ArrayList<String> items = new ArrayList<String>();
+		for (ThemeResourceLink link : themes.get("http://halle/domainmodel/" + themeid).getResourceLinks().values()) {
+			items.add(link.getSuggestionText());
+		}
+		return "The following resources are related to the theme " + TextFormatter.quote(themeid) + ":" + TextFormatter.createList(items);
+	}
+
 	@Override
 	public void createUsers(long since) {
 		// Match
@@ -171,8 +187,134 @@ public class MoodleCourse extends Course {
 
 	@Override
 	public void createThemes(long since) {
-		// TODO Auto-generated method stub
 		
+		// First, create all themes
+		try {
+			String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
+					"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
+					"	\r\n" + 
+					"    SELECT ?s1 ?shortid WHERE {\r\n" + 
+					"  		GRAPH <http://triplestore.tech4comp.dbis.rwth-aachen.de/Wissenslandkarten/data/%s> {\r\n" + 
+					"  			?s1 a ulo:Theme .  \r\n" + 
+					"  			?s1 rdfs:label ?shortid .  \r\n" + 
+					"		}\r\n" + 
+					"    }";
+			
+			String response = sparqlQuery(query);
+			ArrayList<String> themeids = new ArrayList<String>();
+			
+			JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
+			JSONObject responseObj = (JSONObject) parser.parse(response.toString());
+			JSONObject resultsObj = (JSONObject) responseObj.get("results");
+			JSONArray bindingsArray = (JSONArray) resultsObj.get("bindings");
+			for (int i = 0; i < bindingsArray.size(); i++) {
+				JSONObject bindingObj = (JSONObject) bindingsArray.get(i);
+				JSONObject subjectObj = (JSONObject) bindingObj.get("s1");
+				themeids.add(subjectObj.getAsString("value"));
+			}
+			
+			System.out.println("DEBUG --- URIS: " + themeids.toString());
+			
+			for (String themeid : themeids) {
+				themes.put(themeid, new Theme(themeid));
+			}
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		// Then, create theme structure
+		try {
+			String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
+					"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
+					"	\r\n" + 
+					"    SELECT ?s1 ?o1 WHERE {\r\n" + 
+					"  		GRAPH <http://triplestore.tech4comp.dbis.rwth-aachen.de/Wissenslandkarten/data/Moodle_18> {\r\n" + 
+					"  			?s1 ulo:superthemeOf ?o1 .  \r\n" + 
+					"		}\r\n" + 
+					"    }";
+			
+			String response = sparqlQuery(query);
+			
+			JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
+			JSONObject responseObj = (JSONObject) parser.parse(response.toString());
+			JSONObject resultsObj = (JSONObject) responseObj.get("results");
+			JSONArray bindingsArray = (JSONArray) resultsObj.get("bindings");
+			for (int i = 0; i < bindingsArray.size(); i++) {
+				JSONObject bindingObj = (JSONObject) bindingsArray.get(i);
+				JSONObject subjectObj = (JSONObject) bindingObj.get("s1");
+				JSONObject objectObj = (JSONObject) bindingObj.get("o1");
+				themes.get(subjectObj.getAsString("value")).addSubtheme(themes.get(objectObj.getAsString("value")));
+			}
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		// Finally, assign resources and resource information
+		try {
+			String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
+					"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
+					"    SELECT ?themeid ?resourceid ?infoType ?infoVal WHERE {\r\n" + 
+					"  		GRAPH <http://triplestore.tech4comp.dbis.rwth-aachen.de/Wissenslandkarten/data/Moodle_18> {\r\n" + 
+					"    		?themeid ulo:continuativeMaterial ?s1 .\r\n" + 
+					"  			?s1 ulo:id ?resourceid .\r\n" + 
+					"    		?s1 ?infoType ?infoVal .\r\n" + 
+					"  		} \r\n" + 
+					"    } ";
+			
+			String response = sparqlQuery(query);
+			
+			JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
+			JSONObject responseObj1 = (JSONObject) parser.parse(response.toString());
+			JSONObject resultsObj1 = (JSONObject) responseObj1.get("results");
+			JSONArray bindingsArray1 = (JSONArray) resultsObj1.get("bindings");
+			for (int i = 0; i < bindingsArray1.size(); i++) {
+				JSONObject bindingObj = (JSONObject) bindingsArray1.get(i);
+				String themeid = ((JSONObject) bindingObj.get("themeid")).getAsString("value");
+				String resourceid = ((JSONObject) bindingObj.get("resourceid")).getAsString("value");
+				if (resources.containsKey(resourceid)) {
+					if (!themes.get(themeid).getResourceLinks().containsKey(resourceid)) {
+						themes.get(themeid).getResourceLinks().put(resourceid, new ThemeResourceLink(resources.get(resourceid)));
+					}
+					
+					String infoType = ((JSONObject) bindingObj.get("infoType")).getAsString("value");
+					String infoVal = ((JSONObject) bindingObj.get("infoVal")).getAsString("value");
+					themes.get(themeid).getResourceLinks().get(resourceid).addInfo(infoType, infoVal);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private String sparqlQuery(String query) {
+		try {
+			URL url = new URL(service.triplestoreDomain);
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestMethod("POST");
+			conn.setRequestProperty("Content-Type", "application/sparql-query");
+			conn.setRequestProperty("Accept", "application/json");
+			conn.setDoOutput(true);
+			
+			try(OutputStream os = conn.getOutputStream()) {
+			    byte[] input = String.format(query, "Moodle_" + courseid).getBytes("utf-8");
+			    os.write(input, 0, input.length);			
+			}
+			StringBuilder response = new StringBuilder();
+			try(BufferedReader br = new BufferedReader(
+					  new InputStreamReader(conn.getInputStream(), "utf-8"))) {
+					    String responseLine = null;
+					    while ((responseLine = br.readLine()) != null) {
+					        response.append(responseLine.trim());
+					    }
+					    System.out.println("DEBUG --- RESPONSE: " + response.toString());
+					}
+			return response.toString();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return "SPARQL connection failed";
+		}
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package i5.las2peer.services.mentoringCockpitService.Model;
 import i5.las2peer.services.mentoringCockpitService.MentoringCockpitService;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.SuggestionEvaluator;
+import i5.las2peer.services.mentoringCockpitService.Themes.Theme;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -53,6 +54,8 @@ public abstract class Course {
 	
 	public abstract String getSuggestion(String userid, String courseid);
 
+	public abstract String getThemeSuggestions(String themeid, String courseid);
+	
 	public String getCourseid() {
 		return courseid;
 	}

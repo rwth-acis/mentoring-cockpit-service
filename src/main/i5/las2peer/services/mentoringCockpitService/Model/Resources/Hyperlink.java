@@ -1,12 +1,12 @@
 package i5.las2peer.services.mentoringCockpitService.Model.Resources;
 
 import i5.las2peer.services.mentoringCockpitService.Suggestion.SuggestionReason;
+import i5.las2peer.services.mentoringCockpitService.Suggestion.TextFormatter;
 
 public class Hyperlink extends Resource {
 	
 	public Hyperlink(String id, String name, String url) {
 		super(id, name, url);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
@@ -17,8 +17,7 @@ public class Hyperlink extends Resource {
 
 	@Override
 	public String getSuggestionItemText() {
-		// TODO Auto-generated method stub
-		return null;
+		return "Link " + TextFormatter.createHyperlink(name, url);
 	}
 
 }

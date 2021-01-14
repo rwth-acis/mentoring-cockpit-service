@@ -1,6 +1,7 @@
 package i5.las2peer.services.mentoringCockpitService.Model.Resources;
 
 import i5.las2peer.services.mentoringCockpitService.Suggestion.SuggestionReason;
+import i5.las2peer.services.mentoringCockpitService.Suggestion.TextFormatter;
 
 public class Quiz extends CompletableResource {
 	
@@ -14,7 +15,7 @@ public class Quiz extends CompletableResource {
 			case NOT_COMPLETED:
 				return "You still haven't completed the quiz " + this.getName();
 			case NOT_MAX_GRADE:
-				return "You can try improving your grade in the quiz <a href=' " + url + "'>" + this.getName() + "</a>";
+				return "You can try improving your grade in the quiz " + TextFormatter.createHyperlink(name, url);
 			default:
 				return "Error";
 		}
@@ -22,7 +23,6 @@ public class Quiz extends CompletableResource {
 
 	@Override
 	public String getSuggestionItemText() {
-		// TODO Auto-generated method stub
-		return null;
+		return "Quiz " + TextFormatter.createHyperlink(name, url);
 	}
 }

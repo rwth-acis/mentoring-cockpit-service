@@ -1,6 +1,7 @@
 package i5.las2peer.services.mentoringCockpitService.Model.Resources;
 
 import i5.las2peer.services.mentoringCockpitService.Suggestion.SuggestionReason;
+import i5.las2peer.services.mentoringCockpitService.Suggestion.TextFormatter;
 
 public class File extends Resource {
 	
@@ -20,8 +21,7 @@ public class File extends Resource {
 
 	@Override
 	public String getSuggestionItemText() {
-		// TODO Auto-generated method stub
-		return null;
+		return "File " + TextFormatter.createHyperlink(name, url);
 	}
 
 }

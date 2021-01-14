@@ -1,5 +1,7 @@
 package i5.las2peer.services.mentoringCockpitService.Model.Resources;
 
+import java.util.ArrayList;
+
 import i5.las2peer.services.mentoringCockpitService.Suggestion.SuggestionReason;
 
 public abstract class Resource {
@@ -40,6 +42,4 @@ public abstract class Resource {
 	public void setUrl(String url) {
 		this.url = url;
 	}
-	
-	
 }	

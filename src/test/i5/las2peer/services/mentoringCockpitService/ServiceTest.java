@@ -107,19 +107,25 @@ public class ServiceTest {
 		c.setConnectorEndpoint(connector.getHttpEndpoint());
 		JSONObject body = new JSONObject();
 		
-		for (int i = 0; i < 6; i++) {
-			
-			body.put("userid", "151");
-			body.put("courseid", "18");
-			ClientResponse response = c.sendRequest("POST", mainPath + "suggestions/getSuggestion", body.toJSONString());
-			System.out.println(response.getResponse());
-		}
+		body.put("intent", "testTheme1");
+		body.put("courseid", "18");
+		ClientResponse response = c.sendRequest("POST", mainPath + "suggestions/getSuggestionByTheme", body.toJSONString());
+		System.out.println(response.getResponse());
+		
+//		for (int i = 0; i < 6; i++) {
+//			
+//			body.put("userid", "151");
+//			body.put("courseid", "18");
+//			ClientResponse response = c.sendRequest("POST", mainPath + "suggestions/getSuggestion", body.toJSONString());
+//			System.out.println(response.getResponse());
+//		}
 		
 		
 		
 //		System.out.println("DEBUG --- Testing starts");
-//		MentoringCockpitService service = new MentoringCockpitService();
-//		service.createCourses();
+		//MentoringCockpitService service = new MentoringCockpitService();
+		//service.createCourses();
+		//service.courses.get("18").createThemes(0);
 //		if (!service.courses.isEmpty()) {
 //			System.out.println("DEBUG --- Course" + service.courses.keySet().toString());
 //			System.out.println("DEBUG --- Success");

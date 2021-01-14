@@ -65,6 +65,7 @@ public class MentoringCockpitService extends RESTService {
 	private String mysqlHost;
 	private String mysqlPort;
 	private String mysqlDatabase;
+	public String triplestoreDomain = "https://triplestore.tech4comp.dbis.rwth-aachen.de/LMSData";
 	private static String userEmail;
 	private String lrsClientURL;
 	public HashMap<String, Course> courses;
@@ -666,25 +667,61 @@ public class MentoringCockpitService extends RESTService {
 		@Consumes(MediaType.TEXT_PLAIN)
 	    @Produces(MediaType.APPLICATION_JSON)
 	    @ApiOperation(
-				value = "REPLACE THIS WITH AN APPROPRIATE FUNCTION NAME",
-				notes = "REPLACE THIS WITH YOUR NOTES TO THE FUNCTION")
+				value = "Get Suggestion",
+				notes = "Returns a resource suggestion for the given course and user.")
 	    @ApiResponses(
 	            value = { @ApiResponse(
 	                    code = HttpURLConnection.HTTP_OK,
 	                    message = "Connection works") })
 	    public Response getSuggestion(String body) {
 	    	JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
+	    	JSONObject returnObj = new JSONObject();
 	    	try {
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
 	    		String userid = bodyObj.getAsString("user");
 	    		String courseid = bodyObj.getAsString("courseid");
-	    		JSONObject returnObj = new JSONObject();
 	    		returnObj.put("text", this.service.courses.get(courseid).getSuggestion(userid, courseid));
 	    		returnObj.put("closeContext", "true");
 	    		return Response.status(200).entity(returnObj).build();
 	    	} catch (Exception e) {
 	    		e.printStackTrace();
-	    		return Response.status(400).entity("Error").build();
+	    		returnObj.put("text", "Error");
+	    		return Response.status(400).entity(returnObj).build();
+	    	}
+	    	
+		}
+	    
+	    /**
+	     * A function that is called by a chatbot to generate a suggestion for a user based on a specific Theme.
+	     *
+	     * @body Request body of the chatbot
+	     *
+	     */
+	    @POST
+	    @Path("/getSuggestionByTheme")
+		@Consumes(MediaType.TEXT_PLAIN)
+	    @Produces(MediaType.APPLICATION_JSON)
+	    @ApiOperation(
+				value = "Get Suggestion",
+				notes = "Returns a list of resources related to the given theme.")
+	    @ApiResponses(
+	            value = { @ApiResponse(
+	                    code = HttpURLConnection.HTTP_OK,
+	                    message = "Connection works") })
+	    public Response getSuggestionByTheme(String body) {
+	    	JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
+	    	JSONObject returnObj = new JSONObject();
+	    	try {
+	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
+	    		String themeid = bodyObj.getAsString("intent");
+	    		String courseid = bodyObj.getAsString("courseid");
+	    		returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(themeid, courseid));
+	    		returnObj.put("closeContext", "true");
+	    		return Response.status(200).entity(returnObj).build();
+	    	} catch (Exception e) {
+	    		e.printStackTrace();
+	    		returnObj.put("text", "Error");
+	    		return Response.status(400).entity(returnObj).build();
 	    	}
 	    	
 		}
