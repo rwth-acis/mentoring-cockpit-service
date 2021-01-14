@@ -5,15 +5,19 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.*;
-import java.util.Base64;
+import java.util.*;
 
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
 import i5.las2peer.api.Context;
 import i5.las2peer.api.ManualDeployment;
+import i5.las2peer.api.security.Agent;
+import i5.las2peer.api.security.UserAgent;
 import i5.las2peer.restMapper.RESTService;
 import i5.las2peer.restMapper.annotations.ServicePath;
 import i5.las2peer.security.AgentContext;
@@ -33,7 +37,8 @@ import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYSeries;
 import org.knowm.xchart.style.markers.SeriesMarkers;
 
-import java.util.Properties;
+import org.jboss.resteasy.plugins.providers.multipart.InputPart;
+import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
 
 @Api
 @SwaggerDefinition(
@@ -56,6 +61,9 @@ import java.util.Properties;
 @ServicePath("/mentoring")
 public class MentoringCockpitService extends RESTService {
 
+	private static String UPLOAD_FOLDER = "/opt/feedback/";
+	private List<String> feedbackAccessAllowed = new ArrayList<>();
+
 	private String lrsDomain;
 	private String lrsAuth;
 	private String mysqlUser;
@@ -73,6 +81,10 @@ public class MentoringCockpitService extends RESTService {
 	 * 
 	 */
 	public MentoringCockpitService() {
+		// add entries to feedback access allowed list
+		feedbackAccessAllowed.add("bja-tud");
+		feedbackAccessAllowed.add("neumann");
+		// set field values
 		setFieldValues();
 	}
 
@@ -233,7 +245,136 @@ public class MentoringCockpitService extends RESTService {
 		}
 	}
 
+	@GET
+	@Path("/test/{email}")
+	@Produces("application/pdf")
+	@RolesAllowed("authenticated")
+	public Response getTestFeedback(@PathParam("email") String email) {
+		// authentication
+		Agent agent = Context.getCurrent().getMainAgent();
+		if (agent instanceof UserAgent) {
+			UserAgent userAgent = (UserAgent) agent;
+			String name = userAgent.getLoginName();
+			if (feedbackAccessAllowed.contains(name)) {
+				File file = new File(UPLOAD_FOLDER + email + ".pdf");
+				if (!file.exists()) {
+					Response.ResponseBuilder response = Response.status(Response.Status.NOT_FOUND);
+					return response.build();
+				}
 
+				Response.ResponseBuilder response = Response.ok((Object) file);
+				response.header("Content-Disposition", "attachment; filename=\"" + email + ".pdf\"");
+				return response.build();
+			} else {
+				return Response.status(Response.Status.FORBIDDEN).entity("Access denied. Wrong user.").build();
+			}
+		} else {
+			return Response.status(Response.Status.FORBIDDEN).entity("Anonymous access denied").build();
+		}
+	}
+
+	@POST
+	@Path("/test")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
+	@RolesAllowed("authenticated")
+	public Response uploadPdfFile(MultipartFormDataInput multipartFormDataInput) {
+		// authentication
+		Agent agent = Context.getCurrent().getMainAgent();
+		if (agent instanceof UserAgent) {
+			UserAgent userAgent = (UserAgent) agent;
+			String name = userAgent.getLoginName();
+			if (feedbackAccessAllowed.contains(name)) {
+				// local variables
+				MultivaluedMap<String, String> multivaluedMap = null;
+				String fileName = null;
+				InputStream inputStream = null;
+				String uploadFilePath = null;
+
+				try {
+					Map<String, List<InputPart>> map = multipartFormDataInput.getFormDataMap();
+					List<InputPart> lstInputPart = map.get("uploadedFile");
+
+					for(InputPart inputPart : lstInputPart){
+
+						// get filename to be uploaded
+						multivaluedMap = inputPart.getHeaders();
+						fileName = getFileName(multivaluedMap);
+
+						if(null != fileName && !"".equalsIgnoreCase(fileName)){
+
+							// write & upload file to UPLOAD_FILE_SERVER
+							inputStream = inputPart.getBody(InputStream.class,null);
+							uploadFilePath = writeToFileServer(inputStream, fileName);
+
+							// close the stream
+							inputStream.close();
+						}
+					}
+				}
+				catch(IOException ioe){
+					ioe.printStackTrace();
+				}
+				finally{
+					// release resources, if any
+				}
+				return Response.ok("File uploaded successfully at " + uploadFilePath).build();
+			} else {
+				return Response.status(Response.Status.FORBIDDEN).entity("Access denied. Wrong user.").build();
+			}
+		} else {
+			return Response.status(Response.Status.FORBIDDEN).entity("Anonymous access denied").build();
+		}
+	}
+
+	/**
+	 *
+	 * @param multivaluedMap
+	 * @return
+	 */
+	private String getFileName(MultivaluedMap<String, String> multivaluedMap) {
+
+		String[] contentDisposition = multivaluedMap.getFirst("Content-Disposition").split(";");
+
+		for (String filename : contentDisposition) {
+
+			if ((filename.trim().startsWith("filename"))) {
+				String[] name = filename.split("=");
+				String exactFileName = name[1].trim().replaceAll("\"", "");
+				return exactFileName;
+			}
+		}
+		return "UnknownFile";
+	}
+
+	/**
+	 *
+	 * @param inputStream
+	 * @param fileName
+	 * @throws IOException
+	 */
+	private String writeToFileServer(InputStream inputStream, String fileName) throws IOException {
+
+		OutputStream outputStream = null;
+		String qualifiedUploadFilePath = UPLOAD_FOLDER + fileName;
+
+		try {
+			outputStream = new FileOutputStream(new File(qualifiedUploadFilePath));
+			int read = 0;
+			byte[] bytes = new byte[1024];
+			while ((read = inputStream.read(bytes)) != -1) {
+				outputStream.write(bytes, 0, read);
+			}
+			outputStream.flush();
+		}
+		catch (IOException ioe) {
+			ioe.printStackTrace();
+		}
+		finally{
+			//release resource, if any
+			outputStream.close();
+		}
+		return qualifiedUploadFilePath;
+	}
 	
 	/**
 	 * A function that gets all the courses a tutor can see from a MySQL database. 
