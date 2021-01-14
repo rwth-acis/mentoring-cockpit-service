@@ -1,18 +1,44 @@
 package i5.las2peer.services.mentoringCockpitService;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.knowm.xchart.BitmapEncoder;
+import org.knowm.xchart.XYChart;
+import org.knowm.xchart.XYSeries;
+import org.knowm.xchart.style.markers.SeriesMarkers;
 
 import i5.las2peer.api.Context;
 import i5.las2peer.api.ManualDeployment;
@@ -20,8 +46,6 @@ import i5.las2peer.api.security.Agent;
 import i5.las2peer.api.security.UserAgent;
 import i5.las2peer.restMapper.RESTService;
 import i5.las2peer.restMapper.annotations.ServicePath;
-import i5.las2peer.security.AgentContext;
-import i5.las2peer.security.AgentImpl;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
@@ -32,13 +56,6 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
 import net.minidev.json.parser.ParseException;
-import org.knowm.xchart.BitmapEncoder;
-import org.knowm.xchart.XYChart;
-import org.knowm.xchart.XYSeries;
-import org.knowm.xchart.style.markers.SeriesMarkers;
-
-import org.jboss.resteasy.plugins.providers.multipart.InputPart;
-import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
 
 @Api
 @SwaggerDefinition(
@@ -50,11 +67,10 @@ import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
 						name = "Philipp Roytburg",
 						email = "philipp.roytburg@rwth-aachen.de")))
 
-
 /**
  * 
- * This service is for managing data from an LRS and access rights for a tutor in the Mentoring Cockpit. It gets identification subs
- * of a tutor and requests the data for the tutor from the LRS.
+ * This service is for managing data from an LRS and access rights for a tutor in the Mentoring Cockpit. It gets
+ * identification subs of a tutor and requests the data for the tutor from the LRS.
  * 
  */
 @ManualDeployment
@@ -73,8 +89,7 @@ public class MentoringCockpitService extends RESTService {
 	private String mysqlDatabase;
 	private static String userEmail;
 	private String lrsClientURL;
-	
-	
+
 	/**
 	 * 
 	 * Constructor of the Service. Loads the database values from a property file.
@@ -88,27 +103,28 @@ public class MentoringCockpitService extends RESTService {
 		setFieldValues();
 	}
 
-    /**
-     * A function that is called by the Mentoring Cockpit to get students extended statistics in a course.
-     *
-     * @param tutorSub an identification string of the tutor
-     *
-     * @param courseEncoded a hex encoded string of the course URL
-     *
-     * @param studentSub an identification string of the student
-     *
-     * @return an application octet stream, error message or unauthorized message
-     *
-     */
-    @GET
-    @Path("/mwb/{tutorsub}/{courseEncoded}/{studentsub}/extendedstatistics")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    @ApiResponses(
-            value = { @ApiResponse(
-                    code = HttpURLConnection.HTTP_OK,
-                    message = "Connection works") })
-    public Response getMWBExtendedStatistics(@PathParam("tutorsub") String tutorSub, @PathParam("courseEncoded") String courseEncoded, @PathParam("studentsub") String studentSub) {
-    	// build sample graph
+	/**
+	 * A function that is called by the Mentoring Cockpit to get students extended statistics in a course.
+	 *
+	 * @param tutorSub an identification string of the tutor
+	 *
+	 * @param courseEncoded a hex encoded string of the course URL
+	 *
+	 * @param studentSub an identification string of the student
+	 *
+	 * @return an application octet stream, error message or unauthorized message
+	 *
+	 */
+	@GET
+	@Path("/mwb/{tutorsub}/{courseEncoded}/{studentsub}/extendedstatistics")
+	@Produces(MediaType.APPLICATION_OCTET_STREAM)
+	@ApiResponses(
+			value = { @ApiResponse(
+					code = HttpURLConnection.HTTP_OK,
+					message = "Connection works") })
+	public Response getMWBExtendedStatistics(@PathParam("tutorsub") String tutorSub,
+			@PathParam("courseEncoded") String courseEncoded, @PathParam("studentsub") String studentSub) {
+		// build sample graph
 		double[] yData = new double[] { 2.0, 1.0, 0.0 };
 
 		// Create Chart
@@ -132,9 +148,9 @@ public class MentoringCockpitService extends RESTService {
 
 		return Response.ok(output).header("Content-Disposition", "attachment; filename=\"" + filename + "\"").build();
 	}
-	
+
 	/**
-	 * A function that is called by the Mentoring Cockpit to get a student list of a course. 
+	 * A function that is called by the Mentoring Cockpit to get a student list of a course.
 	 *
 	 * @param sub an identification string of the tutor
 	 * 
@@ -153,18 +169,18 @@ public class MentoringCockpitService extends RESTService {
 	public Response getStudents(@PathParam("sub") String sub, @PathParam("courseEncoded") String courseEncoded) {
 		String courseList = getCourseListFromMysql(sub).replace("\\", "");
 		String course = convertHexToString(courseEncoded);
-		if(courseList.equals("Error")) {
+		if (courseList.equals("Error")) {
 			return Response.status(500).entity("An error occured with the MySQL database").build();
-		} else if(courseList.contains(course)) {
+		} else if (courseList.contains(course)) {
 			String response = getStudentsByCourse(course);
 			return Response.ok().entity(response).build();
 		} else {
 			return Response.status(401).entity("Unauthorized").build();
 		}
 	}
-	
+
 	/**
-	 * A function that is called by the Mentoring Cockpit to get students results in a course. 
+	 * A function that is called by the Mentoring Cockpit to get students results in a course.
 	 *
 	 * @param sub an identification string of the tutor
 	 * 
@@ -183,18 +199,18 @@ public class MentoringCockpitService extends RESTService {
 	public Response getResults(@PathParam("sub") String sub, @PathParam("courseEncoded") String courseEncoded) {
 		String courseList = getCourseListFromMysql(sub).replace("\\", "");
 		String course = convertHexToString(courseEncoded);
-		if(courseList.equals("Error")) {
+		if (courseList.equals("Error")) {
 			return Response.status(500).entity("An error occured with the MySQL database").build();
-		} else if(courseList.contains(course)) {
+		} else if (courseList.contains(course)) {
 			String response = getResultsByCourse(course);
 			return Response.ok().entity(response).build();
 		} else {
 			return Response.status(401).entity("Unauthorized").build();
 		}
 	}
-	
+
 	/**
-	 * A function that is called by the Mentoring Cockpit to get a list of courses a tutor can see. 
+	 * A function that is called by the Mentoring Cockpit to get a list of courses a tutor can see.
 	 *
 	 * @param sub an identification string of the tutor
 	 * 
@@ -211,12 +227,14 @@ public class MentoringCockpitService extends RESTService {
 	public Response getCourseList(@PathParam("sub") String sub, @HeaderParam("email") String email) {
 		userEmail = email;
 		String courseList = getCourseListFromMysql(sub);
-		if(courseList.equals("Error")) return Response.status(500).entity("An error occured with the Mysql database").build();
-		else return Response.ok().entity(courseList).build();
+		if (courseList.equals("Error"))
+			return Response.status(500).entity("An error occured with the Mysql database").build();
+		else
+			return Response.ok().entity(courseList).build();
 	}
 
 	/**
-	 * A function that is called by the Mentoring Cockpit to get a list of sensor data a tutor can see. 
+	 * A function that is called by the Mentoring Cockpit to get a list of sensor data a tutor can see.
 	 *
 	 * @param sub an identification string of the tutor
 	 *
@@ -235,9 +253,9 @@ public class MentoringCockpitService extends RESTService {
 	public Response getSensorDataList(@PathParam("sub") String sub, @PathParam("courseEncoded") String courseEncoded) {
 		String courseList = getCourseListFromMysql(sub).replace("\\", "");
 		String course = convertHexToString(courseEncoded);
-		if(courseList.equals("Error")) {
+		if (courseList.equals("Error")) {
 			return Response.status(500).entity("An error occured with the MySQL database").build();
-		} else if(courseList.contains(course)) {
+		} else if (courseList.contains(course)) {
 			String response = getSensorData();
 			return Response.ok().entity(response).build();
 		} else {
@@ -262,7 +280,7 @@ public class MentoringCockpitService extends RESTService {
 					return response.build();
 				}
 
-				Response.ResponseBuilder response = Response.ok((Object) file);
+				Response.ResponseBuilder response = Response.ok(file);
 				response.header("Content-Disposition", "attachment; filename=\"" + email + ".pdf\"");
 				return response.build();
 			} else {
@@ -277,7 +295,7 @@ public class MentoringCockpitService extends RESTService {
 	@Path("/test")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@RolesAllowed("authenticated")
-	public Response uploadPdfFile(MultipartFormDataInput multipartFormDataInput) {
+	public Response uploadPdfFile(FormDataMultiPart multipartFormDataInput) {
 		// authentication
 		Agent agent = Context.getCurrent().getMainAgent();
 		if (agent instanceof UserAgent) {
@@ -291,30 +309,29 @@ public class MentoringCockpitService extends RESTService {
 				String uploadFilePath = null;
 
 				try {
-					Map<String, List<InputPart>> map = multipartFormDataInput.getFormDataMap();
-					List<InputPart> lstInputPart = map.get("uploadedFile");
+					Map<String, List<FormDataBodyPart>> map = multipartFormDataInput.getFields();
+					List<FormDataBodyPart> lstInputPart = map.get("uploadedFile");
 
-					for(InputPart inputPart : lstInputPart){
+					for (FormDataBodyPart inputPart : lstInputPart) {
 
 						// get filename to be uploaded
 						multivaluedMap = inputPart.getHeaders();
 						fileName = getFileName(multivaluedMap);
 
-						if(null != fileName && !"".equalsIgnoreCase(fileName)){
+						if (null != fileName && !"".equalsIgnoreCase(fileName)) {
 
 							// write & upload file to UPLOAD_FILE_SERVER
-							inputStream = inputPart.getBody(InputStream.class,null);
+
+							inputStream = inputPart.getEntityAs(InputStream.class);
 							uploadFilePath = writeToFileServer(inputStream, fileName);
 
 							// close the stream
 							inputStream.close();
 						}
 					}
-				}
-				catch(IOException ioe){
+				} catch (IOException ioe) {
 					ioe.printStackTrace();
-				}
-				finally{
+				} finally {
 					// release resources, if any
 				}
 				return Response.ok("File uploaded successfully at " + uploadFilePath).build();
@@ -365,19 +382,17 @@ public class MentoringCockpitService extends RESTService {
 				outputStream.write(bytes, 0, read);
 			}
 			outputStream.flush();
-		}
-		catch (IOException ioe) {
+		} catch (IOException ioe) {
 			ioe.printStackTrace();
-		}
-		finally{
-			//release resource, if any
+		} finally {
+			// release resource, if any
 			outputStream.close();
 		}
 		return qualifiedUploadFilePath;
 	}
-	
+
 	/**
-	 * A function that gets all the courses a tutor can see from a MySQL database. 
+	 * A function that gets all the courses a tutor can see from a MySQL database.
 	 *
 	 * @param sub an identification string of the tutor
 	 * 
@@ -385,60 +400,58 @@ public class MentoringCockpitService extends RESTService {
 	 * 
 	 */
 	private String getCourseListFromMysql(String sub) {
-		try{
+		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			Connection con=DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase,
-					mysqlUser, mysqlPassword);
-			
+			Connection con = DriverManager.getConnection(
+					"jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase, mysqlUser, mysqlPassword);
+
 			JSONArray courseArr = new JSONArray();
-			
-			Statement stmt=con.createStatement();
-			ResultSet rs=stmt.executeQuery("select COURSELINK, COURSENAME from ACCESS where SUB = '" + sub + "'");
-			while(rs.next()) {
+
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("select COURSELINK, COURSENAME from ACCESS where SUB = '" + sub + "'");
+			while (rs.next()) {
 				JSONObject course = new JSONObject();
 				course.put("name", rs.getString("COURSENAME"));
 				course.put("link", rs.getString("COURSELINK"));
 				courseArr.add(course);
 			}
-			
+
 			con.close();
 			return courseArr.toJSONString();
-		} catch(Exception e) {
+		} catch (Exception e) {
 			System.out.println(e);
 			return "Error";
 		}
 
 	}
-	
-	
+
 	/**
-	 * A function that converts a hexadecimal to a String. 
+	 * A function that converts a hexadecimal to a String.
 	 * 
 	 * @param hex the hexadecimal as a String
 	 * 
 	 * @return the decoded String
 	 * 
 	 */
-	private String convertHexToString(String hex){
+	private String convertHexToString(String hex) {
 
 		StringBuilder sb = new StringBuilder();
 		StringBuilder temp = new StringBuilder();
-		
-		for(int i=0; i<hex.length()-1; i+=2 ){
+
+		for (int i = 0; i < hex.length() - 1; i += 2) {
 			String output = hex.substring(i, (i + 2));
 			int decimal = Integer.parseInt(output, 16);
-			//convert the decimal to character
-			sb.append((char)decimal);
-			
+			// convert the decimal to character
+			sb.append((char) decimal);
+
 			temp.append(decimal);
 		}
-		
+
 		return sb.toString();
 	}
-	
-	
+
 	/**
-	 * A function that gets list of students in a course 
+	 * A function that gets list of students in a course
 	 * 
 	 * @param course the URL of the course
 	 * 
@@ -448,21 +461,21 @@ public class MentoringCockpitService extends RESTService {
 	private String getStudentsByCourse(String course) {
 		JSONObject typeObj = new JSONObject();
 		typeObj.put("statement.object.definition.type", course);
-		
+
 		JSONObject matchObj = new JSONObject();
 		matchObj.put("$match", typeObj);
-		
+
 		JSONObject nameObj = new JSONObject();
-		nameObj.put("$first","$statement.actor.name");
+		nameObj.put("$first", "$statement.actor.name");
 
 		JSONObject averageScoreObj = new JSONObject();
 		averageScoreObj.put("$avg", "$statement.result.score.scaled");
-		
+
 		JSONObject actorObj = new JSONObject();
 		actorObj.put("name", nameObj);
 		actorObj.put("_id", "$statement.actor.mbox");
 		actorObj.put("averageScore", averageScoreObj);
-		
+
 		JSONObject groupObj = new JSONObject();
 		groupObj.put("$group", actorObj);
 
@@ -479,23 +492,23 @@ public class MentoringCockpitService extends RESTService {
 
 		JSONObject projectObj = new JSONObject();
 		projectObj.put("$project", project);
-		
+
 		JSONArray arr = new JSONArray();
 		arr.add(matchObj);
 		arr.add(groupObj);
 		arr.add(sortObj);
 		arr.add(projectObj);
-		
+
 		StringBuilder sb = new StringBuilder();
 		for (byte b : arr.toString().getBytes()) {
 			sb.append("%" + String.format("%02X", b));
 		}
-		
+
 		return LRSconnect(sb.toString());
 	}
-	
+
 	/**
-	 * A function that gets results of students in a course 
+	 * A function that gets results of students in a course
 	 * 
 	 * @param course the URL of the course
 	 * 
@@ -503,13 +516,13 @@ public class MentoringCockpitService extends RESTService {
 	 * 
 	 */
 	private String getResultsByCourse(String course) {
-		//match block
+		// match block
 		JSONObject matchObj = new JSONObject();
 		matchObj.put("statement.object.definition.type", course);
 		JSONObject match = new JSONObject();
 		match.put("$match", matchObj);
-		
-		//project block
+
+		// project block
 		JSONObject projectObj = new JSONObject();
 		projectObj.put("_id", "$statement.actor.mbox");
 		projectObj.put("statement.object", 1);
@@ -518,21 +531,21 @@ public class MentoringCockpitService extends RESTService {
 		projectObj.put("statement.result.response", 1);
 		JSONObject project = new JSONObject();
 		project.put("$project", projectObj);
-		
-		//sort block
+
+		// sort block
 		JSONObject sortObj = new JSONObject();
 		sortObj.put("statement.timestamp", 1);
 		JSONObject sort = new JSONObject();
 		sort.put("$sort", sortObj);
-		
-		//group block
+
+		// group block
 		JSONObject groupObj = new JSONObject();
 		groupObj.put("_id", "$_id");
-		//averageScore block
+		// averageScore block
 		JSONObject averageScoreObj = new JSONObject();
 		averageScoreObj.put("$avg", "$statement.result.score.scaled");
 		groupObj.put("averageScore", averageScoreObj);
-		//results block
+		// results block
 		JSONObject pushObj = new JSONObject();
 		pushObj.put("objectId", "$statement.object.id");
 		pushObj.put("name", "$statement.object.definition.name.en-US");
@@ -545,23 +558,23 @@ public class MentoringCockpitService extends RESTService {
 		groupObj.put("results", push);
 		JSONObject group = new JSONObject();
 		group.put("$group", groupObj);
-		
+
 		JSONArray arr = new JSONArray();
 		arr.add(match);
 		arr.add(project);
 		arr.add(sort);
 		arr.add(group);
-		
+
 		StringBuilder sb = new StringBuilder();
 		for (byte b : arr.toString().getBytes()) {
 			sb.append("%" + String.format("%02X", b));
 		}
-		
+
 		return LRSconnect(sb.toString());
 	}
 
 	/**
-	 * A function that gets sensor data 
+	 * A function that gets sensor data
 	 * 
 	 * @return JSONArray converted to a String, containing the data
 	 * 
@@ -569,16 +582,14 @@ public class MentoringCockpitService extends RESTService {
 	private String getSensorData() {
 		JSONObject match = new JSONObject();
 		match.put("statement.verb.id", "http://example.com/xapi/performed");
-		
+
 		JSONObject matchObj = new JSONObject();
 		matchObj.put("$match", match);
-		
 
 		JSONObject project = new JSONObject();
 		project.put("_id", "$statement.actor.mbox");
 		project.put("objectDesc", "$statement.object.definition.description.en-US");
 		project.put("objectName", "$statement.object.definition.name.en-US");
-
 
 		JSONObject projectObj = new JSONObject();
 		projectObj.put("$project", project);
@@ -597,21 +608,19 @@ public class MentoringCockpitService extends RESTService {
 		JSONObject groupObj = new JSONObject();
 		groupObj.put("$group", group);
 
-		
 		JSONArray arr = new JSONArray();
 		arr.add(matchObj);
 		arr.add(projectObj);
 		arr.add(groupObj);
-		
+
 		StringBuilder sb = new StringBuilder();
 		for (byte b : arr.toString().getBytes()) {
 			sb.append("%" + String.format("%02X", b));
 		}
-		
+
 		return LRSconnect(sb.toString());
 	}
 
-	
 	/**
 	 * A function connects to the LRS and requests data
 	 * 
@@ -620,7 +629,7 @@ public class MentoringCockpitService extends RESTService {
 	 * @return JSONArray converted to a String, containing the data
 	 * 
 	 */
-	private String LRSconnect(String pipeline)  {
+	private String LRSconnect(String pipeline) {
 		StringBuffer response = new StringBuffer();
 		String clientKey;
 		String clientSecret;
@@ -633,8 +642,8 @@ public class MentoringCockpitService extends RESTService {
 			e.printStackTrace();
 		}
 
-		//If Client exists in LRS
-		if(!(clientId).equals("noClientExists")) {
+		// If Client exists in LRS
+		if (!(clientId).equals("noClientExists")) {
 			clientKey = (String) ((JSONObject) clientId).get("basic_key");
 			clientSecret = (String) ((JSONObject) clientId).get("basic_secret");
 			lrsAuth = Base64.getEncoder().encodeToString((clientKey + ":" + clientSecret).getBytes());
@@ -660,9 +669,8 @@ public class MentoringCockpitService extends RESTService {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		return response.toString();
-		}
-		else {
+			return response.toString();
+		} else {
 			return String.valueOf(Response.status(500).entity("Client does not exist in LRS").build());
 		}
 	}
@@ -674,11 +682,12 @@ public class MentoringCockpitService extends RESTService {
 	private Object searchIfClientExists() throws IOException, ParseException {
 		String moodleToken = "";
 		URL url = null;
-		try{
+		try {
 			Connection con = connectToDatabase();
-			Statement stmt=con.createStatement();
-			ResultSet rs=stmt.executeQuery("select MOODLE_TOKEN from moodle_lrs_mapping where EMAIL = '" + userEmail + "'");
-			while(rs.next()) {
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt
+					.executeQuery("select MOODLE_TOKEN from moodle_lrs_mapping where EMAIL = '" + userEmail + "'");
+			while (rs.next()) {
 				moodleToken = rs.getString("moodle_token");
 			}
 			con.close();
@@ -692,7 +701,7 @@ public class MentoringCockpitService extends RESTService {
 				conn.setDoInput(true);
 				conn.setRequestMethod("GET");
 				conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-				conn.setRequestProperty("X-Experience-API-Version","1.0.3");
+				conn.setRequestProperty("X-Experience-API-Version", "1.0.3");
 				conn.setRequestProperty("Authorization", lrsAuth);
 				conn.setRequestProperty("Cache-Control", "no-cache");
 				conn.setUseCaches(false);
@@ -701,24 +710,24 @@ public class MentoringCockpitService extends RESTService {
 				BufferedReader rd = new BufferedReader(new InputStreamReader(is));
 				String line;
 				StringBuilder response = new StringBuilder();
-				while((line = rd.readLine()) != null) {
+				while ((line = rd.readLine()) != null) {
 					response.append(line);
 				}
-				Object obj= JSONValue.parse(response.toString());
+				Object obj = JSONValue.parse(response.toString());
 
-				for(int i = 0 ; i < ((JSONArray ) obj).size(); i ++) {
+				for (int i = 0; i < ((JSONArray) obj).size(); i++) {
 					JSONObject client = (JSONObject) ((JSONArray) obj).get(i);
-					if(client.get("title").equals(moodleToken)) {
+					if (client.get("title").equals(moodleToken)) {
 						return client.get("api");
 					}
 				}
-			}  catch (MalformedURLException e) {
+			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 
-		} catch(Exception e) {
+		} catch (Exception e) {
 			System.out.println(e);
 			return "Error";
 		}
@@ -726,7 +735,7 @@ public class MentoringCockpitService extends RESTService {
 		return "noClientExists";
 	}
 
-	private Connection connectToDatabase(){
+	private Connection connectToDatabase() {
 		Connection con = null;
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
