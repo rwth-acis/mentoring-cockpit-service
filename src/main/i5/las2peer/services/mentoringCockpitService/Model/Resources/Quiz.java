@@ -13,7 +13,7 @@ public class Quiz extends CompletableResource {
 	public String getSuggestionText(SuggestionReason reason) {
 		switch(reason) {
 			case NOT_COMPLETED:
-				return "You still haven't completed the quiz " + this.getName();
+				return "You still haven't completed the quiz " + TextFormatter.quote(TextFormatter.createHyperlink(name, url));
 			case NOT_MAX_GRADE:
 				return "You can try improving your grade in the quiz " + TextFormatter.createHyperlink(name, url);
 			default:
@@ -23,6 +23,6 @@ public class Quiz extends CompletableResource {
 
 	@Override
 	public String getSuggestionItemText() {
-		return "Quiz " + TextFormatter.createHyperlink(name, url);
+		return "Quiz " + TextFormatter.quote(TextFormatter.createHyperlink(name, url));
 	}
 }

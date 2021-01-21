@@ -13,7 +13,7 @@ public class File extends Resource {
 	public String getSuggestionText(SuggestionReason reason) {
 		switch (reason) {
 		case NOT_VIEWED:
-			return "You still haven't accessed the file " + name;
+			return "You still haven't accessed the file " + TextFormatter.quote(TextFormatter.createHyperlink(name, url));
 		default:
 			return "Error";
 		}
@@ -21,7 +21,7 @@ public class File extends Resource {
 
 	@Override
 	public String getSuggestionItemText() {
-		return "File " + TextFormatter.createHyperlink(name, url);
+		return "File " + TextFormatter.quote(TextFormatter.createHyperlink(name, url));
 	}
 
 }

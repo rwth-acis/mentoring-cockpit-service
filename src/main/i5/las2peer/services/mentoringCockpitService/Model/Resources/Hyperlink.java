@@ -11,13 +11,17 @@ public class Hyperlink extends Resource {
 
 	@Override
 	public String getSuggestionText(SuggestionReason reason) {
-		// TODO Auto-generated method stub
-		return null;
+		switch (reason) {
+		case NOT_VIEWED:
+			return "You still haven't accessed the link " + TextFormatter.quote(TextFormatter.createHyperlink(name, url));
+		default:
+			return "Error";
+		}
 	}
 
 	@Override
 	public String getSuggestionItemText() {
-		return "Link " + TextFormatter.createHyperlink(name, url);
+		return "Link " + TextFormatter.quote(TextFormatter.createHyperlink(name, url));
 	}
 
 }

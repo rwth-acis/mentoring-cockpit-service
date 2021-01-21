@@ -206,7 +206,7 @@ public class MoodleCourse extends Course {
 					}
 				}	
 			}
-			System.out.println("DEBUG --- Resources: " + resources.keySet().toString());
+			//System.out.println("DEBUG --- Resources: " + resources.keySet().toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -331,7 +331,7 @@ public class MoodleCourse extends Course {
 					    while ((responseLine = br.readLine()) != null) {
 					        response.append(responseLine.trim());
 					    }
-					    System.out.println("DEBUG --- RESPONSE: " + response.toString());
+					    //System.out.println("DEBUG --- RESPONSE: " + response.toString());
 					}
 			return response.toString();
 		} catch (Exception e) {
