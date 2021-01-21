@@ -7,6 +7,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import i5.las2peer.services.mentoringCockpitService.MentoringCockpitService;
 import i5.las2peer.services.mentoringCockpitService.Interactions.Completed;
@@ -44,7 +45,7 @@ public class MoodleCourse extends Course {
 	}
 
 	@Override
-	public String getSuggestion(String userid, String courseid) {
+	public String getSuggestion(String userid) {
 		updateKnowledgeBase(lastUpdated);
 		Suggestion suggestion =  users.get(userid).getSuggestion();
 		if (suggestion != null) {
@@ -56,12 +57,20 @@ public class MoodleCourse extends Course {
 	}
 
 	@Override
-	public String getThemeSuggestions(String themeid, String courseid) {
-		ArrayList<String> items = new ArrayList<String>();
-		for (ThemeResourceLink link : themes.get("http://halle/domainmodel/" + themeid).getResourceLinks().values()) {
-			items.add(link.getSuggestionText());
+	public String getThemeSuggestions(String shortid) {
+		String themeid = "http://halle/domainmodel/" + shortid;
+		String result = "";
+		String resourceText = themes.get(themeid).getResourceText();
+		String subthemeText = themes.get(themeid).getSubthemeText();
+		
+		if (!resourceText.equals("")) {
+			result = result + "The following resources are related to the theme " + TextFormatter.quote(themes.get(themeid).getName()) + ":" + resourceText;
 		}
-		return "The following resources are related to the theme " + TextFormatter.quote(themeid) + ":" + TextFormatter.createList(items);
+		if (!subthemeText.equals("")) {
+			result = result + "Reply with one of the following related themes if you would like to know more about it:" + subthemeText;
+		}
+		
+		return result;
 	}
 
 	@Override
@@ -74,8 +83,6 @@ public class MoodleCourse extends Course {
 		match.put("statement.stored", gtObject);
 		JSONObject matchObj = new JSONObject();
 		matchObj.put("$match", match);
-		
-		
 		
 		// Project
 		JSONObject project = new JSONObject();
@@ -164,22 +171,42 @@ public class MoodleCourse extends Course {
 		
 		String res = service.LRSconnect(sb.toString());
 		
+		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
+				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
+				"    SELECT DISTINCT ?resourceid WHERE {\r\n" + 
+				"  		GRAPH <http://triplestore.tech4comp.dbis.rwth-aachen.de/Wissenslandkarten/data/Moodle_18> {\r\n" + 
+				"    		?b a ulo:Material .\r\n" + 
+				"    		?b ulo:id ?resourceid .\r\n" + 
+				"  		} \r\n" + 
+				"    } ";
 		
-		
-		JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 		try {
+			String response = sparqlQuery(query);
+			JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
+			JSONObject responseObj = (JSONObject) parser.parse(response.toString());
+			JSONObject resultsObj = (JSONObject) responseObj.get("results");
+			JSONArray bindingsArray = (JSONArray) resultsObj.get("bindings");
+			HashSet<String> resourceIds = new HashSet<String>();
+			for (int i = 0; i < bindingsArray.size(); i++) {
+				JSONObject bindingObj = (JSONObject) bindingsArray.get(i);
+				resourceIds.add(((JSONObject) bindingObj.get("resourceid")).getAsString("value"));
+			}
+			
 			JSONArray data = (JSONArray) parser.parse(res);
 			//System.out.println("DEBUG --- Size: " + data.size());
 			for (int i = 0; i < data.size(); i++) {
 				JSONObject resourceObj = (JSONObject) data.get(i);
-				if (resourceObj.getAsString("_id").contains("quiz")) {
-					resources.put(resourceObj.getAsString("_id"), new Quiz(resourceObj.getAsString("_id"), resourceObj.getAsString("name"), resourceObj.getAsString("_id")));
-				} else if (resourceObj.getAsString("_id").contains("resource")) {
-					resources.put(resourceObj.getAsString("_id"), new File(resourceObj.getAsString("_id"), resourceObj.getAsString("name"), resourceObj.getAsString("_id")));
-				} else if (resourceObj.getAsString("_id").contains("url")) {
-					resources.put(resourceObj.getAsString("_id"), new Hyperlink(resourceObj.getAsString("_id"), resourceObj.getAsString("name"), resourceObj.getAsString("_id")));
-				}
+				if (resourceIds.contains(resourceObj.getAsString("_id"))) {
+					if (resourceObj.getAsString("_id").contains("quiz")) {
+						resources.put(resourceObj.getAsString("_id"), new Quiz(resourceObj.getAsString("_id"), resourceObj.getAsString("name"), resourceObj.getAsString("_id")));
+					} else if (resourceObj.getAsString("_id").contains("resource")) {
+						resources.put(resourceObj.getAsString("_id"), new File(resourceObj.getAsString("_id"), resourceObj.getAsString("name"), resourceObj.getAsString("_id")));
+					} else if (resourceObj.getAsString("_id").contains("url")) {
+						resources.put(resourceObj.getAsString("_id"), new Hyperlink(resourceObj.getAsString("_id"), resourceObj.getAsString("name"), resourceObj.getAsString("_id")));
+					}
+				}	
 			}
+			System.out.println("DEBUG --- Resources: " + resources.keySet().toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -193,15 +220,14 @@ public class MoodleCourse extends Course {
 			String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
 					"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
 					"	\r\n" + 
-					"    SELECT ?s1 ?shortid WHERE {\r\n" + 
+					"    SELECT ?themeid ?name WHERE {\r\n" + 
 					"  		GRAPH <http://triplestore.tech4comp.dbis.rwth-aachen.de/Wissenslandkarten/data/%s> {\r\n" + 
-					"  			?s1 a ulo:Theme .  \r\n" + 
-					"  			?s1 rdfs:label ?shortid .  \r\n" + 
+					"  			?themeid a ulo:Theme .  \r\n" + 
+					"  			?themeid rdfs:label ?name .  \r\n" + 
 					"		}\r\n" + 
 					"    }";
 			
 			String response = sparqlQuery(query);
-			ArrayList<String> themeids = new ArrayList<String>();
 			
 			JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 			JSONObject responseObj = (JSONObject) parser.parse(response.toString());
@@ -209,15 +235,12 @@ public class MoodleCourse extends Course {
 			JSONArray bindingsArray = (JSONArray) resultsObj.get("bindings");
 			for (int i = 0; i < bindingsArray.size(); i++) {
 				JSONObject bindingObj = (JSONObject) bindingsArray.get(i);
-				JSONObject subjectObj = (JSONObject) bindingObj.get("s1");
-				themeids.add(subjectObj.getAsString("value"));
+				String themeid = ((JSONObject) bindingObj.get("themeid")).getAsString("value");
+				String name = ((JSONObject) bindingObj.get("name")).getAsString("value");
+				themes.put(themeid, new Theme(themeid, name));
+				
 			}
-			
-			System.out.println("DEBUG --- URIS: " + themeids.toString());
-			
-			for (String themeid : themeids) {
-				themes.put(themeid, new Theme(themeid));
-			}
+			//System.out.println("DEBUG --- URIS: " + themeids.toString());
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -228,9 +251,9 @@ public class MoodleCourse extends Course {
 			String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
 					"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
 					"	\r\n" + 
-					"    SELECT ?s1 ?o1 WHERE {\r\n" + 
-					"  		GRAPH <http://triplestore.tech4comp.dbis.rwth-aachen.de/Wissenslandkarten/data/Moodle_18> {\r\n" + 
-					"  			?s1 ulo:superthemeOf ?o1 .  \r\n" + 
+					"    SELECT ?supertheme ?subtheme WHERE {\r\n" + 
+					"  		GRAPH <http://triplestore.tech4comp.dbis.rwth-aachen.de/Wissenslandkarten/data/%s> {\r\n" + 
+					"  			?supertheme ulo:superthemeOf ?subtheme .  \r\n" + 
 					"		}\r\n" + 
 					"    }";
 			
@@ -242,8 +265,8 @@ public class MoodleCourse extends Course {
 			JSONArray bindingsArray = (JSONArray) resultsObj.get("bindings");
 			for (int i = 0; i < bindingsArray.size(); i++) {
 				JSONObject bindingObj = (JSONObject) bindingsArray.get(i);
-				JSONObject subjectObj = (JSONObject) bindingObj.get("s1");
-				JSONObject objectObj = (JSONObject) bindingObj.get("o1");
+				JSONObject subjectObj = (JSONObject) bindingObj.get("supertheme");
+				JSONObject objectObj = (JSONObject) bindingObj.get("subtheme");
 				themes.get(subjectObj.getAsString("value")).addSubtheme(themes.get(objectObj.getAsString("value")));
 			}
 			
@@ -256,7 +279,7 @@ public class MoodleCourse extends Course {
 			String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
 					"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
 					"    SELECT ?themeid ?resourceid ?infoType ?infoVal WHERE {\r\n" + 
-					"  		GRAPH <http://triplestore.tech4comp.dbis.rwth-aachen.de/Wissenslandkarten/data/Moodle_18> {\r\n" + 
+					"  		GRAPH <http://triplestore.tech4comp.dbis.rwth-aachen.de/Wissenslandkarten/data/%s> {\r\n" + 
 					"    		?themeid ulo:continuativeMaterial ?s1 .\r\n" + 
 					"  			?s1 ulo:id ?resourceid .\r\n" + 
 					"    		?s1 ?infoType ?infoVal .\r\n" + 

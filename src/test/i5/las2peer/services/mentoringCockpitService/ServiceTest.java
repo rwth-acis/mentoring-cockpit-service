@@ -107,9 +107,13 @@ public class ServiceTest {
 		c.setConnectorEndpoint(connector.getHttpEndpoint());
 		JSONObject body = new JSONObject();
 		
-		body.put("intent", "testTheme1");
+		body.put("firstEntity", "cloudComputingIntro");
 		body.put("courseid", "18");
 		ClientResponse response = c.sendRequest("POST", mainPath + "suggestions/getSuggestionByTheme", body.toJSONString());
+		System.out.println(response.getResponse());
+		
+		body.put("firstEntity", "cloudComputingConcerns");
+		response = c.sendRequest("POST", mainPath + "suggestions/getSuggestionByTheme", body.toJSONString());
 		System.out.println(response.getResponse());
 		
 //		for (int i = 0; i < 6; i++) {

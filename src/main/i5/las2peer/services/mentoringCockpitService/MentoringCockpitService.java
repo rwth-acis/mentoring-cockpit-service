@@ -680,7 +680,7 @@ public class MentoringCockpitService extends RESTService {
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
 	    		String userid = bodyObj.getAsString("user");
 	    		String courseid = bodyObj.getAsString("courseid");
-	    		returnObj.put("text", this.service.courses.get(courseid).getSuggestion(userid, courseid));
+	    		returnObj.put("text", this.service.courses.get(courseid).getSuggestion(userid));
 	    		returnObj.put("closeContext", "true");
 	    		return Response.status(200).entity(returnObj).build();
 	    	} catch (Exception e) {
@@ -713,9 +713,9 @@ public class MentoringCockpitService extends RESTService {
 	    	JSONObject returnObj = new JSONObject();
 	    	try {
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
-	    		String themeid = bodyObj.getAsString("intent");
+	    		String themeid = bodyObj.getAsString("firstEntity");
 	    		String courseid = bodyObj.getAsString("courseid");
-	    		returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(themeid, courseid));
+	    		returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(themeid));
 	    		returnObj.put("closeContext", "true");
 	    		return Response.status(200).entity(returnObj).build();
 	    	} catch (Exception e) {

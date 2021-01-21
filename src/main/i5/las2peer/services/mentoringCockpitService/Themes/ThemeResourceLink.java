@@ -21,6 +21,8 @@ public class ThemeResourceLink {
 			linkInformation.add(new Pages(infoVal));
 		} else if (infoType.contains("timestamp")) {
 			linkInformation.add(new Timestamp(infoVal));
+		} else if (infoType.contains("password")) {
+			linkInformation.add(new Password(infoVal));
 		}
 	}
 	
