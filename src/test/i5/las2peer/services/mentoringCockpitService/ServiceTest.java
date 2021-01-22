@@ -120,6 +120,7 @@ public class ServiceTest {
 			
 			body.put("user", "151");
 			body.put("courseid", "18");
+			body.put("numOfSuggestions", "10");
 			ClientResponse response = c.sendRequest("POST", mainPath + "suggestions/getSuggestion", body.toJSONString());
 			System.out.println(response.getResponse());
 		}

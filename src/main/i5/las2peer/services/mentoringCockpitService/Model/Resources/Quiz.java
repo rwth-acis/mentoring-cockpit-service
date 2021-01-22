@@ -15,7 +15,7 @@ public class Quiz extends CompletableResource {
 			case NOT_COMPLETED:
 				return "You still haven't completed the quiz " + TextFormatter.quote(TextFormatter.createHyperlink(name, url));
 			case NOT_MAX_GRADE:
-				return "You can try improving your grade in the quiz " + TextFormatter.createHyperlink(name, url);
+				return "You can try improving your grade in the quiz " + TextFormatter.quote(TextFormatter.createHyperlink(name, url));
 			default:
 				return "Error";
 		}

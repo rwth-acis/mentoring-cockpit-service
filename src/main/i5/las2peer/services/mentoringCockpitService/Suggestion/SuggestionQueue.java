@@ -19,27 +19,28 @@ public class SuggestionQueue {
 		this.suggestionList = new ArrayList<Suggestion>();
 	}
 	
-	public Suggestion getSuggestion() {
+	public ArrayList<Suggestion> getSuggestion(int number) {
 		// Return the first resource in the queue that has not been removed from the suggestion set
-		Suggestion suggestion = null;
-		
-		if (!suggestionList.isEmpty()) {
+		HashSet<Suggestion> suggestions = new HashSet<Suggestion>();
+		if (!suggestionSet.isEmpty() && number < suggestionSet.size()) {
 			sort();
-			Suggestion temp = null;
-			do {
-				temp = suggestionList.get(suggestionList.size() - 1);
-				suggestionList.remove(suggestionList.size() - 1);			
-			} while (!suggestionSet.contains(temp) && !suggestionList.isEmpty());
-			if (suggestionSet.contains(temp) ) {
-				suggestion = temp;
+			while (number > 0) {
+				if (suggestionList.isEmpty()) {
+					suggestionList = new ArrayList<Suggestion>(suggestionSet);
+					sort();
+				}
+				Suggestion temp = suggestionList.get(suggestionList.size() - 1);
+				suggestionList.remove(suggestionList.size() - 1);
+				if (suggestionSet.contains(temp)) {
+					suggestions.add(temp);
+					number = number - 1;
+				}		
 			}
-		}
-		if (!suggestionSet.isEmpty() && suggestionList.isEmpty() && suggestion == null) {
-			suggestionList = new ArrayList<Suggestion>(suggestionSet);
-			suggestion = getSuggestion();
+		} else if (number >= suggestionSet.size()) {
+			suggestions = new HashSet<Suggestion>(suggestionSet);
 		}
 		
-		return suggestion;
+		return new ArrayList<Suggestion>(suggestions);
 	}
 	
 	public void addSuggestion(Suggestion suggestion) {

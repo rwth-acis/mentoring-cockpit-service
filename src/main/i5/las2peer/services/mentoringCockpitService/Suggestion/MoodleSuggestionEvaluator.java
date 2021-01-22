@@ -16,11 +16,11 @@ public class MoodleSuggestionEvaluator extends SuggestionEvaluator {
 	public double getSuggestionPriority(User user, Resource resource, SuggestionReason reason) {
 		switch (reason) {
 		case NOT_VIEWED:
-			return 1;
-		case NOT_COMPLETED:
 			return 0.9;
+		case NOT_COMPLETED:
+			return 1.0;
 		case NOT_MAX_GRADE:
-			return 1 - getMaxGrade(user, (CompletableResource) resource);
+			return 1.0 - getMaxGrade(user, (CompletableResource) resource);
 		default:
 			return 0;
 		}

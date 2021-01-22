@@ -45,12 +45,17 @@ public class MoodleCourse extends Course {
 	}
 
 	@Override
-	public String getSuggestion(String userid) {
+	public String getSuggestion(String userid, int numOfSuggestions) {
 		updateKnowledgeBase(lastUpdated);
-		Suggestion suggestion =  users.get(userid).getSuggestion();
-		if (suggestion != null) {
-			System.out.println("DEBUG --- Priority: " + suggestion.getPriority());
-			return suggestion.getSuggestionText();
+		ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
+		ArrayList<String> suggestionTexts = new ArrayList<String>();
+		for (Suggestion suggestion : suggestions) {
+			suggestionTexts.add(suggestion.getSuggestionText());
+		}
+		
+		if (!suggestions.isEmpty()) {
+			//System.out.println("DEBUG --- Priority: " + suggestion.getPriority());
+			return "Here is a couple suggestions based on your Moodle activity:" + TextFormatter.createList(suggestionTexts) + "\n Would you like another suggestion?";
 		} else {
 			return "No suggestions available";
 		}

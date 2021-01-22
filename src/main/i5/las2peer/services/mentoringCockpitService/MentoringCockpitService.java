@@ -632,6 +632,34 @@ public class MentoringCockpitService extends RESTService {
 		}
 	}
 	
+//	@GET
+//    @Path("/restartCourses")
+//    @Produces(MediaType.APPLICATION_JSON)
+//    @ApiOperation(
+//			value = "Get Suggestion",
+//			notes = "Restarts all courses.")
+//    @ApiResponses(
+//            value = { @ApiResponse(
+//                    code = HttpURLConnection.HTTP_OK,
+//                    message = "Connection works") })
+//    public Response getSuggestion() {
+//    	JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
+//    	JSONObject returnObj = new JSONObject();
+//    	try {
+//    		JSONObject bodyObj = (JSONObject) parser.parse(body);
+//    		String userid = bodyObj.getAsString("user");
+//    		String courseid = bodyObj.getAsString("courseid");
+//    		returnObj.put("text", this.service.courses.get(courseid).getSuggestion(userid));
+//    		returnObj.put("closeContext", "true");
+//    		return Response.status(200).entity(returnObj).build();
+//    	} catch (Exception e) {
+//    		e.printStackTrace();
+//    		returnObj.put("text", "Error");
+//    		return Response.status(400).entity(returnObj).build();
+//    	}
+//    	
+//	}
+	
 	@Override
 	protected void initResources() {
 		getResourceConfig().register(Suggestions.class);
@@ -680,7 +708,8 @@ public class MentoringCockpitService extends RESTService {
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
 	    		String userid = bodyObj.getAsString("user");
 	    		String courseid = bodyObj.getAsString("courseid");
-	    		returnObj.put("text", this.service.courses.get(courseid).getSuggestion(userid));
+	    		int numOfSuggestions = bodyObj.getAsNumber("numOfSuggestions").intValue();
+	    		returnObj.put("text", this.service.courses.get(courseid).getSuggestion(userid, numOfSuggestions));
 	    		returnObj.put("closeContext", "true");
 	    		return Response.status(200).entity(returnObj).build();
 	    	} catch (Exception e) {

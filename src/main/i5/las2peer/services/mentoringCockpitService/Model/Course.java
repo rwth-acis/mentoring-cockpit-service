@@ -52,7 +52,7 @@ public abstract class Course {
 	
 	public abstract void createInteractions(long since);
 	
-	public abstract String getSuggestion(String userid);
+	public abstract String getSuggestion(String userid, int numOfSuggestions);
 
 	public abstract String getThemeSuggestions(String themeid);
 	

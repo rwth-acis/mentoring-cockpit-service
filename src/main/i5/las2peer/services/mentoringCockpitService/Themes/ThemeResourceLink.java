@@ -27,15 +27,19 @@ public class ThemeResourceLink {
 	}
 	
 	public String getSuggestionText() {
-		String resultString = linkedResource.getSuggestionItemText() + " (";
-		Iterator<Information> iterator = linkInformation.iterator();
-		while (iterator.hasNext()) {
-			resultString = resultString + iterator.next().getInfoText();
-			if (iterator.hasNext()) {
-				resultString = resultString + ", ";
+		if (!linkInformation.isEmpty()) {
+			String resultString = linkedResource.getSuggestionItemText() + " (";
+			Iterator<Information> iterator = linkInformation.iterator();
+			while (iterator.hasNext()) {
+				resultString = resultString + iterator.next().getInfoText();
+				if (iterator.hasNext()) {
+					resultString = resultString + ", ";
+				}
 			}
+			return resultString + ")";
+		} else {
+			return "";
 		}
 		
-		return resultString + ")";
 	}
 }

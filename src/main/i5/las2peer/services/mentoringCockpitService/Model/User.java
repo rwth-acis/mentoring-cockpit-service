@@ -31,7 +31,7 @@ public abstract class User {
 		this.suggestionQueue = new SuggestionQueue();
 	}
 	
-	public Suggestion getSuggestion() {
+	public ArrayList<Suggestion> getSuggestion(int numOfSuggestions) {
 		//System.out.println("DEBUG --- Interactions: " + interactionLists.keySet());
 		// Merge list of new resources and newly interacted resources and update suggestions for them		
 		HashSet<Resource> updateSet = new HashSet<Resource>(course.getNewResources());
@@ -39,7 +39,7 @@ public abstract class User {
 		recentlyInteractedResources.clear();
 		updateSuggestions(updateSet);
 		
-		return suggestionQueue.getSuggestion();	
+		return suggestionQueue.getSuggestion(numOfSuggestions);	
 	}
 	
 	public void updateSuggestions(HashSet<Resource> resources) {
