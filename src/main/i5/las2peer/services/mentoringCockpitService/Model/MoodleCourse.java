@@ -129,7 +129,9 @@ public class MoodleCourse extends Course {
 			JSONArray data = (JSONArray) parser.parse(res);
 			for (int i = 0; i < data.size(); i++) {
 				JSONObject userObj = (JSONObject) data.get(i);
-				users.put(userObj.getAsString("userid"), new MoodleUser(userObj.getAsString("userid"), userObj.getAsString("name"), this));
+				if (!users.containsKey(userObj.getAsString("userid"))) {
+					users.put(userObj.getAsString("userid"), new MoodleUser(userObj.getAsString("userid"), userObj.getAsString("name"), this));
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

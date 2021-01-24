@@ -5,17 +5,18 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
 
 public class SuggestionQueue {
 	private HashMap<String, Suggestion> suggestionMap; // Set used for keeping track of all resources that can be suggested
-	private HashSet<Suggestion> suggestionSet; // Contains the same items from the suggestion queue but in a set, which facilitates lookup
+	private LinkedHashSet<Suggestion> suggestionSet; // Contains the same items from the suggestion queue but in a set, which facilitates lookup
 	private ArrayList<Suggestion> suggestionList; // Queue used for keeping track of what resources should be suggested next
 	
 	public SuggestionQueue() {
 		this.suggestionMap = new HashMap<String, Suggestion>();
-		this.suggestionSet = new HashSet<Suggestion>();
+		this.suggestionSet = new LinkedHashSet<Suggestion>();
 		this.suggestionList = new ArrayList<Suggestion>();
 	}
 	
