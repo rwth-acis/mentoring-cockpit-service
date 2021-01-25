@@ -24,8 +24,7 @@ public abstract class User {
 		this.userid = userid;
 		this.name = name;
 		this.course = course;
-		this.interactionLists = new HashMap<String, ArrayList<UserResourceInteraction>>(); 
-		this.recentlyInteractedResources = new ArrayList<Resource>();
+		this.interactionLists = new HashMap<String, ArrayList<UserResourceInteraction>>();
 		this.suggestionEvaluator = course.suggestionEvaluator;
 		this.recentlyInteractedResources = new ArrayList<Resource>(course.getResources().values());
 		this.suggestionQueue = new SuggestionQueue();

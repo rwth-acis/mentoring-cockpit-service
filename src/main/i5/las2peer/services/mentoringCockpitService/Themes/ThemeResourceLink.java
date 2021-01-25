@@ -27,8 +27,9 @@ public class ThemeResourceLink {
 	}
 	
 	public String getSuggestionText() {
+		String resultString = linkedResource.getSuggestionItemText();
 		if (!linkInformation.isEmpty()) {
-			String resultString = linkedResource.getSuggestionItemText() + " (";
+			resultString = resultString + " (";
 			Iterator<Information> iterator = linkInformation.iterator();
 			while (iterator.hasNext()) {
 				resultString = resultString + iterator.next().getInfoText();
@@ -38,7 +39,7 @@ public class ThemeResourceLink {
 			}
 			return resultString + ")";
 		} else {
-			return "";
+			return resultString;
 		}
 		
 	}
