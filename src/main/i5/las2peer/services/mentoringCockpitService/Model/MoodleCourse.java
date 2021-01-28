@@ -47,34 +47,43 @@ public class MoodleCourse extends Course {
 	@Override
 	public String getSuggestion(String userid, int numOfSuggestions) {
 		updateKnowledgeBase(lastUpdated);
-		ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
-		ArrayList<String> suggestionTexts = new ArrayList<String>();
-		for (Suggestion suggestion : suggestions) {
-			suggestionTexts.add(suggestion.getSuggestionText());
-		}
-		
-		if (!suggestions.isEmpty()) {
-			//System.out.println("DEBUG --- Priority: " + suggestion.getPriority());
-			return "Here is a couple suggestions based on your Moodle activity:" + TextFormatter.createList(suggestionTexts) + "\n Would you like another suggestion?";
+		String result = "";
+		if (users.containsKey(userid)) {
+			ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
+			ArrayList<String> suggestionTexts = new ArrayList<String>();
+			for (Suggestion suggestion : suggestions) {
+				suggestionTexts.add(suggestion.getSuggestionText());
+			}
+			
+			if (!suggestions.isEmpty()) {
+				//System.out.println("DEBUG --- Priority: " + suggestion.getPriority());
+				result = "Here is a couple suggestions based on your Moodle activity:" + TextFormatter.createList(suggestionTexts) + "\n Would you like another suggestion?";
+			} else {
+				result = "No suggestions available";
+			}
 		} else {
-			return "No suggestions available";
+			result = "Error: User not initialized!";
 		}
+		return result;
 	}
 
 	@Override
 	public String getThemeSuggestions(String shortid) {
 		String themeid = "http://halle/domainmodel/" + shortid;
 		String result = "";
-		String resourceText = themes.get(themeid).getResourceText();
-		String subthemeText = themes.get(themeid).getSubthemeText();
-		
-		if (!resourceText.equals("")) {
-			result = result + "The following resources are related to the theme " + TextFormatter.quote(themes.get(themeid).getName()) + ":" + resourceText;
+		if (themes.containsKey(themeid)) {
+			String resourceText = themes.get(themeid).getResourceText();
+			String subthemeText = themes.get(themeid).getSubthemeText();
+			
+			if (!resourceText.equals("")) {
+				result = result + "The following resources are related to the theme " + TextFormatter.quote(themes.get(themeid).getName()) + ":" + resourceText;
+			}
+			if (!subthemeText.equals("")) {
+				result = result + "Reply with one of the following related themes if you would like to know more about it:" + subthemeText;
+			}
+		} else {
+			result = "Error: Theme not initialized!";
 		}
-		if (!subthemeText.equals("")) {
-			result = result + "Reply with one of the following related themes if you would like to know more about it:" + subthemeText;
-		}
-		
 		return result;
 	}
 
@@ -204,7 +213,7 @@ public class MoodleCourse extends Course {
 			for (int i = 0; i < data.size(); i++) {
 				JSONObject resourceObj = (JSONObject) data.get(i);
 				if (resourceIds.contains(resourceObj.getAsString("_id"))) {
-					if (resourceObj.getAsString("_id").contains("quiz")) {
+					if (resourceObj.getAsString("_id").contains("quiz") && !resourceObj.getAsString("name").contains("attempt")) {
 						resources.put(resourceObj.getAsString("_id"), new Quiz(resourceObj.getAsString("_id"), resourceObj.getAsString("name"), resourceObj.getAsString("_id")));
 					} else if (resourceObj.getAsString("_id").contains("resource")) {
 						resources.put(resourceObj.getAsString("_id"), new File(resourceObj.getAsString("_id"), resourceObj.getAsString("name"), resourceObj.getAsString("_id")));
@@ -274,7 +283,9 @@ public class MoodleCourse extends Course {
 				JSONObject bindingObj = (JSONObject) bindingsArray.get(i);
 				JSONObject subjectObj = (JSONObject) bindingObj.get("supertheme");
 				JSONObject objectObj = (JSONObject) bindingObj.get("subtheme");
-				themes.get(subjectObj.getAsString("value")).addSubtheme(themes.get(objectObj.getAsString("value")));
+				if (themes.get(subjectObj.getAsString("value")) != null && themes.get(objectObj.getAsString("value")) != null) {
+					themes.get(subjectObj.getAsString("value")).addSubtheme(themes.get(objectObj.getAsString("value")));
+				}
 			}
 			
 		} catch (Exception e) {
@@ -306,6 +317,9 @@ public class MoodleCourse extends Course {
 				if (resources.containsKey(resourceid)) {
 					if (!themes.get(themeid).getResourceLinks().containsKey(resourceid)) {
 						themes.get(themeid).getResourceLinks().put(resourceid, new ThemeResourceLink(resources.get(resourceid)));
+						if (resources.get(resourceid) instanceof CompletableResource) {
+							((CompletableResource)resources.get(resourceid)).addTheme(themes.get(themeid));
+						}
 					}
 					
 					String infoType = ((JSONObject) bindingObj.get("infoType")).getAsString("value");

@@ -6,7 +6,7 @@ import i5.las2peer.services.mentoringCockpitService.Suggestion.TextFormatter;
 public class Hyperlink extends Resource {
 	
 	public Hyperlink(String id, String name, String url) {
-		super(id, name, url);
+		super(id, name, url, "Hyperlink");
 	}
 
 	@Override

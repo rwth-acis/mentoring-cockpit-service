@@ -16,6 +16,14 @@ public class TextFormatter {
 		return res + "</ul>";
 	}
 	
+	public static String createOrderedList(ArrayList<String> itemlist) {
+		String res = "<ol>";
+		for (String item : itemlist) {
+			res = res + "<li>" + item + "</li>";
+		}
+		return res + "</ol>";
+	}
+	
 	public static String quote(String text) {
 		return "\"" + text + "\"";
 	}

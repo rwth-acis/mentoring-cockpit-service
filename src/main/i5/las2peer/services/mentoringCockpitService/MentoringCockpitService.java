@@ -709,7 +709,11 @@ public class MentoringCockpitService extends RESTService {
 	    		String userid = bodyObj.getAsString("user");
 	    		String courseid = bodyObj.getAsString("courseid");
 	    		int numOfSuggestions = bodyObj.getAsNumber("numOfSuggestions").intValue();
-	    		returnObj.put("text", this.service.courses.get(courseid).getSuggestion(userid, numOfSuggestions));
+	    		if (service.courses.containsKey(courseid)) {
+	    			returnObj.put("text", this.service.courses.get(courseid).getSuggestion(userid, numOfSuggestions));
+	    		} else {
+	    			returnObj.put("text", "Error: Course not initialized!");
+	    		}
 	    		returnObj.put("closeContext", "true");
 	    		return Response.status(200).entity(returnObj).build();
 	    	} catch (Exception e) {
@@ -744,7 +748,11 @@ public class MentoringCockpitService extends RESTService {
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
 	    		String themeid = bodyObj.getAsString("firstEntity");
 	    		String courseid = bodyObj.getAsString("courseid");
-	    		returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(themeid));
+	    		if (service.courses.containsKey(courseid)) {
+	    			returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(themeid));
+	    		} else {
+	    			returnObj.put("text", "Error: Course not initialized!");
+	    		}
 	    		returnObj.put("closeContext", "true");
 	    		return Response.status(200).entity(returnObj).build();
 	    	} catch (Exception e) {

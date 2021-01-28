@@ -107,23 +107,23 @@ public class ServiceTest {
 		c.setConnectorEndpoint(connector.getHttpEndpoint());
 		JSONObject body = new JSONObject();
 		
-		body.put("firstEntity", "matlab");
-		body.put("courseid", "18");
-		ClientResponse response = c.sendRequest("POST", mainPath + "suggestions/getSuggestionByTheme", body.toJSONString());
-		System.out.println(response.getResponse());
+//		body.put("firstEntity", "barabasiAlbert");
+//		body.put("courseid", "18");
+//		ClientResponse response = c.sendRequest("POST", mainPath + "suggestions/getSuggestionByTheme", body.toJSONString());
+//		System.out.println(response.getResponse());
+//		
+//		body.put("firstEntity", "cloudComputingIntro");
+//		response = c.sendRequest("POST", mainPath + "suggestions/getSuggestionByTheme", body.toJSONString());
+//		System.out.println(response.getResponse());
 		
-		body.put("firstEntity", "cloudComputingConcerns");
-		response = c.sendRequest("POST", mainPath + "suggestions/getSuggestionByTheme", body.toJSONString());
-		System.out.println(response.getResponse());
-		
-//		for (int i = 0; i < 6; i++) {
-//			
-//			body.put("user", "151");
-//			body.put("courseid", "18");
-//			body.put("numOfSuggestions", "15");
-//			ClientResponse response = c.sendRequest("POST", mainPath + "suggestions/getSuggestion", body.toJSONString());
-//			System.out.println(response.getResponse());
-//		}
+		for (int i = 0; i < 1; i++) {
+			
+			body.put("user", "162");
+			body.put("courseid", "18");
+			body.put("numOfSuggestions", "2");
+			ClientResponse response = c.sendRequest("POST", mainPath + "suggestions/getSuggestion", body.toJSONString());
+			System.out.println(response.getResponse());
+		}
 		
 		
 		

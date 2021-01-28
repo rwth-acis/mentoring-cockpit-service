@@ -1,21 +1,24 @@
 package i5.las2peer.services.mentoringCockpitService.Themes;
 
+
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import i5.las2peer.services.mentoringCockpitService.Suggestion.TextFormatter;
+import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
 
 public class Theme {
 	String themeid;
 	String name;
-	HashMap<String, ThemeResourceLink> resourceLinks;
-	HashMap<String, Theme> subthemes;
+	LinkedHashMap<String, ThemeResourceLink> resourceLinks;
+	LinkedHashMap<String, Theme> subthemes;
 	
 	public Theme(String themeid, String name) {
 		this.themeid = themeid;
 		this.name = name;
-		this.resourceLinks = new HashMap<String, ThemeResourceLink>();
-		this.subthemes = new HashMap<String, Theme>();
+		this.resourceLinks = new LinkedHashMap<String, ThemeResourceLink>();
+		this.subthemes = new LinkedHashMap<String, Theme>();
 	}
 
 	public String getName() {
@@ -48,6 +51,11 @@ public class Theme {
 		} else {
 			return "";
 		}
+		
+	}
+	
+	public String getResourceTextForCompletable() {
+		return resourceLinks.entrySet().iterator().next().getValue().getSuggestionText();
 		
 	}
 	

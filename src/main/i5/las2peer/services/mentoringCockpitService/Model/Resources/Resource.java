@@ -1,18 +1,18 @@
 package i5.las2peer.services.mentoringCockpitService.Model.Resources;
 
-import java.util.ArrayList;
-
 import i5.las2peer.services.mentoringCockpitService.Suggestion.SuggestionReason;
 
 public abstract class Resource {
 	protected String id;
 	protected String name;
 	protected String url;
+	protected String type;
 	
-	public Resource(String id, String name, String url) {
+	public Resource(String id, String name, String url, String type) {
 		this.id = id;
 		this.name = name;
 		this.url = url;
+		this.type = type;
 	}
 	
 	public abstract String getSuggestionText(SuggestionReason reason);
