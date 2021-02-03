@@ -20,6 +20,7 @@ import i5.las2peer.services.mentoringCockpitService.Interactions.UserResourceInt
 import i5.las2peer.services.mentoringCockpitService.Model.Course;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
 import i5.las2peer.testing.MockAgentFactory;
+import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 
 /**
@@ -107,23 +108,39 @@ public class ServiceTest {
 		c.setConnectorEndpoint(connector.getHttpEndpoint());
 		JSONObject body = new JSONObject();
 		
-//		body.put("firstEntity", "barabasiAlbert");
-//		body.put("courseid", "18");
-//		ClientResponse response = c.sendRequest("POST", mainPath + "suggestions/getSuggestionByTheme", body.toJSONString());
-//		System.out.println(response.getResponse());
-//		
+		JSONArray entities = new JSONArray();
+		JSONObject entity1 = new JSONObject();
+		JSONObject entity2 = new JSONObject();
+		
+		entity1.put("entityName", "barabasiAlbert");
+		entity1.put("value", "barabasiAlbert");
+		entity1.put("confidence", 0.5);
+		
+		entity2.put("entityName", "mapreduce");
+		entity2.put("value", "mapreduce");
+		entity2.put("confidence", 0.4);
+		
+		entities.add(entity1);
+		entities.add(entity2);
+		
+		
+		body.put("entities", entities);
+		body.put("courseid", "18");
+		ClientResponse response = c.sendRequest("POST", mainPath + "suggestions/getSuggestionByTheme", body.toJSONString());
+		System.out.println(response.getResponse());
+		
 //		body.put("firstEntity", "cloudComputingIntro");
 //		response = c.sendRequest("POST", mainPath + "suggestions/getSuggestionByTheme", body.toJSONString());
 //		System.out.println(response.getResponse());
 		
-		for (int i = 0; i < 1; i++) {
-			
-			body.put("user", "162");
-			body.put("courseid", "18");
-			body.put("numOfSuggestions", "2");
-			ClientResponse response = c.sendRequest("POST", mainPath + "suggestions/getSuggestion", body.toJSONString());
-			System.out.println(response.getResponse());
-		}
+//		for (int i = 0; i < 1; i++) {
+//			
+//			body.put("user", "162");
+//			body.put("courseid", "18");
+//			body.put("numOfSuggestions", "2");
+//			ClientResponse response = c.sendRequest("POST", mainPath + "suggestions/getSuggestion", body.toJSONString());
+//			System.out.println(response.getResponse());
+//		}
 		
 		
 		

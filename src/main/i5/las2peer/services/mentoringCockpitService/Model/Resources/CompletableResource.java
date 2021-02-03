@@ -35,7 +35,7 @@ public abstract class CompletableResource extends Resource {
 				for (int i = 0 ; i < 3 ; i++) {
 					resources.add(themes.get(i).getResourceTextForCompletable());
 				}
-				return "Here are some resources that can help you improve your grade in the " + type + TextFormatter.quote(TextFormatter.createHyperlink(name, url)) + ":" +
+				return "Here are some resources that can help you improve your grade in the " + type + " " + TextFormatter.quote(TextFormatter.createHyperlink(name, url)) + ":" +
 						TextFormatter.createOrderedList(resources);
 			default:
 				return "Completable resource not implemented";

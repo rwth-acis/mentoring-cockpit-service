@@ -7,6 +7,7 @@ import java.net.URL;
 import java.sql.*;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -746,10 +747,20 @@ public class MentoringCockpitService extends RESTService {
 	    	JSONObject returnObj = new JSONObject();
 	    	try {
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
-	    		String themeid = bodyObj.getAsString("firstEntity");
+	    		
+	    		JSONObject themeEntity = null;
+	    		JSONArray entities = (JSONArray) bodyObj.get("entities");
+	    		for (int i = 0; i < entities.size(); i++) {
+	    			JSONObject entity = (JSONObject) entities.get(i);
+	    			if (themeEntity == null || entity.getAsNumber("confidence").doubleValue() > themeEntity.getAsNumber("confidence").doubleValue()) {
+	    				themeEntity = entity;
+	    			}
+	    		}
+	    	    
+	    		
 	    		String courseid = bodyObj.getAsString("courseid");
 	    		if (service.courses.containsKey(courseid)) {
-	    			returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(themeid));
+	    			returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(themeEntity.getAsString("entityName")));
 	    		} else {
 	    			returnObj.put("text", "Error: Course not initialized!");
 	    		}
