@@ -16,6 +16,7 @@ import javax.ws.rs.core.StreamingOutput;
 
 import i5.las2peer.api.Context;
 import i5.las2peer.api.ManualDeployment;
+import i5.las2peer.api.logging.MonitoringEvent;
 import i5.las2peer.restMapper.RESTService;
 import i5.las2peer.restMapper.annotations.ServicePath;
 import i5.las2peer.services.mentoringCockpitService.Model.Course;
@@ -82,6 +83,12 @@ public class MentoringCockpitService extends RESTService {
 		userEmail = "askabot@fakemail.de"; //TODO: remove this
 		courses = new HashMap<String, Course>();
 		createCourses();
+	}
+	
+	@Override
+	protected void initResources() {
+		getResourceConfig().register(Suggestions.class);
+		getResourceConfig().register(this);
 	}
 
     /**
@@ -241,7 +248,49 @@ public class MentoringCockpitService extends RESTService {
 		}
 	}
 
-
+	/**
+     * A function that is called by a chatbot to generate a suggestion for a user.
+     *
+     * @body Request body of the chatbot
+     *
+     */
+    @GET
+    @Path("/assignBots")
+    @Produces(MediaType.TEXT_PLAIN)
+    @ApiResponses(
+			value = { @ApiResponse(
+					code = HttpURLConnection.HTTP_OK,
+					message = "Connection works") })
+	public Response assignBots(String body) {
+		try{
+			JSONObject courseMap = new JSONObject();
+			
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			//System.out.println("DEBUG --- Connection: " + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase);
+			Connection con = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase,
+					mysqlUser, mysqlPassword);
+			
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("select * from ACCESS");
+			while(rs.next()) {
+				String botName = rs.getString("SUB");
+				String link = rs.getString("COURSELINK");
+				String courseid = link.split("id=")[1];
+				courseMap.put(botName, courseid);
+			}
+			con.close();
+			JSONObject obj = new JSONObject();
+			obj.put("courseMap", courseMap);
+			
+			System.out.println("\u001B[33mDebug --- CourseMap: " + obj.toString() + "\u001B[0m");
+			Context.get().monitorEvent(MonitoringEvent.SERVICE_CUSTOM_MESSAGE_1, obj.toString());
+			return Response.status(200).entity("Bots assigned.").build();
+			
+		} catch(Exception e) {
+			System.out.println(e);
+			return Response.status(400).entity("Failed.").build();
+		}
+	}
 	
 	/**
 	 * A function that gets all the courses a tutor can see from a MySQL database. 
@@ -633,38 +682,9 @@ public class MentoringCockpitService extends RESTService {
 		}
 	}
 	
-//	@GET
-//    @Path("/restartCourses")
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @ApiOperation(
-//			value = "Get Suggestion",
-//			notes = "Restarts all courses.")
-//    @ApiResponses(
-//            value = { @ApiResponse(
-//                    code = HttpURLConnection.HTTP_OK,
-//                    message = "Connection works") })
-//    public Response getSuggestion() {
-//    	JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
-//    	JSONObject returnObj = new JSONObject();
-//    	try {
-//    		JSONObject bodyObj = (JSONObject) parser.parse(body);
-//    		String userid = bodyObj.getAsString("user");
-//    		String courseid = bodyObj.getAsString("courseid");
-//    		returnObj.put("text", this.service.courses.get(courseid).getSuggestion(userid));
-//    		returnObj.put("closeContext", "true");
-//    		return Response.status(200).entity(returnObj).build();
-//    	} catch (Exception e) {
-//    		e.printStackTrace();
-//    		returnObj.put("text", "Error");
-//    		return Response.status(400).entity(returnObj).build();
-//    	}
-//    	
-//	}
 	
-	@Override
-	protected void initResources() {
-		getResourceConfig().register(Suggestions.class);
-	}
+	
+	
 	
 	@Api(
 			value = "Suggestion resource")

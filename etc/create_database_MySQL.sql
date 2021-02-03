@@ -44,5 +44,5 @@ CREATE TABLE theme_assignment (
 );
 
 INSERT INTO moodle_lrs_mapping VALUES ('MC Store', 'askabot@fakemail.de');
-INSERT INTO ACCESS VALUES ('LMSBot', 'https://moodle.tech4comp.dbis.rwth-aachen.de/course/view.php?id=18', 'askabot');
-INSERT INTO ACCESS VALUES ('LMSBot', 'https://moodle.tech4comp.dbis.rwth-aachen.de/course/view.php?id=20', 'askabot');
+INSERT INTO ACCESS VALUES ('LMSBot', 'https://moodle.tech4comp.dbis.rwth-aachen.de/course/view.php?id=18', 'askabot_webscience1');
+INSERT INTO ACCESS VALUES ('Mentoring Chatbot', 'https://moodle.tech4comp.dbis.rwth-aachen.de/course/view.php?id=20', 'askabot_uni1');
