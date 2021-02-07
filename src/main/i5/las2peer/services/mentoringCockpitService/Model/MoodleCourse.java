@@ -190,7 +190,7 @@ public class MoodleCourse extends Course {
 		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
 				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
 				"    SELECT DISTINCT ?resourceid WHERE {\r\n" + 
-				"  		GRAPH <http://triplestore.tech4comp.dbis.rwth-aachen.de/Wissenslandkarten/data/Moodle_18> {\r\n" + 
+				"  		GRAPH <http://triplestore.tech4comp.dbis.rwth-aachen.de/Wissenslandkarten/data/%s> {\r\n" + 
 				"    		?b a ulo:Material .\r\n" + 
 				"    		?b ulo:id ?resourceid .\r\n" + 
 				"  		} \r\n" + 
