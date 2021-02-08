@@ -770,20 +770,25 @@ public class MentoringCockpitService extends RESTService {
 	    		
 	    		JSONObject themeEntity = null;
 	    		JSONArray entities = (JSONArray) bodyObj.get("entities");
-	    		for (int i = 0; i < entities.size(); i++) {
-	    			JSONObject entity = (JSONObject) entities.get(i);
-	    			if (themeEntity == null || entity.getAsNumber("confidence").doubleValue() > themeEntity.getAsNumber("confidence").doubleValue()) {
-	    				themeEntity = entity;
-	    			}
-	    		}
-	    	    
-	    		
-	    		String courseid = bodyObj.getAsString("courseid");
-	    		if (service.courses.containsKey(courseid)) {
-	    			returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(themeEntity.getAsString("entityName")));
+	    		if (!entities.isEmpty()) {
+	    			for (int i = 0; i < entities.size(); i++) {
+		    			JSONObject entity = (JSONObject) entities.get(i);
+		    			if (themeEntity == null || entity.getAsNumber("confidence").doubleValue() > themeEntity.getAsNumber("confidence").doubleValue()) {
+		    				themeEntity = entity;
+		    			}
+		    		}
+		    	    
+		    		
+		    		String courseid = bodyObj.getAsString("courseid");
+		    		if (service.courses.containsKey(courseid)) {
+		    			returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(themeEntity.getAsString("entityName")));
+		    		} else {
+		    			returnObj.put("text", "Error: Course not initialized!");
+		    		}
 	    		} else {
-	    			returnObj.put("text", "Error: Course not initialized!");
+	    			returnObj.put("text", "I wasn't able to understand your message very well. Would you mind reformulating it?");
 	    		}
+	    		
 	    		returnObj.put("closeContext", "true");
 	    		return Response.status(200).entity(returnObj).build();
 	    	} catch (Exception e) {
