@@ -59,7 +59,7 @@ public class SuggestionQueue {
 		suggestionMap.remove(resource.getId());
 	}
 	
-	public void sort() {
+	private void sort() {
 		Comparator<Suggestion> comp = new Comparator<Suggestion>() {
 			@Override
 			public int compare(Suggestion lhs, Suggestion rhs) {
