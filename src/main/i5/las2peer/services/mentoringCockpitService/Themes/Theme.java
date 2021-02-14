@@ -41,7 +41,7 @@ public class Theme {
 		subthemes.put(theme.getThemeid(), theme);
 	}
 	
-	public String getResourceText() {
+	public String getResourceSuggestions() {
 		ArrayList<String> items = new ArrayList<String>();
 		for (ThemeResourceLink link : resourceLinks.values()) {
 			items.add(link.getSuggestionText());
@@ -59,7 +59,7 @@ public class Theme {
 		
 	}
 	
-	public String getSubthemeText() {
+	public String getThemeSuggestions() {
 		ArrayList<String> names = new ArrayList<String>();
 		for (Theme subtheme : subthemes.values()) {
 			names.add(subtheme.getName());

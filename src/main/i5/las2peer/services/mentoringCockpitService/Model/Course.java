@@ -33,7 +33,7 @@ public abstract class Course {
 		this.newResources = new ArrayList<Resource>();
 		this.suggestionEvaluator = suggestionEvaluator;
 		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-		updateKnowledgeBase(lastUpdated);
+		updateKnowledgeBase();
 	}
 	
 	protected void setTimeToCurrent() {
@@ -42,7 +42,7 @@ public abstract class Course {
 		lastUpdated = instant.getEpochSecond();
 	}
 	
-	public abstract void updateKnowledgeBase(long since);
+	public abstract void updateKnowledgeBase();
 	
 	public abstract void createUsers(long since);
 	

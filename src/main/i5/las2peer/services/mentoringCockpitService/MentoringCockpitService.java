@@ -736,6 +736,7 @@ public class MentoringCockpitService extends RESTService {
 		    		} 
 	    		} else {
 	    			for (Entry<String, Course> entry : this.service.courses.entrySet()) {
+	    				entry.getValue().updateKnowledgeBase();
 	    				if (entry.getValue().getUsers().containsKey(userid)) {
 	    					returnObj.put("text", entry.getValue().getSuggestion(userid, numOfSuggestions));
 	    					break;
@@ -789,8 +790,6 @@ public class MentoringCockpitService extends RESTService {
 		    				themeEntity = entity;
 		    			}
 		    		}
-		    	    
-		    		
 		    		String courseid = bodyObj.getAsString("courseid");
 		    		if (service.courses.containsKey(courseid)) {
 		    			returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(themeEntity.getAsString("entityName")));

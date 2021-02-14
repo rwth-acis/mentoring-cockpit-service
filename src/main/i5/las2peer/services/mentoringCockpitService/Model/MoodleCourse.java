@@ -34,7 +34,8 @@ public class MoodleCourse extends Course {
 	}
 	
 	@Override
-	public void updateKnowledgeBase(long since) {
+	public void updateKnowledgeBase() {
+		long since = lastUpdated;
 		setTimeToCurrent();
 		newResources.clear();
 		
@@ -46,7 +47,6 @@ public class MoodleCourse extends Course {
 
 	@Override
 	public String getSuggestion(String userid, int numOfSuggestions) {
-		updateKnowledgeBase(lastUpdated);
 		String result = "";
 		if (users.containsKey(userid)) {
 			ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
@@ -72,8 +72,8 @@ public class MoodleCourse extends Course {
 		String themeid = "http://halle/domainmodel/" + shortid;
 		String result = "";
 		if (themes.containsKey(themeid)) {
-			String resourceText = themes.get(themeid).getResourceText();
-			String subthemeText = themes.get(themeid).getSubthemeText();
+			String resourceText = themes.get(themeid).getResourceSuggestions();
+			String subthemeText = themes.get(themeid).getThemeSuggestions();
 			
 			if (!resourceText.equals("")) {
 				result = result + "The following resources are related to the theme " + TextFormatter.quote(themes.get(themeid).getName()) + ":" + resourceText;
