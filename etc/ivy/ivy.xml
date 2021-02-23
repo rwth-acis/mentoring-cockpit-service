@@ -20,6 +20,7 @@
 
         <dependency org="org.knowm.xchart" name="xchart" rev="3.6.4" />
         
+        <dependency org="org.json" name="json" rev="20180813" />
         
         <!-- service dependencies -->
         <!-- Add service dependencies here -->

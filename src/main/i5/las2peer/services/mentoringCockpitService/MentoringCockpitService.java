@@ -1,5 +1,6 @@
 package i5.las2peer.services.mentoringCockpitService;
 
+import java.beans.ConstructorProperties;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -32,6 +33,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
@@ -89,6 +91,10 @@ public class MentoringCockpitService extends RESTService {
 	private String mysqlDatabase;
 	private static String userEmail;
 	private String lrsClientURL;
+
+	// TODO: Maybe move to environment
+	private String feedbackLRSAuth = "Basic OTRjMjYxNjdmYzY1MzFmNmM1M2RjZDEyYzJjOWI1OGNiZDc5ZGFkYzo3YWY3ZDFhN2MxYzliYTIyNzMyMDk3NTNhN2E0YjEwNjNiYjYyZjUx";
+	private String feedbackLRSDomain = "https://lrs.tech4comp.dbis.rwth-aachen.de";
 
 	/**
 	 * 
@@ -180,7 +186,7 @@ public class MentoringCockpitService extends RESTService {
 	}
 
 	/**
-	 * A function that is called by the Mentoring Cockpit to get students results in a course.
+	 * A function that is called by the Mentoring Cockpit to get students' results in a course.
 	 *
 	 * @param sub an identification string of the tutor
 	 * 
@@ -293,6 +299,7 @@ public class MentoringCockpitService extends RESTService {
 
 	@POST
 	@Path("/test")
+	@Produces("text/csv")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@RolesAllowed("authenticated")
 	public Response uploadPdfFile(FormDataMultiPart multipartFormDataInput) {
@@ -341,6 +348,20 @@ public class MentoringCockpitService extends RESTService {
 		} else {
 			return Response.status(Response.Status.FORBIDDEN).entity("Anonymous access denied").build();
 		}
+	}
+
+	@POST
+	@Path("/tmitocarFeedback")
+	@Produces(MediaType.TEXT_PLAIN)
+	public Response tmitocarFeedbackStatements() {
+		TMitocarLRSFeedbackProcessing processing = new TMitocarLRSFeedbackProcessing(feedbackLRSAuth, feedbackLRSDomain);
+		processing.process();
+		
+		File statementsFile = new File("AllStatements.csv");
+
+		ResponseBuilder response = Response.ok((Object) statementsFile);  
+        response.header("Content-Disposition","attachment; filename=\"AllStatements.csv\"");  
+        return response.build();
 	}
 
 	/**

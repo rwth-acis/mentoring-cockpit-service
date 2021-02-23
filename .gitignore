@@ -17,3 +17,6 @@
 /etc/startup/
 *.secret
 archiva_credentials.xml
+/servicebundle/
+/.vscode/
+/bin/
