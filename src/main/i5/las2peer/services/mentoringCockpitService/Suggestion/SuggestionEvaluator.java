@@ -19,14 +19,5 @@ public abstract class SuggestionEvaluator {
 	
 	public abstract SuggestionReason getSuggestionReason(User user, Resource resource);
 	
-	public boolean containsInteraction(ArrayList<UserResourceInteraction> interactions, String interactionName) {
-		if (interactions != null) {
-			for (UserResourceInteraction interaction : interactions) {
-				if (interaction.getName().equals(interactionName)) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
+	public abstract boolean hasInteraction(User user, Resource resource, String interactionName);
 }

@@ -1,13 +1,16 @@
 package i5.las2peer.services.mentoringCockpitService.Suggestion;
 
+import java.util.ArrayList;
+
 import i5.las2peer.services.mentoringCockpitService.Interactions.Completed;
 import i5.las2peer.services.mentoringCockpitService.Interactions.UserResourceInteraction;
+import i5.las2peer.services.mentoringCockpitService.Model.SPARQLConnection;
 import i5.las2peer.services.mentoringCockpitService.Model.User;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.CompletableResource;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
 
 public class MoodleSuggestionEvaluator extends SuggestionEvaluator {
-
+	
 	public MoodleSuggestionEvaluator(double minimalPriority, double maximalPriority) {
 		super(minimalPriority, maximalPriority);
 	}
@@ -30,10 +33,10 @@ public class MoodleSuggestionEvaluator extends SuggestionEvaluator {
 	public SuggestionReason getSuggestionReason(User user, Resource resource) {
 		if (resource instanceof CompletableResource) {
 			CompletableResource completable = (CompletableResource) resource;
-			if (!containsInteraction(user.getInteractionLists().get(resource.getId()), "completed")) {
+			if (!hasInteraction(user, resource, "completed")) {
 				return SuggestionReason.NOT_COMPLETED;
 			} else {
-				double maxGrade = getMaxGrade(user, completable);
+				double maxGrade = getBestGrade(user, completable);
 				if (maxGrade < 1) {
 					return SuggestionReason.NOT_MAX_GRADE;
 				} else {
@@ -41,7 +44,7 @@ public class MoodleSuggestionEvaluator extends SuggestionEvaluator {
 				}
 			}
 		} else {
-			if (!containsInteraction(user.getInteractionLists().get(resource.getId()), "viewed")) {
+			if (!hasInteraction(user, resource, "viewed")) {
 				return SuggestionReason.NOT_VIEWED;
 			} else {
 				return SuggestionReason.NOT_SUGGESTED;
@@ -49,16 +52,31 @@ public class MoodleSuggestionEvaluator extends SuggestionEvaluator {
 		}
 	}
 	
-	public double getMaxGrade(User user, CompletableResource completable) {
-		double res = 0;
-		for (UserResourceInteraction interaction : user.getInteractionLists().get(completable.getId())) {
-			if (interaction instanceof Completed) {
-				Completed completed = (Completed) interaction;
-				if (completed.getGrade() > res) {
-					res = completed.getGrade();
+	public double getBestGrade(User user, CompletableResource completable) {
+		double result = 0;
+		try {
+			return SPARQLConnection.getInstance().getBestGrade(user.getUserid(), completable.getId());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	@Override
+	public boolean hasInteraction(User user, Resource resource, String interactionName) {
+		boolean result = false;
+		try {
+			ArrayList<String> interactions = SPARQLConnection.getInstance().getInteractions(user.getUserid(), resource.getId());
+			for (String interaction : interactions) {
+				if (interaction.contains(interactionName)) { //TODO: change to equals
+					result = true;
 				}
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-		return res;
+		return result;
 	}
+	
+	
 }

@@ -108,39 +108,39 @@ public class ServiceTest {
 		c.setConnectorEndpoint(connector.getHttpEndpoint());
 		JSONObject body = new JSONObject();
 		
-		JSONArray entities = new JSONArray();
-		JSONObject entity1 = new JSONObject();
-		JSONObject entity2 = new JSONObject();
-		
-		entity1.put("entityName", "barabasiAlbert");
-		entity1.put("value", "barabasiAlbert");
-		entity1.put("confidence", 0.5);
-		
-		entity2.put("entityName", "mapreduce");
-		entity2.put("value", "mapreduce");
-		entity2.put("confidence", 0.4);
-		
-		entities.add(entity1);
-		entities.add(entity2);
-		
-		
-		body.put("entities", entities);
-		body.put("courseid", "18");
-		ClientResponse response = c.sendRequest("POST", mainPath + "suggestions/getSuggestionByTheme", body.toJSONString());
-		System.out.println(response.getResponse());
+//		JSONArray entities = new JSONArray();
+//		JSONObject entity1 = new JSONObject();
+//		JSONObject entity2 = new JSONObject();
+//		
+//		entity1.put("entityName", "barabasiAlbert");
+//		entity1.put("value", "barabasiAlbert");
+//		entity1.put("confidence", 0.5);
+//		
+//		entity2.put("entityName", "mapreduce");
+//		entity2.put("value", "mapreduce");
+//		entity2.put("confidence", 0.4);
+//		
+//		entities.add(entity1);
+//		entities.add(entity2);
+//		
+//		
+//		body.put("entities", entities);
+//		body.put("courseid", "18");
+//		ClientResponse response = c.sendRequest("GET", mainPath + "assignBots", body.toJSONString());
+//		System.out.println(response.getResponse());
 		
 //		body.put("firstEntity", "cloudComputingIntro");
 //		response = c.sendRequest("POST", mainPath + "suggestions/getSuggestionByTheme", body.toJSONString());
 //		System.out.println(response.getResponse());
 		
-//		for (int i = 0; i < 1; i++) {
-//			
-//			body.put("user", "162");
-//			body.put("courseid", "18");
-//			body.put("numOfSuggestions", "2");
-//			ClientResponse response = c.sendRequest("POST", mainPath + "suggestions/getSuggestion", body.toJSONString());
-//			System.out.println(response.getResponse());
-//		}
+		for (int i = 0; i < 6; i++) {
+			
+			body.put("user", "https://moodle.tech4comp.dbis.rwth-aachen.de/user/profile.php?id=180");
+			//body.put("courseid", "https://moodle.tech4comp.dbis.rwth-aachen.de/course/view.php?id=20");
+			body.put("numOfSuggestions", "2");
+			ClientResponse response = c.sendRequest("POST", mainPath + "suggestions/getSuggestion", body.toJSONString());
+			System.out.println(response.getResponse());
+		}
 		
 		
 		

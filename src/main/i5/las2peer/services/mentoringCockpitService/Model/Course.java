@@ -18,7 +18,6 @@ public abstract class Course {
 	protected HashMap<String, Resource> resources;
 	protected HashMap<String, Theme> themes;
 	protected MentoringCockpitService service;
-	protected SuggestionEvaluator suggestionEvaluator;
 	protected long lastUpdated = 0;
 	protected ArrayList<Resource> newResources;
 	
@@ -29,11 +28,18 @@ public abstract class Course {
 		this.resources = new HashMap<String, Resource>();
 		this.themes = new HashMap<String, Theme>();
 		this.service = service;
-		this.lastUpdated = 0;
+		SPARQLConnection.startConnection(service.triplestoreDomain);
 		this.newResources = new ArrayList<Resource>();
-		this.suggestionEvaluator = suggestionEvaluator;
 		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
-		updateKnowledgeBase();
+		try {
+			this.lastUpdated = SPARQLConnection.getInstance().getLatestTime(courseid);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		updateOntology(lastUpdated);
+		updateProfiles(0);
+		setTimeToCurrent();
 	}
 	
 	protected void setTimeToCurrent() {
@@ -42,15 +48,19 @@ public abstract class Course {
 		lastUpdated = instant.getEpochSecond();
 	}
 	
-	public abstract void updateKnowledgeBase();
+	public abstract void update();
 	
-	public abstract void createUsers(long since);
+	protected abstract void updateOntology(long since);
 	
-	public abstract void createResources(long since);
+	protected abstract void updateProfiles(long since);
 	
-	public abstract void createThemes(long since);
+	protected abstract void createUsers(long since);
 	
-	public abstract void createInteractions(long since);
+	protected abstract void createResources(long since);
+	
+	protected abstract void createThemes(long since);
+	
+	protected abstract void createInteractions(long since);
 	
 	public abstract String getSuggestion(String userid, int numOfSuggestions);
 

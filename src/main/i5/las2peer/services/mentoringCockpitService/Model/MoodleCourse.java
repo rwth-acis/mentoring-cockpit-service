@@ -34,21 +34,78 @@ public class MoodleCourse extends Course {
 	}
 	
 	@Override
-	public void updateKnowledgeBase() {
+	public void update() {
 		long since = lastUpdated;
 		setTimeToCurrent();
 		newResources.clear();
 		
+		updateOntology(since);
+		updateProfiles(since);
+	}
+	
+	@Override
+	protected void updateOntology(long since) {
+		if (since == 0) {
+			try {
+				SPARQLConnection.getInstance().addSchema();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		} else {
+			since = since + 1;
+		}
 		createResources(since);
 		createUsers(since);
 		createInteractions(since);
 		createThemes(since);
 	}
-
+	
+	protected void updateProfiles(long since) {
+		try {
+			JSONArray updates = SPARQLConnection.getInstance().getUpdates(since, courseid);
+			for (int i = 0; i < updates.size(); i++) {
+				JSONObject obj = (JSONObject) updates.get(i);
+				String userid = ((JSONObject) obj.get("userid")).getAsString("value");
+				String username = ((JSONObject) obj.get("username")).getAsString("value");
+				String resourceid = ((JSONObject) obj.get("resourceid")).getAsString("value");
+				String resourcename = ((JSONObject) obj.get("resourcename")).getAsString("value");
+				String resourcetype = ((JSONObject) obj.get("resourcetype")).getAsString("value");
+				
+				if (!users.containsKey(userid)) {
+					users.put(userid, new User(userid, username, resources.values()));
+					//System.out.println("DEBUG --- USERID: " + userid);
+				}
+				
+				Resource resource = null;
+				if (!resources.containsKey(resourceid)) {
+					if (resourcetype.contains("file")) {
+						resource = new File(resourceid, resourcename, resourceid);
+					} else if (resourcetype.contains("hyperlink")) {
+						resource = new Hyperlink(resourceid, resourcename, resourceid);
+					} else if (resourcetype.contains("quiz")) {
+						resource = new Quiz(resourceid, resourcename, resourceid);
+					}
+					if (resource != null) {
+						resources.put(resourceid, resource);
+						newResources.add(resource);
+					}
+				} else {
+					resource = resources.get(resourceid);
+				}
+				if (resource != null) {
+					users.get(userid).getUpdateSet().add(resource);
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	@Override
 	public String getSuggestion(String userid, int numOfSuggestions) {
 		String result = "";
 		if (users.containsKey(userid)) {
+			users.get(userid).updateSuggestions(newResources);
 			ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
 			ArrayList<String> suggestionTexts = new ArrayList<String>();
 			for (Suggestion suggestion : suggestions) {
@@ -91,7 +148,7 @@ public class MoodleCourse extends Course {
 	public void createUsers(long since) {
 		// Match
 		JSONObject match = new JSONObject();
-		match.put("statement.context.extensions.https://tech4comp&46;de/xapi/context/extensions/courseInfo.courseid", Integer.parseInt(courseid));
+		match.put("statement.context.extensions.https://tech4comp&46;de/xapi/context/extensions/courseInfo.courseid", Integer.parseInt(courseid.split("id=")[1]));
 		JSONObject gtObject = new JSONObject();
 		gtObject.put("$gt", Instant.ofEpochSecond(since).toString());
 		match.put("statement.stored", gtObject);
@@ -136,12 +193,13 @@ public class MoodleCourse extends Course {
 		JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 		try {
 			JSONArray data = (JSONArray) parser.parse(res);
+			JSONArray usersArray = new JSONArray();
 			for (int i = 0; i < data.size(); i++) {
 				JSONObject userObj = (JSONObject) data.get(i);
-				if (!users.containsKey(userObj.getAsString("userid"))) {
-					users.put(userObj.getAsString("userid"), new MoodleUser(userObj.getAsString("userid"), userObj.getAsString("name"), this));
-				}
+				userObj.put("courseid", courseid);
+				usersArray.add(userObj);
 			}
+			SPARQLConnection.getInstance().addUser(usersArray);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -151,7 +209,7 @@ public class MoodleCourse extends Course {
 	public void createResources(long since) {
 		// Match
 		JSONObject match = new JSONObject();
-		match.put("statement.context.extensions.https://tech4comp&46;de/xapi/context/extensions/courseInfo.courseid", Integer.parseInt(courseid));
+		match.put("statement.context.extensions.https://tech4comp&46;de/xapi/context/extensions/courseInfo.courseid", Integer.parseInt(courseid.split("id=")[1]));
 		JSONObject gtObject = new JSONObject();
 		gtObject.put("$gt", Instant.ofEpochSecond(since).toString());
 		match.put("statement.stored", gtObject);
@@ -187,41 +245,31 @@ public class MoodleCourse extends Course {
 		
 		String res = service.LRSconnect(sb.toString());
 		
-		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
-				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
-				"    SELECT DISTINCT ?resourceid WHERE {\r\n" + 
-				"  		GRAPH <http://triplestore.tech4comp.dbis.rwth-aachen.de/Wissenslandkarten/data/%s> {\r\n" + 
-				"    		?b a ulo:Material .\r\n" + 
-				"    		?b ulo:id ?resourceid .\r\n" + 
-				"  		} \r\n" + 
-				"    } ";
 		
 		try {
-			String response = sparqlQuery(query);
 			JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
-			JSONObject responseObj = (JSONObject) parser.parse(response.toString());
-			JSONObject resultsObj = (JSONObject) responseObj.get("results");
-			JSONArray bindingsArray = (JSONArray) resultsObj.get("bindings");
-			HashSet<String> resourceIds = new HashSet<String>();
-			for (int i = 0; i < bindingsArray.size(); i++) {
-				JSONObject bindingObj = (JSONObject) bindingsArray.get(i);
-				resourceIds.add(((JSONObject) bindingObj.get("resourceid")).getAsString("value"));
-			}
-			
 			JSONArray data = (JSONArray) parser.parse(res);
 			//System.out.println("DEBUG --- Size: " + data.size());
+			JSONArray resourcesArray = new JSONArray();
 			for (int i = 0; i < data.size(); i++) {
 				JSONObject resourceObj = (JSONObject) data.get(i);
-				if (resourceIds.contains(resourceObj.getAsString("_id"))) {
-					if (resourceObj.getAsString("_id").contains("quiz") && !resourceObj.getAsString("name").contains("attempt")) {
-						resources.put(resourceObj.getAsString("_id"), new Quiz(resourceObj.getAsString("_id"), resourceObj.getAsString("name"), resourceObj.getAsString("_id")));
-					} else if (resourceObj.getAsString("_id").contains("resource")) {
-						resources.put(resourceObj.getAsString("_id"), new File(resourceObj.getAsString("_id"), resourceObj.getAsString("name"), resourceObj.getAsString("_id")));
-					} else if (resourceObj.getAsString("_id").contains("url")) {
-						resources.put(resourceObj.getAsString("_id"), new Hyperlink(resourceObj.getAsString("_id"), resourceObj.getAsString("name"), resourceObj.getAsString("_id")));
-					}
-				}	
-			}
+				if (resourceObj.getAsString("_id").contains("quiz") && !resourceObj.getAsString("name").contains("attempt")) {
+					resourceObj.put("type", "quiz");
+				} else if (resourceObj.getAsString("_id").contains("resource")) {
+					resourceObj.put("type", "file");
+				} else if (resourceObj.getAsString("_id").contains("url")) {
+					resourceObj.put("type", "hyperlink");
+				} else if (resourceObj.getAsString("_id").contains("forum/view")) {
+					resourceObj.put("type", "forum");
+				}else if (resourceObj.getAsString("_id").contains("forum/discuss")) {
+					resourceObj.put("type", "post");
+				} else {
+					resourceObj.put("type", "undefined");
+				}
+				resourceObj.put("courseid", courseid);
+				resourcesArray.add(resourceObj);
+			}	
+			SPARQLConnection.getInstance().addResources(resourcesArray);
 			//System.out.println("DEBUG --- Resources: " + resources.keySet().toString());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -237,13 +285,13 @@ public class MoodleCourse extends Course {
 					"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
 					"	\r\n" + 
 					"    SELECT ?themeid ?name WHERE {\r\n" + 
-					"  		GRAPH <http://triplestore.tech4comp.dbis.rwth-aachen.de/Wissenslandkarten/data/%s> {\r\n" + 
+					"  		GRAPH <%s> {\r\n" + 
 					"  			?themeid a ulo:Theme .  \r\n" + 
 					"  			?themeid rdfs:label ?name .  \r\n" + 
 					"		}\r\n" + 
 					"    }";
 			
-			String response = sparqlQuery(query);
+			String response = SPARQLConnection.getInstance().sparqlQuery(query);
 			
 			JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 			JSONObject responseObj = (JSONObject) parser.parse(response.toString());
@@ -268,12 +316,12 @@ public class MoodleCourse extends Course {
 					"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
 					"	\r\n" + 
 					"    SELECT ?supertheme ?subtheme WHERE {\r\n" + 
-					"  		GRAPH <http://triplestore.tech4comp.dbis.rwth-aachen.de/Wissenslandkarten/data/%s> {\r\n" + 
+					"  		GRAPH <%s> {\r\n" + 
 					"  			?supertheme ulo:superthemeOf ?subtheme .  \r\n" + 
 					"		}\r\n" + 
 					"    }";
 			
-			String response = sparqlQuery(query);
+			String response = SPARQLConnection.getInstance().sparqlQuery(query);
 			
 			JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 			JSONObject responseObj = (JSONObject) parser.parse(response.toString());
@@ -297,14 +345,14 @@ public class MoodleCourse extends Course {
 			String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
 					"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
 					"    SELECT ?themeid ?resourceid ?infoType ?infoVal WHERE {\r\n" + 
-					"  		GRAPH <http://triplestore.tech4comp.dbis.rwth-aachen.de/Wissenslandkarten/data/%s> {\r\n" + 
+					"  		GRAPH <%s> {\r\n" + 
 					"    		?themeid ulo:continuativeMaterial ?s1 .\r\n" + 
 					"  			?s1 ulo:id ?resourceid .\r\n" + 
 					"    		?s1 ?infoType ?infoVal .\r\n" + 
 					"  		} \r\n" + 
 					"    } ";
 			
-			String response = sparqlQuery(query);
+			String response = SPARQLConnection.getInstance().sparqlQuery(query);
 			
 			JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 			JSONObject responseObj1 = (JSONObject) parser.parse(response.toString());
@@ -332,40 +380,13 @@ public class MoodleCourse extends Course {
 		}
 	}
 	
-	private String sparqlQuery(String query) {
-		try {
-			URL url = new URL(service.triplestoreDomain);
-			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-			conn.setRequestMethod("POST");
-			conn.setRequestProperty("Content-Type", "application/sparql-query");
-			conn.setRequestProperty("Accept", "application/json");
-			conn.setDoOutput(true);
-			
-			try(OutputStream os = conn.getOutputStream()) {
-			    byte[] input = String.format(query, "Moodle_" + courseid).getBytes("utf-8");
-			    os.write(input, 0, input.length);			
-			}
-			StringBuilder response = new StringBuilder();
-			try(BufferedReader br = new BufferedReader(
-					  new InputStreamReader(conn.getInputStream(), "utf-8"))) {
-					    String responseLine = null;
-					    while ((responseLine = br.readLine()) != null) {
-					        response.append(responseLine.trim());
-					    }
-					    //System.out.println("DEBUG --- RESPONSE: " + response.toString());
-					}
-			return response.toString();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return "SPARQL connection failed";
-		}
-	}
+	
 
 	@Override
 	public void createInteractions(long since) {
 		// Match
 		JSONObject match = new JSONObject();
-		match.put("statement.context.extensions.https://tech4comp&46;de/xapi/context/extensions/courseInfo.courseid", Integer.parseInt(courseid));
+		match.put("statement.context.extensions.https://tech4comp&46;de/xapi/context/extensions/courseInfo.courseid", Integer.parseInt(courseid.split("id=")[1]));
 		JSONObject matchObj = new JSONObject();
 		JSONObject gtObject = new JSONObject();
 		gtObject.put("$gt", Instant.ofEpochSecond(since).toString());
@@ -410,40 +431,34 @@ public class MoodleCourse extends Course {
 			JSONArray data = (JSONArray) parser.parse(res);
 			
 			//System.out.println("DEBUG --- Size: " + data.size());
+			JSONArray interactions = new JSONArray();
 			for (int i = 0; i < data.size(); i++) {
 				JSONObject dataObj = (JSONObject) data.get(i);
 				JSONObject relationObj = (JSONObject) dataObj.get("_id");
-				User user = users.get(relationObj.getAsString("userid"));
-				Resource resource = resources.get(relationObj.getAsString("objectid"));
 				String verb = relationObj.getAsString("verb");
-				long timestamp = Instant.parse(relationObj.getAsString("timestamp")).getEpochSecond();
-				
-				if (resource != null) {
-					//TODO: Add more verbs
-					UserResourceInteraction interaction = null;
-					if (verb.contains("completed")) {
-						JSONObject resultObject = (JSONObject) relationObj.get("result");
-						if (Boolean.parseBoolean(resultObject.getAsString("completion"))) {
-							CompletableResource completableResource = (CompletableResource) resource;
-							JSONObject scoreObject = (JSONObject) resultObject.get("score");
-							interaction = new Completed(timestamp, user, completableResource, Double.parseDouble(scoreObject.getAsString("scaled")));
-						}
-					} else if (verb.contains("viewed")) {
-						interaction = new Viewed(timestamp, user, resource);
+				String verbShort = "";
+				JSONObject infoObj = new JSONObject();
+				if (verb.contains("completed")) {
+					JSONObject resultObject = (JSONObject) relationObj.get("result");
+					if (Boolean.parseBoolean(resultObject.getAsString("completion"))) {
+						verbShort = "completed";
+						JSONObject scoreObject = (JSONObject) resultObject.get("score");
+						infoObj.put("score", scoreObject.getAsNumber("scaled"));
 					}
-					
-					// Add interactions to interaction lists
-					if (interaction != null) {
-						if (!user.getInteractionLists().containsKey(resource.getId())) {
-							user.getInteractionLists().put(resource.getId(), new ArrayList<UserResourceInteraction>());
-						}
-						user.getInteractionLists().get(resource.getId()).add(interaction);
-					}
-					
-					// Add resource to user's newly interacted resource list
-					user.getRecentlyInteractedResources().add(resource);
+				} else if (verb.contains("viewed")) {
+					verbShort = "viewed";
+				} else if (verb.contains("posted") || verb.contains("replied")) {
+					verbShort = "posted";
+				} else {
+					verbShort = "interacted";
 				}
+				relationObj.put("info", infoObj);
+				relationObj.put("verbShort", verbShort);
+				relationObj.put("courseid", courseid);
+				interactions.add(relationObj);
+				
 			}
+			SPARQLConnection.getInstance().addInteractions(interactions);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

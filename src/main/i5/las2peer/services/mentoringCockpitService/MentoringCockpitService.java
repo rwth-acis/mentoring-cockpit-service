@@ -67,7 +67,7 @@ public class MentoringCockpitService extends RESTService {
 	private String mysqlHost;
 	private String mysqlPort;
 	private String mysqlDatabase;
-	public String triplestoreDomain = "https://triplestore.tech4comp.dbis.rwth-aachen.de/LMSData";
+	public String triplestoreDomain = "https://triplestore.tech4comp.dbis.rwth-aachen.de/LMSData"; //TODO: add to configs
 	private static String userEmail;
 	private String lrsClientURL;
 	public HashMap<String, Course> courses;
@@ -671,9 +671,9 @@ public class MentoringCockpitService extends RESTService {
 			Statement stmt = con.createStatement();
 			ResultSet rs = stmt.executeQuery("select COURSELINK from ACCESS");
 			while(rs.next()) {
-				String link = rs.getString("COURSELINK");
-				String courseid = link.split("id=")[1];
-				MoodleCourse course = new MoodleCourse(courseid, link, this);
+				String courseid = rs.getString("COURSELINK");
+				//String courseid = link.split("id=")[1];
+				Course course = new MoodleCourse(courseid, courseid, this);
 				courses.put(courseid, course);
 			}
 			con.close();
@@ -736,7 +736,8 @@ public class MentoringCockpitService extends RESTService {
 		    		} 
 	    		} else {
 	    			for (Entry<String, Course> entry : this.service.courses.entrySet()) {
-	    				entry.getValue().updateKnowledgeBase();
+	    				entry.getValue().update();
+	    				//System.out.println("DEBUG --- USERID: " + entry.getValue().getUsers().keySet());
 	    				if (entry.getValue().getUsers().containsKey(userid)) {
 	    					returnObj.put("text", entry.getValue().getSuggestion(userid, numOfSuggestions));
 	    					break;
