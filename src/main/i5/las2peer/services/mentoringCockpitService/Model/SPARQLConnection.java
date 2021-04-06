@@ -75,6 +75,9 @@ public class SPARQLConnection {
 				"    	ulo:quiz rdfs:subclassOf ulo:resource .\r\n" + 
 				"    	ulo:forum rdfs:subclassOf ulo:resource .\r\n" + 
 				"    	ulo:post rdfs:subclassOf ulo:resource .\r\n" + 
+				"    	ulo:student rdfs:subclassOf ulo:user .\r\n" + 
+				"    	ulo:teacher rdfs:subclassOf ulo:user .\r\n" + 
+				"    	ulo:chatbot rdfs:subclassOf ulo:user .\r\n" + 
 				"	}\r\n" + 
 				"}";
 		String response = sparqlUpdate(query);
@@ -166,8 +169,7 @@ public class SPARQLConnection {
 				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
 				"    SELECT DISTINCT ?resourceid WHERE {\r\n" + 
 				"  		GRAPH <%s> {\r\n" + 
-				"    		?b a ulo:Material .\r\n" + 
-				"    		?b ulo:id ?resourceid .\r\n" + 
+				"    		?b ulo:discussResource ?resourceid .\r\n" + 
 				"  		} \r\n" + 
 				"    }";
 		
@@ -281,6 +283,47 @@ public class SPARQLConnection {
 		}
 		return result;
 	} 
+	
+	public JSONArray getThemes() {
+		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
+				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
+				"	\r\n" + 
+				"    SELECT ?themeid ?name WHERE {\r\n" + 
+				"  		GRAPH <%s> {\r\n" + 
+				"  			?themeid a ulo:theme .  \r\n" + 
+				"  			?themeid rdfs:label ?name .  \r\n" + 
+				"		}\r\n" + 
+				"    }";
+		
+		return getBindings(sparqlQuery(query));
+	}
+	
+	public JSONArray getThemeStructure() {
+		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
+				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
+				"	\r\n" + 
+				"    SELECT ?supertheme ?subtheme WHERE {\r\n" + 
+				"  		GRAPH <%s> {\r\n" + 
+				"  			?supertheme ulo:relatedTo ?subtheme .  \r\n" + 
+				"		}\r\n" + 
+				"    }";
+		
+		return getBindings(sparqlQuery(query));
+	}
+	
+	public JSONArray getThemesInfo() {
+		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
+				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
+				"    SELECT ?themeid ?resourceid ?infoType ?infoVal WHERE {\r\n" + 
+				"  		GRAPH <%s> {\r\n" + 
+				"    		?themeid ulo:discusses ?s1 .\r\n" + 
+				"  			?s1 ulo:discussResource ?resourceid .\r\n" + 
+				"    		?s1 ?infoType ?infoVal .\r\n" + 
+				"  		} \r\n" + 
+				"    } ";
+		
+		return getBindings(sparqlQuery(query));
+	}
 	
 	public String sparqlQuery(String query) {
 		try {

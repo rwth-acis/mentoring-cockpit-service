@@ -160,6 +160,7 @@ public class MoodleCourse extends Course {
 		project.put("_id", "$statement.actor.account.name");
 		project.put("userid", "$statement.actor.account.name");
 		project.put("name", "$statement.actor.name");
+		project.put("roles", "$statement.context.extensions.https://tech4comp&46;de/xapi/context/extensions/actorRoles");
 		JSONObject projectObj = new JSONObject();
 		projectObj.put("$project", project);
 		
@@ -168,11 +169,14 @@ public class MoodleCourse extends Course {
 		JSONObject group = new JSONObject();
 		JSONObject idObject = new JSONObject();
 		JSONObject nameObject = new JSONObject();
+		JSONObject roleObject = new JSONObject();
 		idObject.put("$first", "$userid");
 		nameObject.put("$first", "$name");
+		roleObject.put("$first", "$roles");
 		group.put("_id", "$_id");
 		group.put("userid", idObject);
 		group.put("name", nameObject);
+		group.put("roles", roleObject);
 		groupObject.put("$group", group);
 		
 		// Assemble pipeline
@@ -281,22 +285,8 @@ public class MoodleCourse extends Course {
 		
 		// First, create all themes
 		try {
-			String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
-					"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
-					"	\r\n" + 
-					"    SELECT ?themeid ?name WHERE {\r\n" + 
-					"  		GRAPH <%s> {\r\n" + 
-					"  			?themeid a ulo:Theme .  \r\n" + 
-					"  			?themeid rdfs:label ?name .  \r\n" + 
-					"		}\r\n" + 
-					"    }";
-			
-			String response = SPARQLConnection.getInstance().sparqlQuery(query);
-			
-			JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
-			JSONObject responseObj = (JSONObject) parser.parse(response.toString());
-			JSONObject resultsObj = (JSONObject) responseObj.get("results");
-			JSONArray bindingsArray = (JSONArray) resultsObj.get("bindings");
+			JSONArray bindingsArray = SPARQLConnection.getInstance().getThemes();
+
 			for (int i = 0; i < bindingsArray.size(); i++) {
 				JSONObject bindingObj = (JSONObject) bindingsArray.get(i);
 				String themeid = ((JSONObject) bindingObj.get("themeid")).getAsString("value");
@@ -312,21 +302,7 @@ public class MoodleCourse extends Course {
 		
 		// Then, create theme structure
 		try {
-			String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
-					"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
-					"	\r\n" + 
-					"    SELECT ?supertheme ?subtheme WHERE {\r\n" + 
-					"  		GRAPH <%s> {\r\n" + 
-					"  			?supertheme ulo:superthemeOf ?subtheme .  \r\n" + 
-					"		}\r\n" + 
-					"    }";
-			
-			String response = SPARQLConnection.getInstance().sparqlQuery(query);
-			
-			JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
-			JSONObject responseObj = (JSONObject) parser.parse(response.toString());
-			JSONObject resultsObj = (JSONObject) responseObj.get("results");
-			JSONArray bindingsArray = (JSONArray) resultsObj.get("bindings");
+			JSONArray bindingsArray = SPARQLConnection.getInstance().getThemeStructure();
 			for (int i = 0; i < bindingsArray.size(); i++) {
 				JSONObject bindingObj = (JSONObject) bindingsArray.get(i);
 				JSONObject subjectObj = (JSONObject) bindingObj.get("supertheme");
@@ -342,24 +318,9 @@ public class MoodleCourse extends Course {
 		
 		// Finally, assign resources and resource information
 		try {
-			String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
-					"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
-					"    SELECT ?themeid ?resourceid ?infoType ?infoVal WHERE {\r\n" + 
-					"  		GRAPH <%s> {\r\n" + 
-					"    		?themeid ulo:continuativeMaterial ?s1 .\r\n" + 
-					"  			?s1 ulo:id ?resourceid .\r\n" + 
-					"    		?s1 ?infoType ?infoVal .\r\n" + 
-					"  		} \r\n" + 
-					"    } ";
-			
-			String response = SPARQLConnection.getInstance().sparqlQuery(query);
-			
-			JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
-			JSONObject responseObj1 = (JSONObject) parser.parse(response.toString());
-			JSONObject resultsObj1 = (JSONObject) responseObj1.get("results");
-			JSONArray bindingsArray1 = (JSONArray) resultsObj1.get("bindings");
-			for (int i = 0; i < bindingsArray1.size(); i++) {
-				JSONObject bindingObj = (JSONObject) bindingsArray1.get(i);
+			JSONArray bindingsArray = SPARQLConnection.getInstance().getThemesInfo();
+			for (int i = 0; i < bindingsArray.size(); i++) {
+				JSONObject bindingObj = (JSONObject) bindingsArray.get(i);
 				String themeid = ((JSONObject) bindingObj.get("themeid")).getAsString("value");
 				String resourceid = ((JSONObject) bindingObj.get("resourceid")).getAsString("value");
 				if (resources.containsKey(resourceid)) {
@@ -424,7 +385,7 @@ public class MoodleCourse extends Course {
 		
 		String res = service.LRSconnect(sb.toString());
 		
-		//System.out.println("DEBUG --- Relations: " + res);
+		System.out.println("DEBUG --- Relations: " + res);
 		
 		JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 		try {
