@@ -1,4 +1,4 @@
-package i5.las2peer.services.mentoringCockpitService.Themes;
+package i5.las2peer.services.mentoringCockpitService.Model.Information;
 
 public abstract class Information {
 	String name;

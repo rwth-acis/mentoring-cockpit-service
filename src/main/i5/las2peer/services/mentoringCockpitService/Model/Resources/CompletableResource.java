@@ -2,9 +2,9 @@ package i5.las2peer.services.mentoringCockpitService.Model.Resources;
 
 import java.util.ArrayList;
 
+import i5.las2peer.services.mentoringCockpitService.Model.Theme;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.SuggestionReason;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.TextFormatter;
-import i5.las2peer.services.mentoringCockpitService.Themes.Theme;
 
 public abstract class CompletableResource extends Resource {
 	protected double minGrade;

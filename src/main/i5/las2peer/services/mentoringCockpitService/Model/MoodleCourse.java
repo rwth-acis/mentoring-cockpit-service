@@ -1,27 +1,18 @@
 package i5.las2peer.services.mentoringCockpitService.Model;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashSet;
 
 import i5.las2peer.services.mentoringCockpitService.MentoringCockpitService;
-import i5.las2peer.services.mentoringCockpitService.Interactions.Completed;
-import i5.las2peer.services.mentoringCockpitService.Interactions.UserResourceInteraction;
-import i5.las2peer.services.mentoringCockpitService.Interactions.Viewed;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.CompletableResource;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.File;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Quiz;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
+import i5.las2peer.services.mentoringCockpitService.SPARQLConnection.SPARQLConnection;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.MoodleSuggestionEvaluator;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.Suggestion;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.TextFormatter;
-import i5.las2peer.services.mentoringCockpitService.Themes.Theme;
-import i5.las2peer.services.mentoringCockpitService.Themes.ThemeResourceLink;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Hyperlink;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
@@ -73,7 +64,6 @@ public class MoodleCourse extends Course {
 				
 				if (!users.containsKey(userid)) {
 					users.put(userid, new User(userid, username, resources.values()));
-					//System.out.println("DEBUG --- USERID: " + userid);
 				}
 				
 				Resource resource = null;
@@ -113,7 +103,6 @@ public class MoodleCourse extends Course {
 			}
 			
 			if (!suggestions.isEmpty()) {
-				//System.out.println("DEBUG --- Priority: " + suggestion.getPriority());
 				result = "Here is a couple suggestions based on your Moodle activity:" + TextFormatter.createList(suggestionTexts) + "\n Would you like another suggestion?";
 			} else {
 				result = "No suggestions available";
@@ -192,8 +181,6 @@ public class MoodleCourse extends Course {
 		
 		String res = service.LRSconnect(sb.toString());
 		
-		//System.out.println("DEBUG --- Users: " + res);
-		
 		JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 		try {
 			JSONArray data = (JSONArray) parser.parse(res);
@@ -253,7 +240,6 @@ public class MoodleCourse extends Course {
 		try {
 			JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 			JSONArray data = (JSONArray) parser.parse(res);
-			//System.out.println("DEBUG --- Size: " + data.size());
 			JSONArray resourcesArray = new JSONArray();
 			for (int i = 0; i < data.size(); i++) {
 				JSONObject resourceObj = (JSONObject) data.get(i);
@@ -274,7 +260,6 @@ public class MoodleCourse extends Course {
 				resourcesArray.add(resourceObj);
 			}	
 			SPARQLConnection.getInstance().addResources(resourcesArray);
-			//System.out.println("DEBUG --- Resources: " + resources.keySet().toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -294,8 +279,6 @@ public class MoodleCourse extends Course {
 				themes.put(themeid, new Theme(themeid, name));
 				
 			}
-			//System.out.println("DEBUG --- URIS: " + themeids.toString());
-			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -384,14 +367,9 @@ public class MoodleCourse extends Course {
 		}
 		
 		String res = service.LRSconnect(sb.toString());
-		
-		System.out.println("DEBUG --- Relations: " + res);
-		
 		JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 		try {
 			JSONArray data = (JSONArray) parser.parse(res);
-			
-			//System.out.println("DEBUG --- Size: " + data.size());
 			JSONArray interactions = new JSONArray();
 			for (int i = 0; i < data.size(); i++) {
 				JSONObject dataObj = (JSONObject) data.get(i);

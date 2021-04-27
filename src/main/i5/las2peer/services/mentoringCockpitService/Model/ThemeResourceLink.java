@@ -1,8 +1,12 @@
-package i5.las2peer.services.mentoringCockpitService.Themes;
+package i5.las2peer.services.mentoringCockpitService.Model;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import i5.las2peer.services.mentoringCockpitService.Model.Information.Information;
+import i5.las2peer.services.mentoringCockpitService.Model.Information.Pages;
+import i5.las2peer.services.mentoringCockpitService.Model.Information.Password;
+import i5.las2peer.services.mentoringCockpitService.Model.Information.Timestamp;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
 
 public class ThemeResourceLink {

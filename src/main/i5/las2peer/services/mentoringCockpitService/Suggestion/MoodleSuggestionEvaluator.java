@@ -2,12 +2,10 @@ package i5.las2peer.services.mentoringCockpitService.Suggestion;
 
 import java.util.ArrayList;
 
-import i5.las2peer.services.mentoringCockpitService.Interactions.Completed;
-import i5.las2peer.services.mentoringCockpitService.Interactions.UserResourceInteraction;
-import i5.las2peer.services.mentoringCockpitService.Model.SPARQLConnection;
 import i5.las2peer.services.mentoringCockpitService.Model.User;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.CompletableResource;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
+import i5.las2peer.services.mentoringCockpitService.SPARQLConnection.SPARQLConnection;
 
 public class MoodleSuggestionEvaluator extends SuggestionEvaluator {
 	

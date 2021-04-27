@@ -1,8 +1,5 @@
 package i5.las2peer.services.mentoringCockpitService.Suggestion;
 
-import java.util.ArrayList;
-
-import i5.las2peer.services.mentoringCockpitService.Interactions.UserResourceInteraction;
 import i5.las2peer.services.mentoringCockpitService.Model.User;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
 

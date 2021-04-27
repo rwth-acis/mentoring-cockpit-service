@@ -266,7 +266,6 @@ public class MentoringCockpitService extends RESTService {
 			JSONObject courseMap = new JSONObject();
 			
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			//System.out.println("DEBUG --- Connection: " + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase);
 			Connection con = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase,
 					mysqlUser, mysqlPassword);
 			
@@ -563,7 +562,6 @@ public class MentoringCockpitService extends RESTService {
 				conn.setRequestMethod("GET");
 				conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
 				conn.setRequestProperty("Authorization","Basic " + auth);
-				//System.out.println("DEBUG --- URL: " + conn.getURL().toString());
 
 				BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 
@@ -596,11 +594,9 @@ public class MentoringCockpitService extends RESTService {
 		try{
 			Connection con = connectToDatabase();
 			Statement stmt = con.createStatement();
-			//System.out.println("DEBUG --- Email: " + userEmail);
 			ResultSet rs = stmt.executeQuery("select MOODLE_TOKEN from moodle_lrs_mapping where EMAIL = '" + userEmail + "'");
 			while(rs.next()) {
 				moodleToken = rs.getString("moodle_token");
-				//System.out.println("DEBUG --- Token: " + moodleToken);
 			}
 			con.close();
 
@@ -664,7 +660,6 @@ public class MentoringCockpitService extends RESTService {
 	public void createCourses() {
 		try{
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			//System.out.println("DEBUG --- Connection: " + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase);
 			Connection con = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase,
 					mysqlUser, mysqlPassword);
 			
@@ -672,7 +667,6 @@ public class MentoringCockpitService extends RESTService {
 			ResultSet rs = stmt.executeQuery("select COURSELINK from ACCESS");
 			while(rs.next()) {
 				String courseid = rs.getString("COURSELINK");
-				//String courseid = link.split("id=")[1];
 				Course course = new MoodleCourse(courseid, courseid, this);
 				courses.put(courseid, course);
 			}
@@ -706,7 +700,7 @@ public class MentoringCockpitService extends RESTService {
 		MentoringCockpitService service = (MentoringCockpitService) Context.get().getService();
 		
 		/**
-	     * A function that is called by a chatbot to generate a suggestion for a user.
+	     * A function that is called by a chatbot to generate a list of resource recommendations based on the user's LMS data.
 	     *
 	     * @body Request body of the chatbot
 	     *
@@ -737,7 +731,6 @@ public class MentoringCockpitService extends RESTService {
 	    		} else {
 	    			for (Entry<String, Course> entry : this.service.courses.entrySet()) {
 	    				entry.getValue().update();
-	    				//System.out.println("DEBUG --- USERID: " + entry.getValue().getUsers().keySet());
 	    				if (entry.getValue().getUsers().containsKey(userid)) {
 	    					returnObj.put("text", entry.getValue().getSuggestion(userid, numOfSuggestions));
 	    					break;
@@ -760,7 +753,7 @@ public class MentoringCockpitService extends RESTService {
 		}
 	    
 	    /**
-	     * A function that is called by a chatbot to generate a suggestion for a user based on a specific Theme.
+	     * A function that is called by a chatbot to generate a list of recommendations based on the given theme.
 	     *
 	     * @body Request body of the chatbot
 	     *

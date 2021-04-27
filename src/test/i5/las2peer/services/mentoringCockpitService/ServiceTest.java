@@ -2,8 +2,6 @@ package i5.las2peer.services.mentoringCockpitService;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collection;
 
 import org.junit.After;
 import org.junit.Before;
@@ -16,11 +14,7 @@ import i5.las2peer.connectors.webConnector.client.MiniClient;
 import i5.las2peer.p2p.LocalNode;
 import i5.las2peer.p2p.LocalNodeManager;
 import i5.las2peer.security.UserAgentImpl;
-import i5.las2peer.services.mentoringCockpitService.Interactions.UserResourceInteraction;
-import i5.las2peer.services.mentoringCockpitService.Model.Course;
-import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
 import i5.las2peer.testing.MockAgentFactory;
-import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 
 /**

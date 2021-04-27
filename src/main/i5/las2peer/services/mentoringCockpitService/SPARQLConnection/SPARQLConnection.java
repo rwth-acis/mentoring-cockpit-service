@@ -1,4 +1,4 @@
-package i5.las2peer.services.mentoringCockpitService.Model;
+package i5.las2peer.services.mentoringCockpitService.SPARQLConnection;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -52,7 +52,6 @@ public class SPARQLConnection {
 		if (!bindings.isEmpty()) {
 			JSONObject obj = (JSONObject) bindings.get(0);
 			JSONObject varObj = (JSONObject) obj.get("timestamp");
-			//System.out.println("DEBUG --- THING: " + varObj.toJSONString());
 			res = varObj.getAsNumber("value").longValue();
 		}
 		return res;
@@ -80,8 +79,7 @@ public class SPARQLConnection {
 				"    	ulo:chatbot rdfs:subclassOf ulo:user .\r\n" + 
 				"	}\r\n" + 
 				"}";
-		String response = sparqlUpdate(query);
-		//System.out.println("DEBUG --- HEY: " + response);
+		String response = sparqlUpdate(query);;
 	}
 	
 	public void addResources (JSONArray objects) {
@@ -102,8 +100,7 @@ public class SPARQLConnection {
 				JSONObject bindingObj = (JSONObject) bindingsArray.get(i);
 				resourceIds.add(((JSONObject) bindingObj.get("resourceid")).getAsString("value"));
 			}
-			//System.out.println("DEBUG --- RESOURCEIDS: " + resourceIds);
-			//System.out.println("DEBUG --- RESOURCES: " + objects.toString());
+			
 			String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
 					"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
 					"    INSERT DATA  {\r\n" + 
@@ -113,11 +110,12 @@ public class SPARQLConnection {
 				JSONObject obj = (JSONObject) objects.get(i);
 				String id = obj.getAsString("_id");
 				String type = obj.getAsString("type");
-				//System.out.println("DEBUG --- STRING: " + id);
+
 				if (resourceIds.contains(id) || type.equals("post") || type.equals("forum")) {
-					//System.out.println("DEBUG --- FALA");
+					if (type.equals("post")) {
+						id = id.split("#parent")[0];
+					}
 					String name = obj.getAsString("name");
-					
 					String url = id;
 					String courseid = obj.getAsString("courseid");
 					
@@ -132,9 +130,8 @@ public class SPARQLConnection {
 				}
 			}
 
-			
 			String response = sparqlUpdate(query + "}\r\n}");
-			//System.out.println("DEBUG --- RESPONSE: " + response);
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -161,7 +158,6 @@ public class SPARQLConnection {
 
 		
 		String responseString = sparqlUpdate(query + "}}");
-		//System.out.println("DEBUG --- QUERY: " + query);
 	}
 	
 	public void addInteractions (JSONArray objects) {
@@ -209,7 +205,6 @@ public class SPARQLConnection {
 				}
 			}
 			String response = sparqlUpdate(query + "}}");
-			//System.out.println("DEBUG --- QUERY: " + query);
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -236,8 +231,7 @@ public class SPARQLConnection {
 				"    FILTER (xsd:integer(?timestamp) > " + since + ").\r\n" + 
 				"  }\r\n" + 
 				"}";
-		//System.out.println("DEBUG --- QUERY: " + query);
-		//System.out.println("DEBUG --- BINDINGS: " + getBindings(sparqlQuery(query)).toJSONString());
+		
 		return getBindings(sparqlQuery(query));
 	}
 	
@@ -253,9 +247,8 @@ public class SPARQLConnection {
 				"  	?b ulo:interactionResource <" + resourceid + "> .\r\n" + 
 				"  }\r\n" + 
 				"}";
+		
 		JSONArray bindings = getBindings(sparqlQuery(query));
-		//System.out.println("DEBUG --- QUERY: " + query);
-		//System.out.println("DEBUG --- BINDINGS: " + bindings);
 		for (int i = 0; i < bindings.size(); i++) {
 			JSONObject obj = (JSONObject) bindings.get(i);
 			interactions.add(((JSONObject) obj.get("interaction")).getAsString("value"));
@@ -345,8 +338,6 @@ public class SPARQLConnection {
 					    while ((responseLine = br.readLine()) != null) {
 					        response.append(responseLine.trim());
 					    }
-					    //System.out.println("DEBUG --- QUERY: " + query);
-					    //System.out.println("DEBUG --- RESPONSE: " + response.toString());
 					}
 			return response.toString();
 		} catch (Exception e) {
@@ -365,7 +356,6 @@ public class SPARQLConnection {
 			conn.setDoOutput(true);
 			
 			try(OutputStream os = conn.getOutputStream()) {
-				//System.out.println("DEBUG --- QUERY: " + String.format("update=" + query, graphurl));
 			    byte[] input = String.format("update=" + query, graphurl).getBytes("utf-8");
 			    os.write(input, 0, input.length);			
 			}
@@ -376,8 +366,6 @@ public class SPARQLConnection {
 					    while ((responseLine = br.readLine()) != null) {
 					        response.append(responseLine.trim());
 					    }
-					    //System.out.println("DEBUG --- QUERY: " + query);
-					    //System.out.println("DEBUG --- RESPONSE: " + response.toString());
 					}
 			return response.toString();
 		} catch (Exception e) {
@@ -389,7 +377,6 @@ public class SPARQLConnection {
 	private JSONArray getBindings(String queryResult) {
 		JSONArray result = new JSONArray();
 		try {
-			//System.out.println("DEBUG --- RESPONSE: " + queryResult);
 			JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 			JSONObject responseObj = (JSONObject) parser.parse(queryResult.toString());
 			JSONObject resultsObj = (JSONObject) responseObj.get("results");
