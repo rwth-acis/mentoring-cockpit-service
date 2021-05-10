@@ -32,6 +32,8 @@ export SERVICE=${SERVICE_NAME}.${SERVICE_CLASS}@${SERVICE_VERSION}
     echo "Mandatory variable MYSQL_DATABASE is not set. Add -e MYSQL_DATABASE=mysqlDatabase to your arguments." && exit 1
 [[ -z "${LRS_CLIENT_URL}" ]] && \
     echo "Mandatory variable LRS_CLIENT_URL is not set. Add -e MYSQL_DATABASE=mysqlDatabase to your arguments." && exit 1
+[[ -z "${SPARQL_URL}" ]] && \
+    echo "Mandatory variable SPARQL_URL is not set. Add -e MYSQL_DATABASE=mysqlDatabase to your arguments." && exit 1
 
 # optional variables
 [[ -z "${SERVICE_PASSPHRASE}" ]] && export SERVICE_PASSPHRASE='mentoring'
@@ -48,6 +50,7 @@ set_in_service_config mysqlHost ${MYSQL_HOST}
 set_in_service_config mysqlPort ${MYSQL_PORT}
 set_in_service_config mysqlDatabase ${MYSQL_DATABASE}
 set_in_service_config lrsClientURL ${LRS_CLIENT_URL}
+set_in_service_config sparqlUrl ${SPARQL_URL}
 
 
 # wait for any bootstrap host to be available

@@ -67,7 +67,7 @@ public class MentoringCockpitService extends RESTService {
 	private String mysqlHost;
 	private String mysqlPort;
 	private String mysqlDatabase;
-	public String triplestoreDomain = "https://triplestore.tech4comp.dbis.rwth-aachen.de/LMSData"; //TODO: add to configs
+	public String triplestoreDomain;
 	private static String userEmail;
 	private String lrsClientURL;
 	public HashMap<String, Course> courses;
