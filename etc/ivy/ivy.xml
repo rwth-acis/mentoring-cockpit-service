@@ -10,7 +10,7 @@
     </publications>
     <dependencies>
         <!-- las2peer core -->
-        <dependency org="i5" name="las2peer-bundle" rev="0.8.3" changing="true" conf="platform->*" />
+        <dependency org="i5" name="las2peer-bundle" rev="1.0.1" changing="true" conf="platform->*" />
         <!-- JUnit -->
         <dependency org="junit" name="junit" rev="4.12" conf="platform->*" />
         
@@ -19,7 +19,9 @@
         <dependency org="com.googlecode.json-simple" name="json-simple" rev="1.1" />
 
         <dependency org="org.knowm.xchart" name="xchart" rev="3.6.4" />
-
+        
+        <dependency org="org.json" name="json" rev="20180813" />
+        
         <!-- service dependencies -->
         <!-- Add service dependencies here -->
         <!-- All dependencies with (default) conf="bundle->*" are packaged into the service jar -->

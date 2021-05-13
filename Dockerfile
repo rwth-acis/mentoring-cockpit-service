@@ -6,6 +6,8 @@ RUN apk add --update bash mysql-client apache-ant curl fontconfig ttf-dejavu && 
 RUN addgroup -g 1000 -S las2peer && \
     adduser -u 1000 -S las2peer -G las2peer
 
+RUN mkdir -p /opt/feedback && chown -R 1000:1000 /opt/feedback && chmod -R "a+rwX" /opt/feedback
+
 COPY --chown=las2peer:las2peer . /src
 WORKDIR /src
 
