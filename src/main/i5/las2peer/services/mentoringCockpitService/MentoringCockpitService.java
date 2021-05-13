@@ -18,6 +18,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map.Entry;
+
+import javax.ws.rs.*;
 import java.util.List;
 import java.util.Map;
 
@@ -44,20 +48,32 @@ import org.knowm.xchart.style.markers.SeriesMarkers;
 
 import i5.las2peer.api.Context;
 import i5.las2peer.api.ManualDeployment;
+import i5.las2peer.api.logging.MonitoringEvent;
+import i5.las2peer.restMapper.RESTService;
+import i5.las2peer.restMapper.annotations.ServicePath;
+import i5.las2peer.services.mentoringCockpitService.Model.Course;
+import i5.las2peer.services.mentoringCockpitService.Model.MoodleCourse;
 import i5.las2peer.api.security.Agent;
 import i5.las2peer.api.security.UserAgent;
 import i5.las2peer.restMapper.RESTService;
 import i5.las2peer.restMapper.annotations.ServicePath;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.Contact;
 import io.swagger.annotations.Info;
+import io.swagger.annotations.License;
 import io.swagger.annotations.SwaggerDefinition;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
+import net.minidev.json.parser.JSONParser;
 import net.minidev.json.parser.ParseException;
+import org.knowm.xchart.BitmapEncoder;
+import org.knowm.xchart.XYChart;
+import org.knowm.xchart.XYSeries;
+import org.knowm.xchart.style.markers.SeriesMarkers;
 
 @Api
 @SwaggerDefinition(
@@ -89,8 +105,12 @@ public class MentoringCockpitService extends RESTService {
 	private String mysqlHost;
 	private String mysqlPort;
 	private String mysqlDatabase;
+	public String triplestoreDomain;
 	private static String userEmail;
 	private String lrsClientURL;
+	public HashMap<String, Course> courses;
+	
+	
 
 	// TODO: Maybe move to environment
 	private String feedbackLRSAuth = "Basic OTRjMjYxNjdmYzY1MzFmNmM1M2RjZDEyYzJjOWI1OGNiZDc5ZGFkYzo3YWY3ZDFhN2MxYzliYTIyNzMyMDk3NTNhN2E0YjEwNjNiYjYyZjUx";
@@ -107,6 +127,15 @@ public class MentoringCockpitService extends RESTService {
 		feedbackAccessAllowed.add("neumann");
 		// set field values
 		setFieldValues();
+		userEmail = "askabot@fakemail.de"; //TODO: remove this
+		courses = new HashMap<String, Course>();
+		createCourses();
+	}
+	
+	@Override
+	protected void initResources() {
+		getResourceConfig().register(Suggestions.class);
+		getResourceConfig().register(this);
 	}
 
 	/**
@@ -269,6 +298,49 @@ public class MentoringCockpitService extends RESTService {
 		}
 	}
 
+	/**
+     * A function that is called by a chatbot to generate a suggestion for a user.
+     *
+     * @body Request body of the chatbot
+     *
+     */
+    @GET
+    @Path("/assignBots")
+    @Produces(MediaType.TEXT_PLAIN)
+    @ApiResponses(
+			value = { @ApiResponse(
+					code = HttpURLConnection.HTTP_OK,
+					message = "Connection works") })
+	public Response assignBots(String body) {
+		try{
+			JSONObject courseMap = new JSONObject();
+			
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			Connection con = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase,
+					mysqlUser, mysqlPassword);
+			
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("select * from ACCESS");
+			while(rs.next()) {
+				String botName = rs.getString("SUB");
+				String link = rs.getString("COURSELINK");
+				String courseid = link.split("id=")[1];
+				courseMap.put(botName, courseid);
+			}
+			con.close();
+			JSONObject obj = new JSONObject();
+			obj.put("courseMap", courseMap);
+			
+			System.out.println("\u001B[33mDebug --- CourseMap: " + obj.toString() + "\u001B[0m");
+			Context.get().monitorEvent(MonitoringEvent.SERVICE_CUSTOM_MESSAGE_1, obj.toString());
+			return Response.status(200).entity("Bots assigned.").build();
+			
+		} catch(Exception e) {
+			System.out.println(e);
+			return Response.status(400).entity("Failed.").build();
+		}
+	}
+	
 	@GET
 	@Path("/test/{email}")
 	@Produces("application/pdf")
@@ -423,14 +495,14 @@ public class MentoringCockpitService extends RESTService {
 	private String getCourseListFromMysql(String sub) {
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			Connection con = DriverManager.getConnection(
-					"jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase, mysqlUser, mysqlPassword);
-
+			Connection con = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase,
+					mysqlUser, mysqlPassword);
+			
 			JSONArray courseArr = new JSONArray();
-
+			
 			Statement stmt = con.createStatement();
 			ResultSet rs = stmt.executeQuery("select COURSELINK, COURSENAME from ACCESS where SUB = '" + sub + "'");
-			while (rs.next()) {
+			while(rs.next()) {
 				JSONObject course = new JSONObject();
 				course.put("name", rs.getString("COURSENAME"));
 				course.put("link", rs.getString("COURSELINK"));
@@ -650,7 +722,7 @@ public class MentoringCockpitService extends RESTService {
 	 * @return JSONArray converted to a String, containing the data
 	 * 
 	 */
-	private String LRSconnect(String pipeline) {
+	public String LRSconnect(String pipeline)  {
 		StringBuffer response = new StringBuffer();
 		String clientKey;
 		String clientSecret;
@@ -661,20 +733,22 @@ public class MentoringCockpitService extends RESTService {
 			e.printStackTrace();
 		} catch (ParseException e) {
 			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-
-		// If Client exists in LRS
-		if (!(clientId).equals("noClientExists")) {
+		
+		//If Client exists in LRS
+		if(!(clientId).equals("noClientExists")) {
 			clientKey = (String) ((JSONObject) clientId).get("basic_key");
 			clientSecret = (String) ((JSONObject) clientId).get("basic_secret");
-			lrsAuth = Base64.getEncoder().encodeToString((clientKey + ":" + clientSecret).getBytes());
+			String auth = Base64.getEncoder().encodeToString((clientKey + ":" + clientSecret).getBytes());
 
 			try {
 				URL url = new URL(lrsDomain + "pipeline=" + pipeline);
 				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 				conn.setRequestMethod("GET");
 				conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-				conn.setRequestProperty("Authorization", "Basic " + lrsAuth);
+				conn.setRequestProperty("Authorization","Basic " + auth);
 
 				BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 
@@ -689,9 +763,10 @@ public class MentoringCockpitService extends RESTService {
 				e.printStackTrace();
 			} catch (IOException e) {
 				e.printStackTrace();
-			}
+			} 
 			return response.toString();
-		} else {
+		}
+		else {
 			return String.valueOf(Response.status(500).entity("Client does not exist in LRS").build());
 		}
 	}
@@ -706,9 +781,8 @@ public class MentoringCockpitService extends RESTService {
 		try {
 			Connection con = connectToDatabase();
 			Statement stmt = con.createStatement();
-			ResultSet rs = stmt
-					.executeQuery("select MOODLE_TOKEN from moodle_lrs_mapping where EMAIL = '" + userEmail + "'");
-			while (rs.next()) {
+			ResultSet rs = stmt.executeQuery("select MOODLE_TOKEN from moodle_lrs_mapping where EMAIL = '" + userEmail + "'");
+			while(rs.next()) {
 				moodleToken = rs.getString("moodle_token");
 			}
 			con.close();
@@ -769,4 +843,150 @@ public class MentoringCockpitService extends RESTService {
 		}
 		return con;
 	}
+	
+	public void createCourses() {
+		try{
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			Connection con = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase,
+					mysqlUser, mysqlPassword);
+			
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("select COURSELINK from ACCESS");
+			while(rs.next()) {
+				String courseid = rs.getString("COURSELINK");
+				Course course = new MoodleCourse(courseid, courseid, this);
+				courses.put(courseid, course);
+			}
+			con.close();
+		} catch(Exception e) {
+			System.out.println(e);
+		}
+	}
+	
+	@Api(
+			value = "Suggestion resource")
+	@SwaggerDefinition(
+			info = @Info(
+					title = "Mentoring Cockpit Service",
+					version = "1.0.0",
+					description = "",
+					termsOfService = "",
+					contact = @Contact(
+							name = "Leonardo da Matta",
+							url = "",
+							email = "leonardo.matta@rwth-aachen.de"),
+					license = @License(
+							name = "",
+							url = "")))
+	@Path("/suggestions")
+	public static class Suggestions {
+		MentoringCockpitService service = (MentoringCockpitService) Context.get().getService();
+		
+		/**
+	     * A function that is called by a chatbot to generate a list of resource recommendations based on the user's LMS data.
+	     *
+	     * @body Request body of the chatbot
+	     *
+	     */
+	    @POST
+	    @Path("/getSuggestion")
+		@Consumes(MediaType.TEXT_PLAIN)
+	    @Produces(MediaType.APPLICATION_JSON)
+	    @ApiOperation(
+				value = "Get Suggestion",
+				notes = "Returns a resource suggestion for the given course and user.")
+	    @ApiResponses(
+	            value = { @ApiResponse(
+	                    code = HttpURLConnection.HTTP_OK,
+	                    message = "Connection works") })
+	    public Response getSuggestion(String body) {
+	    	JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
+	    	JSONObject returnObj = new JSONObject();
+	    	try {
+	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
+	    		String userid = bodyObj.getAsString("user");
+	    		String courseid = bodyObj.getAsString("courseid");
+	    		int numOfSuggestions = bodyObj.getAsNumber("numOfSuggestions").intValue();
+	    		if (courseid != null) {
+	    			if (service.courses.containsKey(courseid)) {
+		    			returnObj.put("text", this.service.courses.get(courseid).getSuggestion(userid, numOfSuggestions));
+		    		} 
+	    		} else {
+	    			for (Entry<String, Course> entry : this.service.courses.entrySet()) {
+	    				entry.getValue().update();
+	    				if (entry.getValue().getUsers().containsKey(userid)) {
+	    					returnObj.put("text", entry.getValue().getSuggestion(userid, numOfSuggestions));
+	    					break;
+	    				}
+	    			}
+	    		}
+	    		if (!returnObj.containsKey("text")) {
+    				returnObj.put("text", "Error: Course not initialized!");
+    			}
+	    		returnObj.put("closeContext", "true");
+	    		return Response.status(200).entity(returnObj).build();
+	    		
+	    		
+	    	} catch (Exception e) {
+	    		e.printStackTrace();
+	    		returnObj.put("text", "I wasn't able to understand your message very well. Would you mind reformulating it?");
+	    		return Response.status(400).entity(returnObj).build();
+	    	}
+	    	
+		}
+	    
+	    /**
+	     * A function that is called by a chatbot to generate a list of recommendations based on the given theme.
+	     *
+	     * @body Request body of the chatbot
+	     *
+	     */
+	    @POST
+	    @Path("/getSuggestionByTheme")
+		@Consumes(MediaType.TEXT_PLAIN)
+	    @Produces(MediaType.APPLICATION_JSON)
+	    @ApiOperation(
+				value = "Get Suggestion",
+				notes = "Returns a list of resources related to the given theme.")
+	    @ApiResponses(
+	            value = { @ApiResponse(
+	                    code = HttpURLConnection.HTTP_OK,
+	                    message = "Connection works") })
+	    public Response getSuggestionByTheme(String body) {
+	    	JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
+	    	JSONObject returnObj = new JSONObject();
+	    	try {
+	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
+	    		
+	    		JSONObject themeEntity = null;
+	    		JSONArray entities = (JSONArray) bodyObj.get("entities");
+	    		if (!entities.isEmpty()) {
+	    			for (int i = 0; i < entities.size(); i++) {
+		    			JSONObject entity = (JSONObject) entities.get(i);
+		    			if (themeEntity == null || entity.getAsNumber("confidence").doubleValue() > themeEntity.getAsNumber("confidence").doubleValue()) {
+		    				themeEntity = entity;
+		    			}
+		    		}
+		    		String courseid = bodyObj.getAsString("courseid");
+		    		if (service.courses.containsKey(courseid)) {
+		    			returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(themeEntity.getAsString("entityName")));
+		    		} else {
+		    			returnObj.put("text", "Error: Course not initialized!");
+		    		}
+	    		} else {
+	    			returnObj.put("text", "I wasn't able to understand your message very well. Would you mind reformulating it?");
+	    		}
+	    		
+	    		returnObj.put("closeContext", "true");
+	    		return Response.status(200).entity(returnObj).build();
+	    	} catch (Exception e) {
+	    		e.printStackTrace();
+	    		returnObj.put("text", "Error");
+	    		return Response.status(400).entity(returnObj).build();
+	    	}
+	    	
+		}
+	}
+	
+	
 }

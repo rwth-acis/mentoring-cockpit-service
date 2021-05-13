@@ -8,6 +8,7 @@ if [[ ! -z "${DEBUG}" ]]; then
 fi
 
 # set some helpful variables
+export CREATE_DB_SQL='etc/create_database_MySQL.sql'
 export SERVICE_PROPERTY_FILE='etc/i5.las2peer.services.mentoringCockpitService.MentoringCockpitService.properties'
 export SERVICE_VERSION=$(awk -F "=" '/service.version/ {print $2}' etc/ant_configuration/service.properties)
 export SERVICE_NAME=$(awk -F "=" '/service.name/ {print $2}' etc/ant_configuration/service.properties)
@@ -29,6 +30,10 @@ export SERVICE=${SERVICE_NAME}.${SERVICE_CLASS}@${SERVICE_VERSION}
     echo "Mandatory variable MYSQL_PORT is not set. Add -e MYSQL_PORT=mysqlPort to your arguments." && exit 1
 [[ -z "${MYSQL_DATABASE}" ]] && \
     echo "Mandatory variable MYSQL_DATABASE is not set. Add -e MYSQL_DATABASE=mysqlDatabase to your arguments." && exit 1
+[[ -z "${LRS_CLIENT_URL}" ]] && \
+    echo "Mandatory variable LRS_CLIENT_URL is not set. Add -e MYSQL_DATABASE=mysqlDatabase to your arguments." && exit 1
+[[ -z "${SPARQL_URL}" ]] && \
+    echo "Mandatory variable SPARQL_URL is not set. Add -e MYSQL_DATABASE=mysqlDatabase to your arguments." && exit 1
 
 # optional variables
 [[ -z "${SERVICE_PASSPHRASE}" ]] && export SERVICE_PASSPHRASE='mentoring'
@@ -44,6 +49,8 @@ set_in_service_config mysqlPassword ${MYSQL_PASSWORD}
 set_in_service_config mysqlHost ${MYSQL_HOST}
 set_in_service_config mysqlPort ${MYSQL_PORT}
 set_in_service_config mysqlDatabase ${MYSQL_DATABASE}
+set_in_service_config lrsClientURL ${LRS_CLIENT_URL}
+set_in_service_config sparqlUrl ${SPARQL_URL}
 
 
 # wait for any bootstrap host to be available
@@ -58,6 +65,19 @@ if [[ ! -z "${BOOTSTRAP}" ]]; then
             break
         fi
     done
+fi
+
+# ensure the database is ready
+while ! mysqladmin ping -h${MYSQL_HOST} -P${MYSQL_PORT} -u${MYSQL_USER} -p${MYSQL_PASSWORD} --silent; do
+    echo "Waiting for mysql at ${MYSQL_HOST}:${MYSQL_PORT}..."
+    sleep 1
+done
+echo "${MYSQL_HOST}:${MYSQL_PORT} is available. Continuing..."
+
+# Create and migrate the database on first run
+if ! mysql -h${MYSQL_HOST} -P${MYSQL_PORT} -u${MYSQL_USER} -p${MYSQL_PASSWORD} -e "desc ${MYSQL_DATABASE}.ACCESS" > /dev/null 2>&1; then
+    echo "Creating database schema..."
+    mysql -h${MYSQL_HOST} -P${MYSQL_PORT} -u${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE} < ${CREATE_DB_SQL}
 fi
 
 # prevent glob expansion in lib/*
@@ -88,9 +108,9 @@ echo external_address = $(curl -s https://ipinfo.io/ip):${LAS2PEER_PORT} > etc/p
 if [[ -z "${@}" ]]
 then
     if [ -n "$LAS2PEER_ETH_HOST" ]; then
-        exec ${LAUNCH_COMMAND} --node-id-seed $NODE_ID_SEED --observer --ethereum-mnemonic "$(selectMnemonic)" uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) startWebConnector "node=getNodeAsEthereumNode()" "registry=node.getRegistryClient()" "n=getNodeAsEthereumNode()" "r=n.getRegistryClient()" 
+        exec ${LAUNCH_COMMAND} --observer --ethereum-mnemonic "$(selectMnemonic)" uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) startWebConnector "node=getNodeAsEthereumNode()" "registry=node.getRegistryClient()" "n=getNodeAsEthereumNode()" "r=n.getRegistryClient()" 
     else
-        exec ${LAUNCH_COMMAND} --node-id-seed $NODE_ID_SEED --observer uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) startWebConnector
+        exec ${LAUNCH_COMMAND} --observer uploadStartupDirectory startService\("'""${SERVICE}""'", "'""${SERVICE_PASSPHRASE}""'"\) startWebConnector
     fi
 else
   exec ${LAUNCH_COMMAND} ${@}
