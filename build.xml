@@ -1,4 +1,4 @@
-<project name="las2peer-Template-Project" default="all" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+<project name="Mentoring Cockpit Service" default="all" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
     
     <property file="etc/ant_configuration/user.properties"/>
     <property file="etc/ant_configuration/service.properties"/>
@@ -52,10 +52,10 @@
 	   <echo>Java/JVM version: ${ant.java.version}</echo> 
 	   <echo>Java/JVM detail version: ${java.version}</echo> 
 		<fail message="Unsupported Java version: ${ant.java.version}. 
-		  Make sure that the Java version is 1.8.">
+		  Make sure that the Java version is 14.">
 		  <condition>
 		  	<not>
-				<equals arg1="${ant.java.version}" arg2="1.8"/>
+				<equals arg1="${ant.java.version}" arg2="14"/>
 			</not>
 		  </condition>
 		</fail>

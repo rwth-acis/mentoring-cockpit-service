@@ -958,18 +958,22 @@ public class MentoringCockpitService extends RESTService {
 	    	try {
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
 	    		
-	    		JSONObject themeEntity = null;
-	    		JSONArray entities = (JSONArray) bodyObj.get("entities");
-	    		if (!entities.isEmpty()) {
-	    			for (int i = 0; i < entities.size(); i++) {
-		    			JSONObject entity = (JSONObject) entities.get(i);
-		    			if (themeEntity == null || entity.getAsNumber("confidence").doubleValue() > themeEntity.getAsNumber("confidence").doubleValue()) {
-		    				themeEntity = entity;
-		    			}
-		    		}
+	    		String themeEntity = null;
+	    		JSONObject entities = (JSONObject) bodyObj.get("entities");
+	    		if (entities != null) {
+	    			for (String entityName : entities.keySet()) {
+						JSONObject entity = (JSONObject) entities.get(entityName);
+
+						if (themeEntity == null ||
+								entity.getAsNumber("confidence").doubleValue() >
+										((JSONObject) entities.get(themeEntity)).getAsNumber("confidence").doubleValue()) {
+							themeEntity = entityName;
+						}
+					}
+
 		    		String courseid = bodyObj.getAsString("courseid");
 		    		if (service.courses.containsKey(courseid)) {
-		    			returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(themeEntity.getAsString("entityName")));
+		    			returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(themeEntity));
 		    		} else {
 		    			returnObj.put("text", "Error: Course not initialized!");
 		    		}
