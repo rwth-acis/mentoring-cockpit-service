@@ -39,6 +39,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
+import i5.las2peer.api.security.AnonymousAgent;
+import i5.las2peer.security.UserAgentImpl;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.knowm.xchart.BitmapEncoder;
@@ -134,6 +136,7 @@ public class MentoringCockpitService extends RESTService {
 	
 	@Override
 	protected void initResources() {
+		getResourceConfig().register(LRSQuery.class);
 		getResourceConfig().register(Suggestions.class);
 		getResourceConfig().register(this);
 	}
@@ -991,6 +994,138 @@ public class MentoringCockpitService extends RESTService {
 	    	
 		}
 	}
-	
-	
+	@Path("lrs")
+	public static class LRSQuery {
+		MentoringCockpitService service = (MentoringCockpitService) Context.get().getService();
+
+		/**
+		 * Method used for querying LRS data of a specific student. Parameters can include a list of verbs or objects
+		 * the xAPI statements refer to.
+		 *
+		 * @body Request body of the query.
+		 *
+		 */
+		@POST
+		@Path("lrsQuery")
+		@Consumes(MediaType.APPLICATION_JSON)
+		@Produces(MediaType.APPLICATION_JSON)
+		@ApiOperation(
+				value = "Query LRS",
+				notes = "Returns a JSON object with the results of the LRS query..")
+		@ApiResponses(
+				value = { @ApiResponse(
+						code = HttpURLConnection.HTTP_OK,
+						message = "Connection works") })
+		public Response lrsQuery(String body) {
+			JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
+			JSONObject bodyObj = null;
+			try {
+				bodyObj = (JSONObject) parser.parse(body);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			JSONObject parametersObj = (JSONObject) bodyObj.get("parameters");
+			JSONArray verbsList = (JSONArray) parametersObj.get("verbs");
+			JSONArray objectsList = (JSONArray) parametersObj.get("objects");
+
+			String actor = bodyObj.getAsString("actor");
+
+
+
+
+			// Check if the requesting user is the same as the provided actor
+			if (Context.getCurrent().getMainAgent() instanceof AnonymousAgent) {
+				return Response.status(Response.Status.UNAUTHORIZED).entity("Authorization required.").build();
+			}
+
+			UserAgentImpl u = (UserAgentImpl) Context.getCurrent().getMainAgent();
+			if (u.getEmail().equals(actor)) {
+				return Response.status(Response.Status.FORBIDDEN).entity("Access denied.").build();
+			}
+
+			// Match block
+
+			// Match only statements containing one specified verb and one specified object
+			JSONObject matchObj = new JSONObject();
+			JSONArray andArray = new JSONArray();
+
+			if (!verbsList.isEmpty()) {
+				JSONObject matchVerbs = new JSONObject();
+				JSONArray inVerbs = new JSONArray();
+				inVerbs.add("statement.verb.id");
+				inVerbs.add(verbsList);
+				matchVerbs.put("$in", inVerbs);
+				andArray.add(matchVerbs);
+			}
+
+			if (!objectsList.isEmpty()) {
+				JSONObject matchObjects = new JSONObject();
+				JSONArray inObjects = new JSONArray();
+				inObjects.add("statement.object.id");
+				inObjects.add(objectsList);
+				matchObjects.put("$in", inObjects);
+				andArray.add(matchObjects);
+			}
+
+			// If no verbs or objects are specified, simply match any statement by the given actor
+			if (!verbsList.isEmpty() || !objectsList.isEmpty()) {
+				matchObj.put("$and", andArray);
+			}
+			matchObj.put("statement.actor.account.name", actor);
+
+			JSONObject match = new JSONObject();
+			match.put("$match", matchObj);
+
+			JSONArray arr = new JSONArray();
+			arr.add(matchObj);
+
+			StringBuilder sb = new StringBuilder();
+			for (byte b : arr.toString().getBytes()) {
+				sb.append("%" + String.format("%02X", b));
+			}
+
+			return Response.status(200).entity(service.LRSconnect(sb.toString())).build();
+		}
+
+	}
+	/**
+	 * Method used for checking whether the passed user sub belongs to a mentor.
+	 *
+	 * @param userSub User sub to be checked.
+	 */
+	@GET
+	@Path("checkIfMentor/{userSub}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@ApiOperation(
+			value = "Check user role.",
+			notes = "Returns a JSON object with the result of the role check.")
+	@ApiResponses(
+			value = { @ApiResponse(
+					code = HttpURLConnection.HTTP_OK,
+					message = "Connection works") })
+	public Response checkIfMentor(@PathParam("userSub") String userSub) {
+		JSONObject returnObj = new JSONObject();
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			Connection con = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase,
+					mysqlUser, mysqlPassword);
+
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("select SUB from ACCESS");
+			ArrayList<String> subs = new ArrayList<>();
+			while(rs.next()) {
+				subs.add(rs.getString("SUB"));
+			}
+			con.close();
+
+			returnObj.put("result", subs.contains(userSub));
+			return Response.status(200).entity(returnObj.toString()).build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			returnObj.put("result", "error");
+			return Response.status(400).entity(returnObj.toString()).build();
+		}
+	}
 }
