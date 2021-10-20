@@ -28,7 +28,7 @@ public abstract class Course {
 		this.resources = new HashMap<String, Resource>();
 		this.themes = new HashMap<String, Theme>();
 		this.service = service;
-		SPARQLConnection.startConnection(service.triplestoreDomain);
+		SPARQLConnection.startConnection(service.sparqlUrl);
 		this.newResources = new ArrayList<Resource>();
 		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 		try {

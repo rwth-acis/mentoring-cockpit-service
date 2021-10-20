@@ -105,7 +105,7 @@ public class MentoringCockpitService extends RESTService {
 	private String mysqlHost;
 	private String mysqlPort;
 	private String mysqlDatabase;
-	public String triplestoreDomain;
+	public String sparqlUrl;
 	private static String userEmail;
 	private String lrsClientURL;
 	public HashMap<String, Course> courses;
