@@ -316,7 +316,7 @@ public class MentoringCockpitService extends RESTService {
 			JSONObject courseMap = new JSONObject();
 			
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			Connection con = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase,
+			Connection con = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase + "?useSSL=false",
 					mysqlUser, mysqlPassword);
 			
 			Statement stmt = con.createStatement();
@@ -495,7 +495,7 @@ public class MentoringCockpitService extends RESTService {
 	private String getCourseListFromMysql(String sub) {
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			Connection con = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase,
+			Connection con = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase + "?useSSL=false",
 					mysqlUser, mysqlPassword);
 			
 			JSONArray courseArr = new JSONArray();
@@ -834,7 +834,7 @@ public class MentoringCockpitService extends RESTService {
 		Connection con = null;
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			con = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase,
+			con = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase + "?useSSL=false",
 					mysqlUser, mysqlPassword);
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -847,7 +847,7 @@ public class MentoringCockpitService extends RESTService {
 	public void createCourses() {
 		try{
 			Class.forName("com.mysql.cj.jdbc.Driver");
-			Connection con = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase,
+			Connection con = DriverManager.getConnection("jdbc:mysql://" + mysqlHost + ":" + mysqlPort + "/" + mysqlDatabase + "?useSSL=false",
 					mysqlUser, mysqlPassword);
 			
 			Statement stmt = con.createStatement();
