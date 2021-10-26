@@ -54,6 +54,7 @@ public class MoodleCourse extends Course {
 	protected void updateProfiles(long since) {
 		try {
 			JSONArray updates = SPARQLConnection.getInstance().getUpdates(since, courseid);
+			System.out.println("Update profiles with updates: " + updates);
 			for (int i = 0; i < updates.size(); i++) {
 				JSONObject obj = (JSONObject) updates.get(i);
 				String userid = ((JSONObject) obj.get("userid")).getAsString("value");
@@ -190,6 +191,7 @@ public class MoodleCourse extends Course {
 				userObj.put("courseid", courseid);
 				usersArray.add(userObj);
 			}
+			System.out.println("Add users to SPARQL: " + usersArray);
 			SPARQLConnection.getInstance().addUser(usersArray);
 		} catch (Exception e) {
 			e.printStackTrace();

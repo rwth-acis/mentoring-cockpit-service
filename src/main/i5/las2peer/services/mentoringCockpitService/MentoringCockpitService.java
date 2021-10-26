@@ -129,6 +129,7 @@ public class MentoringCockpitService extends RESTService {
 		setFieldValues();
 		userEmail = "askabot@fakemail.de"; //TODO: remove this
 		courses = new HashMap<String, Course>();
+		System.out.println("creating course...");
 		createCourses();
 	}
 	
@@ -744,6 +745,7 @@ public class MentoringCockpitService extends RESTService {
 			String auth = Base64.getEncoder().encodeToString((clientKey + ":" + clientSecret).getBytes());
 
 			try {
+				System.out.println("Requesting LRS with pipeline: " + pipeline);
 				URL url = new URL(lrsDomain + "pipeline=" + pipeline);
 				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 				conn.setRequestMethod("GET");
@@ -763,7 +765,8 @@ public class MentoringCockpitService extends RESTService {
 				e.printStackTrace();
 			} catch (IOException e) {
 				e.printStackTrace();
-			} 
+			}
+			System.out.println("Got response: " + response.toString());
 			return response.toString();
 		}
 		else {
@@ -857,6 +860,7 @@ public class MentoringCockpitService extends RESTService {
 				Course course = new MoodleCourse(courseid, courseid, this);
 				courses.put(courseid, course);
 			}
+			System.out.println("Course list: " + courses.toString());
 			con.close();
 		} catch(Exception e) {
 			System.out.println(e);
