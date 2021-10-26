@@ -58,6 +58,7 @@ public class MoodleCourse extends Course {
 			for (int i = 0; i < updates.size(); i++) {
 				JSONObject obj = (JSONObject) updates.get(i);
 				String userid = ((JSONObject) obj.get("userid")).getAsString("value");
+				userid = userid.replace("https://moodle.tech4comp.dbis.rwth-aachen.de//user//profile.php?id=", "");
 				String username = ((JSONObject) obj.get("username")).getAsString("value");
 				String resourceid = ((JSONObject) obj.get("resourceid")).getAsString("value");
 				String resourcename = ((JSONObject) obj.get("resourcename")).getAsString("value");

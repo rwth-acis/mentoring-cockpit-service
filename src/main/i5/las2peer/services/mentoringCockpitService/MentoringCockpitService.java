@@ -597,6 +597,7 @@ public class MentoringCockpitService extends RESTService {
 		for (byte b : arr.toString().getBytes()) {
 			sb.append("%" + String.format("%02X", b));
 		}
+		System.out.println("Requesting Students of course " + course + " from LRS");
 
 		return LRSconnect(sb.toString());
 	}
@@ -663,6 +664,7 @@ public class MentoringCockpitService extends RESTService {
 		for (byte b : arr.toString().getBytes()) {
 			sb.append("%" + String.format("%02X", b));
 		}
+		System.out.println("Requesting results of students of course " + course + " from LRS");
 
 		return LRSconnect(sb.toString());
 	}
@@ -711,6 +713,7 @@ public class MentoringCockpitService extends RESTService {
 		for (byte b : arr.toString().getBytes()) {
 			sb.append("%" + String.format("%02X", b));
 		}
+		System.out.println("Requesting sensor data from LRS");
 
 		return LRSconnect(sb.toString());
 	}
@@ -745,7 +748,6 @@ public class MentoringCockpitService extends RESTService {
 			String auth = Base64.getEncoder().encodeToString((clientKey + ":" + clientSecret).getBytes());
 
 			try {
-				System.out.println("Requesting LRS with pipeline: " + pipeline);
 				URL url = new URL(lrsDomain + "pipeline=" + pipeline);
 				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 				conn.setRequestMethod("GET");
@@ -766,7 +768,7 @@ public class MentoringCockpitService extends RESTService {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			System.out.println("Got response: " + response.toString());
+			System.out.println("Got LRS response: " + response.toString());
 			return response.toString();
 		}
 		else {
