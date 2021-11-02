@@ -964,7 +964,7 @@ public class MentoringCockpitService extends RESTService {
 //	    		JSONObject themeEntity = null;
 //	    		System.out.println("Trying to convert to JSONArray:\n" + bodyObj);
 //	    		JSONArray entities = (JSONArray) bodyObj.get("entities");
-				JSONObject entity = bodyObj.get("entities");
+				JSONObject entity = (JSONObject) bodyObj.get("entities");
 	    		if (entity != null && !entity.keySet().isEmpty()) {
 //	    			for (int i = 0; i < entities.size(); i++) {
 //		    			JSONObject entity = (JSONObject) entities.get(i);
@@ -976,7 +976,7 @@ public class MentoringCockpitService extends RESTService {
 		    		String courseid = bodyObj.getAsString("courseid");
 		    		if (service.courses.containsKey(courseid)) {
 		    			// There should be only one entity in there
-						String entityValue = entity.get(entity.keySet().iterator().next()).get("value");
+						String entityValue = ((JSONObject) entity.get(entity.keySet().iterator().next())).getAsString("value");
 						returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(entityValue));
 		    		} else {
 		    			returnObj.put("text", "Error: Course not initialized!");
