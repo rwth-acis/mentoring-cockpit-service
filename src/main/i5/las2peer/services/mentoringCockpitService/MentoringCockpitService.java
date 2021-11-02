@@ -972,12 +972,11 @@ public class MentoringCockpitService extends RESTService {
 //		    				themeEntity = entity;
 //		    			}
 //		    		}
-					System.out.println("Sent entities:\n" + entity);
 		    		String courseid = bodyObj.getAsString("courseid");
 		    		if (service.courses.containsKey(courseid)) {
 		    			// There should be only one entity in there
-						String entityValue = ((JSONObject) entity.get(entity.keySet().iterator().next())).getAsString("value");
-						returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(entityValue));
+						String entityName = (String) entity.keySet().iterator().next();
+						returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(entityName));
 		    		} else {
 		    			returnObj.put("text", "Error: Course " + courseid + " not initialized!");
 		    		}
