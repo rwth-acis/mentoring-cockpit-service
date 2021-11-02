@@ -979,7 +979,7 @@ public class MentoringCockpitService extends RESTService {
 						String entityValue = ((JSONObject) entity.get(entity.keySet().iterator().next())).getAsString("value");
 						returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(entityValue));
 		    		} else {
-		    			returnObj.put("text", "Error: Course not initialized!");
+		    			returnObj.put("text", "Error: Course " + courseid + " not initialized!");
 		    		}
 	    		} else {
 	    			returnObj.put("text", "I wasn't able to understand your message very well. Would you mind reformulating it?");

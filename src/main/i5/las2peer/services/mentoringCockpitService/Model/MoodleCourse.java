@@ -139,7 +139,8 @@ public class MoodleCourse extends Course {
 	public void createUsers(long since) {
 		// Match
 		JSONObject match = new JSONObject();
-		match.put("statement.context.extensions.https://tech4comp&46;de/xapi/context/extensions/courseInfo.courseid", Integer.parseInt(courseid.split("id=")[1]));
+//		match.put("statement.context.extensions.https://tech4comp&46;de/xapi/context/extensions/courseInfo.courseid", Integer.parseInt(courseid.split("id=")[1]));
+		match.put("statement.context.extensions.https://tech4comp&46;de/xapi/context/extensions/courseInfo.courseid", courseid);
 		JSONObject gtObject = new JSONObject();
 		gtObject.put("$gt", Instant.ofEpochSecond(since).toString());
 		match.put("statement.stored", gtObject);
@@ -175,6 +176,8 @@ public class MoodleCourse extends Course {
 		pipeline.add(matchObj);
 		pipeline.add(projectObj);
 		pipeline.add(groupObject);
+
+		System.out.println("Requesting user with pipeline:\n" + pipeline);
 		
 		StringBuilder sb = new StringBuilder();
 		for (byte b : pipeline.toString().getBytes()) {
@@ -203,7 +206,8 @@ public class MoodleCourse extends Course {
 	public void createResources(long since) {
 		// Match
 		JSONObject match = new JSONObject();
-		match.put("statement.context.extensions.https://tech4comp&46;de/xapi/context/extensions/courseInfo.courseid", Integer.parseInt(courseid.split("id=")[1]));
+//		match.put("statement.context.extensions.https://tech4comp&46;de/xapi/context/extensions/courseInfo.courseid", Integer.parseInt(courseid.split("id=")[1]));
+		match.put("statement.context.extensions.https://tech4comp&46;de/xapi/context/extensions/courseInfo.courseid", courseid);
 		JSONObject gtObject = new JSONObject();
 		gtObject.put("$gt", Instant.ofEpochSecond(since).toString());
 		match.put("statement.stored", gtObject);
@@ -236,7 +240,9 @@ public class MoodleCourse extends Course {
 		for (byte b : pipeline.toString().getBytes()) {
 			sb.append("%" + String.format("%02X", b));
 		}
-		
+
+		System.out.println("Requesting resource with pipeline:\n" + pipeline);
+
 		String res = service.LRSconnect(sb.toString());
 		
 		
