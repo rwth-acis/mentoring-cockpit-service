@@ -597,7 +597,7 @@ public class MentoringCockpitService extends RESTService {
 		for (byte b : arr.toString().getBytes()) {
 			sb.append("%" + String.format("%02X", b));
 		}
-		System.out.println("Requesting Students of course " + course + " from LRS");
+		System.out.println("Requesting Students of course " + course + " from LRS with JSONArray:\n" + arr);
 
 		return LRSconnect(sb.toString());
 	}
@@ -962,9 +962,11 @@ public class MentoringCockpitService extends RESTService {
 	    	JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 	    	JSONObject returnObj = new JSONObject();
 	    	try {
+	    		System.out.println("Incoming message body for suggestionByTheme:\n" + body);
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
 	    		
 	    		JSONObject themeEntity = null;
+	    		System.out.println("Trying to convert to JSONArray:\n" + bodyObj);
 	    		JSONArray entities = (JSONArray) bodyObj.get("entities");
 	    		if (!entities.isEmpty()) {
 	    			for (int i = 0; i < entities.size(); i++) {
@@ -984,6 +986,7 @@ public class MentoringCockpitService extends RESTService {
 	    		}
 	    		
 	    		returnObj.put("closeContext", "true");
+	    		System.out.println("suggestionByTheme returns:\n" + returnObj);
 	    		return Response.status(200).entity(returnObj).build();
 	    	} catch (Exception e) {
 	    		e.printStackTrace();
