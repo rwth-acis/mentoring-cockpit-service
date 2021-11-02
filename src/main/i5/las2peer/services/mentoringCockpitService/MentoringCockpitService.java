@@ -16,14 +16,10 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
+import java.util.*;
 import java.util.Map.Entry;
 
 import javax.ws.rs.*;
-import java.util.List;
-import java.util.Map;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -965,19 +961,23 @@ public class MentoringCockpitService extends RESTService {
 	    		System.out.println("Incoming message body for suggestionByTheme:\n" + body);
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
 	    		
-	    		JSONObject themeEntity = null;
-	    		System.out.println("Trying to convert to JSONArray:\n" + bodyObj);
-	    		JSONArray entities = (JSONArray) bodyObj.get("entities");
-	    		if (!entities.isEmpty()) {
-	    			for (int i = 0; i < entities.size(); i++) {
-		    			JSONObject entity = (JSONObject) entities.get(i);
-		    			if (themeEntity == null || entity.getAsNumber("confidence").doubleValue() > themeEntity.getAsNumber("confidence").doubleValue()) {
-		    				themeEntity = entity;
-		    			}
-		    		}
+//	    		JSONObject themeEntity = null;
+//	    		System.out.println("Trying to convert to JSONArray:\n" + bodyObj);
+//	    		JSONArray entities = (JSONArray) bodyObj.get("entities");
+				JSONObject entity = bodyObj.get("entities");
+	    		if (entity != null && !entity.keySet().isEmpty()) {
+//	    			for (int i = 0; i < entities.size(); i++) {
+//		    			JSONObject entity = (JSONObject) entities.get(i);
+//		    			if (themeEntity == null || entity.getAsNumber("confidence").doubleValue() > themeEntity.getAsNumber("confidence").doubleValue()) {
+//		    				themeEntity = entity;
+//		    			}
+//		    		}
+					System.out.println("Sent entities:\n" + entity);
 		    		String courseid = bodyObj.getAsString("courseid");
 		    		if (service.courses.containsKey(courseid)) {
-		    			returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(themeEntity.getAsString("entityName")));
+		    			// There should be only one entity in there
+						String entityValue = entity.get(entity.keySet().iterator().next()).get("value");
+						returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(entityValue));
 		    		} else {
 		    			returnObj.put("text", "Error: Course not initialized!");
 		    		}
