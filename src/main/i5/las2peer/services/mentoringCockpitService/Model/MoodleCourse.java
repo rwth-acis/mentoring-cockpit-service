@@ -137,6 +137,7 @@ public class MoodleCourse extends Course {
 
 	@Override
 	public void createUsers(long since) {
+		System.out.println("(!) Creating users for the course ");
 		// Match
 		JSONObject match = new JSONObject();
 		match.put("statement.context.extensions.https://tech4comp&46;de/xapi/context/extensions/courseInfo.courseid", Integer.parseInt(courseid.split("id=")[1]));
@@ -182,11 +183,12 @@ public class MoodleCourse extends Course {
 		for (byte b : pipeline.toString().getBytes()) {
 			sb.append("%" + String.format("%02X", b));
 		}
-		
+		System.out.println("(!) Establishing connection with the Learning Record Store");
 		String res = service.LRSconnect(sb.toString());
 		
 		JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 		try {
+			System.out.println("(!) Updating actual users");
 			JSONArray data = (JSONArray) parser.parse(res);
 			JSONArray usersArray = new JSONArray();
 			for (int i = 0; i < data.size(); i++) {
@@ -196,8 +198,10 @@ public class MoodleCourse extends Course {
 			}
 			System.out.println("Add users to SPARQL: " + usersArray);
 			SPARQLConnection.getInstance().addUser(usersArray);
+			System.out.println("(!)Users where added succesfully to the SPARql update");
 		} catch (Exception e) {
 			e.printStackTrace();
+			System.out.println("(!) Creation of users did not conclude correctly");
 		}
 	}
 
@@ -240,6 +244,7 @@ public class MoodleCourse extends Course {
 		}
 
 		System.out.println("Requesting resource with pipeline:\n" + pipeline);
+		//System.out.println("(!): The pipeline string used to connect with the LRS: "+ sb.toString());
 
 		String res = service.LRSconnect(sb.toString());
 		

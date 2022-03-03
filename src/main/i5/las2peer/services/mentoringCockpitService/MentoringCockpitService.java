@@ -855,6 +855,7 @@ public class MentoringCockpitService extends RESTService {
 			ResultSet rs = stmt.executeQuery("select COURSELINK from ACCESS");
 			while(rs.next()) {
 				String courseid = rs.getString("COURSELINK");
+				System.out.println("(!) Creating course : " + courseid);
 				Course course = new MoodleCourse(courseid, courseid, this);
 				courses.put(courseid, course);
 			}
