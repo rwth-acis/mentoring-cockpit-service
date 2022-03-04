@@ -53,19 +53,24 @@ public class MoodleCourse extends Course {
 	
 	protected void updateProfiles(long since) {
 		try {
-			JSONArray updates = SPARQLConnection.getInstance().getUpdates(since, courseid);
+			JSONArray updates = SPARQLConnection.getInstance().getUpdates(since, courseid); // This is where the error is, the updates don´t contain also the new users!!!
+			System.out.println("(!!): this should be where the new users are actually updated to the hash list");
 			System.out.println("Update profiles with updates: " + updates);
 			for (int i = 0; i < updates.size(); i++) {
 				JSONObject obj = (JSONObject) updates.get(i);
 				String userid = ((JSONObject) obj.get("userid")).getAsString("value");
-				userid = userid.replace("https://moodle.tech4comp.dbis.rwth-aachen.de/user/profile.php?id=", "");
+				
+				//userid = userid.replace("https://moodle.tech4comp.dbis.rwth-aachen.de/user/profile.php?id=", "");
+				System.out.println("(!!) Going through user: --->" + userid);
 				String username = ((JSONObject) obj.get("username")).getAsString("value");
 				String resourceid = ((JSONObject) obj.get("resourceid")).getAsString("value");
 				String resourcename = ((JSONObject) obj.get("resourcename")).getAsString("value");
 				String resourcetype = ((JSONObject) obj.get("resourcetype")).getAsString("value");
 				
 				if (!users.containsKey(userid)) {
+					System.out.println("(!!) Complete new user is being added!:-->" + username+ "With user id" +userid );
 					users.put(userid, new User(userid, username, resources.values()));
+					
 				}
 				
 				Resource resource = null;
