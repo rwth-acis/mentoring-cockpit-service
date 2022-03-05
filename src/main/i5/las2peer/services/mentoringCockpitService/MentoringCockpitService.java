@@ -18,6 +18,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
 import java.util.Map.Entry;
+import java.net.URLEncoder;
 
 import javax.ws.rs.*;
 
@@ -34,6 +35,8 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.Response.ResponseBuilder;
+
+import javax.ws.rs.core.UriBuilder;
 
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
@@ -1010,33 +1013,52 @@ public class MentoringCockpitService extends RESTService {
 		public Response testConnection(String body) {
 	    	JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 	    	JSONObject returnObj = new JSONObject();
+			JSONObject payloadJson = new JSONObject();
+
+
 	    	try {
 	    		System.out.println("Incoming message:\n" + body);
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
-				JSONObject entity = (JSONObject) bodyObj.get("entities");
-	    		if (entity != null && !entity.keySet().isEmpty()) {
-		    		String courseid = bodyObj.getAsString("courseid");
-		    		if (service.courses.containsKey(courseid)) {
-		    			// There should be only one entity in there
-						String entityName = (String) entity.keySet().iterator().next();
-						//Maybe I can test triggering the provisionray suggestions from here
-						// returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(entityName));
-		    		} else {
-		    			returnObj.put("text", "Error: Course " + courseid + " not initialized!");
-		    		}
+				//JSONObject entity = (JSONObject) bodyObj.get("entities"); Entities are used for the theme based suggestions, as keywords the server has to look for
+	    		if (bodyObj != null) {
+
+					String userid = bodyObj.getAsString("user");
+					String courseid = bodyObj.getAsString("courseid");
+					int numOfSuggestions = bodyObj.getAsNumber("numOfSuggestions").intValue();
+
+					String line = null;
+					StringBuilder sb = new StringBuilder ();
+					String res = null;
+		
+					URL url = UriBuilder.fromPath("http://localhost:5002/static/test/")
+								.path(URLEncoder.encode(payloadJson.toString(), "UTF-8").replace("+","%20"))
+								.build()
+								.toURL();
+					HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+					connection.setRequestMethod("POST");
+					connection.connect();
+					BufferedReader rd  = new BufferedReader( new InputStreamReader(connection.getInputStream(), "UTF-8"));
+		
+					while ((line = rd.readLine()) != null ) {
+						sb.append(line);
+					}
+					res = sb.toString();
+					return Response.ok().entity(res).build();
+
 	    		} else {
-	    			returnObj.put("text", "I wasn't able to understand your message very well. Would you mind reformulating it?");
+	    			returnObj.put("text", "I wasn´t able to find any information in you´r request, please try again");
+					returnObj.put("closeContext", "true");
+					System.out.println("The return response from the service is:\n" + returnObj);
+					return Response.status(200).entity(returnObj).build();
 	    		}
-	    		
-	    		returnObj.put("closeContext", "true");
-	    		System.out.println("The return response from the service is:\n" + returnObj);
-	    		return Response.status(200).entity(returnObj).build();
+
 	    	} catch (Exception e) {
 	    		e.printStackTrace();
+				System.out.println(e.toString());
 	    		returnObj.put("text", "Error");
 	    		return Response.status(400).entity(returnObj).build();
 	    	}
-	    	
+
 		}				
 
 
