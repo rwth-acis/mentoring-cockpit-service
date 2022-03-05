@@ -64,6 +64,10 @@ public abstract class Course {
 	protected abstract void createInteractions(long since);
 	
 	public abstract String getSuggestion(String userid, int numOfSuggestions);
+	
+	public abstract String getSuggestionFuture(String userid, int emotion, int numOfSuggestions);
+
+	public abstract String getSuggestionPast(String userid, int emotion, int numOfSuggestions);
 
 	public abstract String getThemeSuggestions(String themeid);
 	

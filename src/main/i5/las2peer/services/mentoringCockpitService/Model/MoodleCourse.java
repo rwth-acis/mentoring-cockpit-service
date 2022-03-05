@@ -121,6 +121,12 @@ public class MoodleCourse extends Course {
 	}
 
 	@Override
+	public String getSuggestionFuture(String userid, int numOfSuggestions, int emotion){return "";}
+
+	@Override
+	public String getSuggestionPast(String userid, int numOfSuggestions, int emotion){return "";}
+
+	@Override
 	public String getThemeSuggestions(String shortid) {
 		String themeid = "http://halle/domainmodel/" + shortid;
 		String result = "";

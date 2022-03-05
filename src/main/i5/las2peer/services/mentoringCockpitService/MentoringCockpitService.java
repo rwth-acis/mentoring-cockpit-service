@@ -995,6 +995,54 @@ public class MentoringCockpitService extends RESTService {
 	    	}
 	    	
 		}
+
+		@POST
+		@Path("/testConnection")
+		@Consumes(MediaType.TEXT_PLAIN)
+	    @Produces(MediaType.APPLICATION_JSON)
+	    @ApiOperation(
+				value = "Test connection with the MongoDB",
+				notes = "Return 200 for a valid connection")
+	    @ApiResponses(
+	            value = { @ApiResponse(
+	                    code = HttpURLConnection.HTTP_OK,
+	                    message = "Connection works") })
+		public Response testConnection(String body) {
+	    	JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
+	    	JSONObject returnObj = new JSONObject();
+	    	try {
+	    		System.out.println("Incoming message:\n" + body);
+	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
+				JSONObject entity = (JSONObject) bodyObj.get("entities");
+	    		if (entity != null && !entity.keySet().isEmpty()) {
+		    		String courseid = bodyObj.getAsString("courseid");
+		    		if (service.courses.containsKey(courseid)) {
+		    			// There should be only one entity in there
+						String entityName = (String) entity.keySet().iterator().next();
+						//Maybe I can test triggering the provisionray suggestions from here
+						// returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(entityName));
+		    		} else {
+		    			returnObj.put("text", "Error: Course " + courseid + " not initialized!");
+		    		}
+	    		} else {
+	    			returnObj.put("text", "I wasn't able to understand your message very well. Would you mind reformulating it?");
+	    		}
+	    		
+	    		returnObj.put("closeContext", "true");
+	    		System.out.println("The return response from the service is:\n" + returnObj);
+	    		return Response.status(200).entity(returnObj).build();
+	    	} catch (Exception e) {
+	    		e.printStackTrace();
+	    		returnObj.put("text", "Error");
+	    		return Response.status(400).entity(returnObj).build();
+	    	}
+	    	
+		}				
+
+
+
+
+
 	}
 	
 	

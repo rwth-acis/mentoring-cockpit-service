@@ -211,7 +211,7 @@ public class SPARQLConnection {
 		}
 	}
 	
-	public JSONArray getUpdates(long since, String courseid) { // Probably some formating error doesnt allow for all the correct results to come through. 
+	public JSONArray getUpdates(long since, String courseid) { // Probably some formating error doesnt allow for all the correct results to come through. It seems to be the string is simply built for the courses for the leipzig university, still is strange that some RWTh users come through.
 		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
 				"PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\r\n" + 
 				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
