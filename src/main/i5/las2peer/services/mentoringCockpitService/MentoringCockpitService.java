@@ -1026,17 +1026,34 @@ public class MentoringCockpitService extends RESTService {
 					String courseid = bodyObj.getAsString("courseid");
 					int numOfSuggestions = bodyObj.getAsNumber("numOfSuggestions").intValue();
 
+					payloadJson.put("userid", userid);
+					payloadJson.put("courseid", courseid);
+					payloadJson.put("numOfSuggestions", numOfSuggestions);
+
+
 					String line = null;
 					StringBuilder sb = new StringBuilder ();
 					String res = null;
-		
-					URL url = UriBuilder.fromPath("http://localhost:5002/static/test/")
-								.path(URLEncoder.encode(payloadJson.toString(), "UTF-8").replace("+","%20"))
-								.build()
-								.toURL();
+					
+					URL url = UriBuilder.fromPath("http://host.docker.internal:5002/static/test/")
+								//.path(URLEncoder.encode(payloadJson.toString(), "UTF-8").replace("+","%20"))
+					 			.build()
+					 			.toURL();
+					System.out.println("Attempting connection with url:" + url.toString());
 					HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 					connection.setRequestMethod("POST");
+					connection.setRequestProperty("Content-Type", "application-json; utf-8");
+					connection.setRequestProperty("Accept", "application/json");
+					connection.setDoOutput(true);
+					try(OutputStream os = connection.getOutputStream()){
+
+						byte[] input = bodyObj.toJSONString().getBytes("utf-8");
+						os.write(input, 0, input.length);
+
+					}
 					connection.connect();
+				
+					
 					BufferedReader rd  = new BufferedReader( new InputStreamReader(connection.getInputStream(), "UTF-8"));
 		
 					while ((line = rd.readLine()) != null ) {
