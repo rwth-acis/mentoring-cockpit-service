@@ -60,7 +60,7 @@ public class MoodleCourse extends Course {
 				JSONObject obj = (JSONObject) updates.get(i);
 				String userid = ((JSONObject) obj.get("userid")).getAsString("value");
 				
-				//userid = userid.replace("https://moodle.tech4comp.dbis.rwth-aachen.de/user/profile.php?id=", "");
+				userid = userid.replace("https://moodle.tech4comp.dbis.rwth-aachen.de/user/profile.php?id=", "");
 				System.out.println("(!!) Going through user: --->" + userid);
 				String username = ((JSONObject) obj.get("username")).getAsString("value");
 				String resourceid = ((JSONObject) obj.get("resourceid")).getAsString("value");
@@ -399,6 +399,7 @@ public class MoodleCourse extends Course {
 		}
 		
 		String res = service.LRSconnect(sb.toString());
+		System.out.println("(!!!) This is the result of the query of interaction to the triple store: " + res);
 		JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 		try {
 			JSONArray data = (JSONArray) parser.parse(res);

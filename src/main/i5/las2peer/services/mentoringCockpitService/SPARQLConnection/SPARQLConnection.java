@@ -163,8 +163,10 @@ public class SPARQLConnection {
 	
 	public void addInteractions (JSONArray objects) {
 		System.out.println("(!!): Adding following interactions to Sparql: " + objects.toString());
+
+		//I think this first query gets all the distinct resources in the graph
 		String resourceQuery = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
-				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
+				"PREFIX rdfs\r\n" + 
 				"    SELECT DISTINCT ?resourceid WHERE {\r\n" + 
 				"  		GRAPH <%s> {\r\n" + 
 				"    		?b ulo:discussResource ?resourceid .\r\n" + 
@@ -174,9 +176,16 @@ public class SPARQLConnection {
 		try {
 			JSONArray bindingsArray = getBindings(sparqlQuery(resourceQuery));
 			
+			
 			HashSet<String> resourceIds = new HashSet<String>();
 			for (int i = 0; i < bindingsArray.size(); i++) {
 				JSONObject bindingObj = (JSONObject) bindingsArray.get(i);
+
+
+				// String x = ((JSONObject) bindingObj.get("resourceid")).getAsString("value");
+				// fixedSyntaxResourceId = x.substring(0,x.length()-)+"B"+x.substring(3);
+
+
 				resourceIds.add(((JSONObject) bindingObj.get("resourceid")).getAsString("value"));
 			}
 			
@@ -188,8 +197,10 @@ public class SPARQLConnection {
 			for (int i = 0; i < objects.size(); i++) {
 				JSONObject obj = (JSONObject) objects.get(i);
 				String resourceid = obj.getAsString("objectid");
+				//todo: fix the formatting FROM THE LRS, not the triple store of how the resources are described
+				//! resourceid format is unequal to the format from the triplestore. resource id has .demod in the string instead of .de/mod... need to fix this.
 				String interaction = obj.getAsString("verbShort");
-				if (resourceIds.contains(resourceid) || interaction.equals("posted") || interaction.equals("interacted")) {
+				if (resourceIds.contains(resourceid) || interaction.equals("posted") || interaction.equals("interacted") /*|| interaction.equals("viewed") This doesnt help as it adds resources which are not identifiable, the solution should be to repair the string directly form the LRS*/){
 					String userid = "https://moodle.tech4comp.dbis.rwth-aachen.de/user/profile.php?id=" + obj.getAsString("userid");
 					
 					JSONObject information = (JSONObject) obj.get("info");
@@ -200,7 +211,7 @@ public class SPARQLConnection {
 							+ "ulo:timestamp " + "\"" + Instant.parse(obj.getAsString("timestamp")).getEpochSecond() + "\";\r\n";
 					
 					for (Entry<String, Object> entry : information.entrySet()) {
-						query = query + ";\r\nulo:" + entry.getKey() + " \"" + entry.getValue().toString() + "\"";
+						query = query + ";\r\n ulo:" + entry.getKey() + " \"" + entry.getValue().toString() + "\"";
 					}
 					
 					query = query + "] .\r\n";

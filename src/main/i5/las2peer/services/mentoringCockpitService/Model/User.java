@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashSet;
 
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
+import i5.las2peer.services.mentoringCockpitService.Suggestion.ERecSuggestionEvaluator;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.MoodleSuggestionEvaluator;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.Suggestion;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.SuggestionEvaluator;
@@ -22,6 +23,8 @@ public class User {
 		this.userid = userid;
 		this.name = name;
 		this.suggestionEvaluator = new MoodleSuggestionEvaluator(0, 1);
+		//(!) todo: Once the transmition of data from the LRS -> Sparql -> MCS work fine, we can change the suggestion Evaluator to the new one.
+		//this.suggestionEvaluator = new ERecSuggestionEvaluator(0,1);
 		this.suggestionQueue = new SuggestionQueue();
 		this.updateSet = new ArrayList<Resource>();
 		updateSuggestions(resources);
