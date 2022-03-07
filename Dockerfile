@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk-alpine
+FROM openjdk:17-jdk-alpine
 
 ENV LAS2PEER_PORT=9011
 
@@ -13,7 +13,7 @@ WORKDIR /src
 
 # run the rest as unprivileged user
 USER las2peer
-RUN ant jar
+RUN chmod +x gradlew && ./gradlew build --exclude-task test
 
 EXPOSE $LAS2PEER_PORT
 ENTRYPOINT ["/src/docker-entrypoint.sh"]
