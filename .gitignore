@@ -20,7 +20,6 @@
 archiva_credentials.xml
 /servicebundle/
 /.vscode/
-/bin/
 
 # Ignore Gradle project-specific cache directory
 .gradle
