@@ -40,8 +40,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
-//import i5.las2peer.restMapper.RESTService;
-//import i5.las2peer.restMapper.annotations.ServicePath;
+import i5.las2peer.restMapper.RESTService;
+import i5.las2peer.restMapper.annotations.ServicePath;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -139,6 +139,7 @@ public class ERecCourse extends Course {
 	@Override
 	public String getSuggestionFuture(String userid, int emotion, int numOfSuggestions) {
 
+		//This first part will remain probably the same. It checks if the user is part of the course, updates the suggestion with added resources and or interactions. Then calls the getSuggestion method from the user class. This is ultimately where the final suggestion string is comuter. From the USER
 		// String result = "";
 		// if (users.containsKey(userid)) {
 		// 	users.get(userid).updateSuggestions(newResources);
@@ -162,7 +163,7 @@ public class ERecCourse extends Course {
 
         //dummy variables in order to test the functioning
 
-        String userid_temp = "juan.stuecker@rwth-aachen.de";
+        String userid_temp = "juan.stuecker@gmail.com";
         int numOfSuggestions_temp = 3; 
         int emotion_temp = 2; 
 

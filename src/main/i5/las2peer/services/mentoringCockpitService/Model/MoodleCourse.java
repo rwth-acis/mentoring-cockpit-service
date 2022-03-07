@@ -93,6 +93,12 @@ public class MoodleCourse extends Course {
 					users.get(userid).getUpdateSet().add(resource);
 				}
 			}
+
+			System.out.println(("(!) Showing all the users in the course: "+ courseid));
+			for(String key: users.keySet()) {
+				System.out.print(key);
+				System.out.print(", ");
+			  }
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -281,7 +287,8 @@ public class MoodleCourse extends Course {
 				}
 				resourceObj.put("courseid", courseid);
 				resourcesArray.add(resourceObj);
-			}	
+			}
+			System.out.println("(!): Adding resources to sparl with resources array: " + resourcesArray.toString());	
 			SPARQLConnection.getInstance().addResources(resourcesArray);
 		} catch (Exception e) {
 			e.printStackTrace();
