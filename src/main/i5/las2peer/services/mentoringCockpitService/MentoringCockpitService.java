@@ -999,7 +999,7 @@ public class MentoringCockpitService extends RESTService {
 	    	
 		}
 
-		@GET
+		@POST
 		@Path("/testConnection")
 		@Consumes(MediaType.TEXT_PLAIN)
 	    @Produces(MediaType.APPLICATION_JSON)
@@ -1017,7 +1017,7 @@ public class MentoringCockpitService extends RESTService {
 
 
 	    	try {
-				//todo: There is something wrong going on with the body variable, it is not casted in to JSONObject, and it is not shown on the logs
+				//todo: There is something wrong going on with the body variable, it is not casted in to JSONObject, and it is not shown on the logstoekncd
 	    		System.out.println("Incoming message:\n" + body);
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
 				//JSONObject entity = (JSONObject) bodyObj.get("entities"); Entities are used for the theme based suggestions, as keywords the server has to look for
@@ -1042,7 +1042,7 @@ public class MentoringCockpitService extends RESTService {
 					 			.toURL();
 					System.out.println("Attempting connection with url:" + url.toString());
 					HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-					connection.setRequestMethod("GET");
+					connection.setRequestMethod("POST");
 					connection.setRequestProperty("Content-Type", "application-json; utf-8");
 					connection.setRequestProperty("Accept", "application/json");
 					connection.setDoOutput(true);
