@@ -999,12 +999,12 @@ public class MentoringCockpitService extends RESTService {
 	    	
 		}
 
-		@POST
+		@GET
 		@Path("/testConnection")
 		@Consumes(MediaType.TEXT_PLAIN)
 	    @Produces(MediaType.APPLICATION_JSON)
 	    @ApiOperation(
-				value = "Test connection with the MongoDB",
+				value = "Test connection with the MongoDB, and the quering function in the Web Emotion Recognition Server",
 				notes = "Return 200 for a valid connection")
 	    @ApiResponses(
 	            value = { @ApiResponse(
@@ -1017,12 +1017,13 @@ public class MentoringCockpitService extends RESTService {
 
 
 	    	try {
+				//todo: There is something wrong going on with the body variable, it is not casted in to JSONObject, and it is not shown on the logs
 	    		System.out.println("Incoming message:\n" + body);
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
 				//JSONObject entity = (JSONObject) bodyObj.get("entities"); Entities are used for the theme based suggestions, as keywords the server has to look for
 	    		if (bodyObj != null) {
 
-					String userid = bodyObj.getAsString("user");
+					String userid = bodyObj.getAsString("userid");
 					String courseid = bodyObj.getAsString("courseid");
 					int numOfSuggestions = bodyObj.getAsNumber("numOfSuggestions").intValue();
 
@@ -1035,13 +1036,13 @@ public class MentoringCockpitService extends RESTService {
 					StringBuilder sb = new StringBuilder ();
 					String res = null;
 					
-					URL url = UriBuilder.fromPath("http://host.docker.internal:5002/static/test/")
+					URL url = UriBuilder.fromPath("http://host.docker.internal:5002/static/getLowest/")
 								//.path(URLEncoder.encode(payloadJson.toString(), "UTF-8").replace("+","%20"))
 					 			.build()
 					 			.toURL();
 					System.out.println("Attempting connection with url:" + url.toString());
 					HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-					connection.setRequestMethod("POST");
+					connection.setRequestMethod("GET");
 					connection.setRequestProperty("Content-Type", "application-json; utf-8");
 					connection.setRequestProperty("Accept", "application/json");
 					connection.setDoOutput(true);

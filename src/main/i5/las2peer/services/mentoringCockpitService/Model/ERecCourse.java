@@ -19,6 +19,10 @@ import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
 
 
+import java.io.OutputStream;
+
+
+
 
 
 
@@ -190,18 +194,75 @@ public class ERecCourse extends Course {
 
         String result = "";
 
-        result = "Hello";
+		if (users.containsKey(userid)) {
+
+			//step one: get the lowest valnence scored items from the mongo db for the specific user. 
+			//todo: make sure how to querie the data either with a user id, or with an email. Find a way to possibly seamlessly switch between the 2. Or just standarize everything to one only. --->Probably the easiest way is to check in the python server, as it has the direct connection to mongo
+
+			//setting json request file
+			JSONObject payloadJson = new JSONObject();
+			payloadJson.put("userid", userid);
+			payloadJson.put("numOfSuggestions", numOfSuggestions);
+			payloadJson.put("emotion", emotion);
+
+			System.out.println("Establishing connection with Emotion Service");
+
+			try{
+				String line = null;
+				StringBuilder sb = new StringBuilder ();
+
+				
+				URL url = UriBuilder.fromPath("http://host.docker.internal:5002/static/getLowest/")
+							.build()
+							.toURL();
+				System.out.println("Attempting connection with url:" + url.toString());
+				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+				connection.setRequestMethod("GET");
+				connection.setRequestProperty("Content-Type", "application-json; utf-8");
+				connection.setRequestProperty("Accept", "application/json");
+				connection.setDoOutput(true);
+				try(OutputStream os = connection.getOutputStream()){
+
+					byte[] input = payloadJson.toJSONString().getBytes("utf-8");
+					os.write(input, 0, input.length);
+
+				}
+				connection.connect();
+			
+				
+				BufferedReader rd  = new BufferedReader( new InputStreamReader(connection.getInputStream(), "UTF-8"));
+
+				while ((line = rd.readLine()) != null ) {
+					sb.append(line);
+				}
+				result = sb.toString();
+
+			}catch (Exception e) {
+				System.out.println("Error in the request to the Emotion Server");
+				e.printStackTrace();
+			}
+			return result;
+
+		} else {
+			result = "Error: User not initialized!";
+		}
+		return result; 
+
+	    	
+
+
+			
+
+
+
+	}
 
 
 
 
 
 
-
-        return result; 
-
-
-    }
+    
 
 
     @Override
