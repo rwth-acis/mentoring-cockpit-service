@@ -894,6 +894,117 @@ public class MentoringCockpitService extends RESTService {
 	     * @body Request body of the chatbot
 	     *
 	     */
+
+
+		@POST
+	    @Path("/getEmotionSuggestion")
+		@Consumes(MediaType.APPLICATION_JSON)
+	    @Produces(MediaType.APPLICATION_JSON)
+	    @ApiOperation(
+				value = "Get Suggestion",
+				notes = "Returns a resource suggestion for the given course and user.")
+	    @ApiResponses(
+	            value = { @ApiResponse(
+	                    code = HttpURLConnection.HTTP_OK,
+	                    message = "Connection works") })
+	    public Response getEmotionSuggestion(String body) {
+
+			//before anything, the service will have to connect to the speech emotion recognition service to make speech to text and emotion recognition.
+
+	    	JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
+	    	JSONObject returnObj = new JSONObject();
+	    	try {
+	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
+	    		// String userid = bodyObj.getAsString("user");
+	    		// String courseid = bodyObj.getAsString("courseid");
+	    		// int numOfSuggestions = bodyObj.getAsNumber("numOfSuggestions").intValue();
+
+				//CHECKS if the course exists, else updates and check again.
+
+	    		// if (courseid != null) {
+	    		// 	if (service.courses.containsKey(courseid)) {
+		    	// 		returnObj.put("text", this.service.courses.get(courseid).getSuggestion(userid, numOfSuggestions));
+		    	// 	} 
+	    		// } else {
+	    		// 	for (Entry<String, Course> entry : this.service.courses.entrySet()) {
+	    		// 		entry.getValue().update();
+	    		// 		if (entry.getValue().getUsers().containsKey(userid)) {
+	    		// 			returnObj.put("text", entry.getValue().getSuggestion(userid, numOfSuggestions));
+	    		// 			break;
+	    		// 		}
+	    		// 	}
+	    		// }
+
+				String line = null;
+				StringBuilder sb = new StringBuilder ();
+				String res = null;
+				
+				URL url = UriBuilder.fromPath("http://host.docker.internal:5002/static/emotion/speech/")
+							//.path(URLEncoder.encode(payloadJson.toString(), "UTF-8").replace("+","%20"))
+							.build()
+							.toURL();
+				System.out.println("Attempting connection with url:" + url.toString());
+				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+				connection.setRequestMethod("POST");
+				connection.setRequestProperty("Content-Type", "application-json; utf-8");
+				connection.setRequestProperty("Accept", "application/json");
+				connection.setDoOutput(true);
+				try(OutputStream os = connection.getOutputStream()){
+
+					byte[] input = bodyObj.toJSONString().getBytes("utf-8");
+					os.write(input, 0, input.length);
+
+				}
+				connection.connect();
+			
+				
+				BufferedReader rd  = new BufferedReader( new InputStreamReader(connection.getInputStream(), "UTF-8"));
+	
+				while ((line = rd.readLine()) != null ) {
+					sb.append(line);
+				}
+				res = sb.toString();
+				returnObj.put("text", res);
+
+
+
+
+
+
+
+
+	    		if (!returnObj.containsKey("text")) {
+    				returnObj.put("text", "Error: Something went wrong");
+    			}
+	    		returnObj.put("closeContext", "true");
+	    		return Response.status(200).entity(returnObj).build();
+	    		
+	    		
+	    	} catch (Exception e) {
+	    		e.printStackTrace();
+	    		returnObj.put("text", "The connection with the emotion recognition service was not possible");
+	    		return Response.status(400).entity(returnObj).build();
+	    	}
+	    	
+		}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	    @POST
 	    @Path("/getSuggestion")
 		@Consumes(MediaType.TEXT_PLAIN)
@@ -980,6 +1091,7 @@ public class MentoringCockpitService extends RESTService {
 		    		if (service.courses.containsKey(courseid)) {
 		    			// There should be only one entity in there
 						String entityName = (String) entity.keySet().iterator().next();
+						//todo: This is the part where i could get the links to the different topics, it needed in the end
 						returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(entityName));
 		    		} else {
 		    			returnObj.put("text", "Error: Course " + courseid + " not initialized!");
@@ -998,7 +1110,8 @@ public class MentoringCockpitService extends RESTService {
 	    	}
 	    	
 		}
-
+		//todo: Figure out how to route the connection from the Social Bot Manager Service. 
+		//(A) The MCS receives the JSON file with metadata and the Filebody in base64. It would then have to send it to the Erec service, after that the correct Suggestion Function would be passed, which would return the emotion, and it would respond.
 		@POST
 		@Path("/testConnection")
 		@Consumes(MediaType.TEXT_PLAIN)
