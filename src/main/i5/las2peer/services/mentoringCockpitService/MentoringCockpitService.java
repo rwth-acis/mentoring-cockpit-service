@@ -898,7 +898,7 @@ public class MentoringCockpitService extends RESTService {
 
 		@POST
 	    @Path("/getEmotionSuggestion")
-		@Consumes(MediaType.APPLICATION_JSON)
+		@Consumes(MediaType.TEXT_PLAIN)
 	    @Produces(MediaType.APPLICATION_JSON)
 	    @ApiOperation(
 				value = "Get Suggestion",
@@ -938,8 +938,8 @@ public class MentoringCockpitService extends RESTService {
 				String line = null;
 				StringBuilder sb = new StringBuilder ();
 				String res = null;
-				
-				URL url = UriBuilder.fromPath("http://host.docker.internal:5002/static/emotion/speech/")
+				//In case of testing local use: "http://host.docker.internal:5002/static/emotion/speech/"
+				URL url = UriBuilder.fromPath("http://137.226.232.75:32111/static/emotion/speech/")
 							//.path(URLEncoder.encode(payloadJson.toString(), "UTF-8").replace("+","%20"))
 							.build()
 							.toURL();
@@ -963,6 +963,16 @@ public class MentoringCockpitService extends RESTService {
 				while ((line = rd.readLine()) != null ) {
 					sb.append(line);
 				}
+				String suggestion = "";
+				//response string conatins: (text): speech to text from the audio file, (predicted_emotion): from the emotion recognition service, in the future maybe the keyword for the function to be triggered from rasa directly, (metadata): userid, time,  
+
+				if (suggestion.equals("past")){
+					//trigger past suggestion for the appropri
+				}
+				if(suggestion.equals("future")){
+
+				}
+
 				res = sb.toString();
 				returnObj.put("text", res);
 

@@ -204,6 +204,7 @@ public class ERecCourse extends Course {
 			payloadJson.put("userid", userid);
 			payloadJson.put("numOfSuggestions", numOfSuggestions);
 			payloadJson.put("emotion", emotion);
+			payloadJson.put("coursid", courseid);
 
 			System.out.println("Establishing connection with Emotion Service");
 
