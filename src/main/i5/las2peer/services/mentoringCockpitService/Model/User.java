@@ -40,8 +40,14 @@ public class User {
 		System.out.println("Updating suggestions for user:"+ userid);
 		//update the last current emotion from the mongodb
 		//todo: create a function which gets the last emotion reading from the user, from the mognodb
-		//this does not work either
+		//This resources are the <<newResources>>
 		HashSet<Resource> updates = new HashSet<Resource>(resources);
+		//the <<<updateSet>>> in the course.updateProfiles(long since) method, resources come from sparql.getupdates(since, courseid)
+		//the <<newResources>> comes from resources which were NOT stored previously in the course class. This is passed on user.updateSuggestions(newResources)
+		//both serve the exact same fucntion of storing the resources which should be analysed for possible recommendation
+
+		//both are added to the updates HashSet
+		//todo: One of the problems is that both newResources, and updateSet are only updated while creating the course!
 		updates.addAll(updateSet);
 		updateSet.clear();
 		for (Resource resource : updates) {

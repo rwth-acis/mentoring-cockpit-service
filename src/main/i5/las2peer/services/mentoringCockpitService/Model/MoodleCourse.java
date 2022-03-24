@@ -70,7 +70,7 @@ public class MoodleCourse extends Course {
 				if (!users.containsKey(userid)) {
 					System.out.println("(!!) Complete new user is being added!:-->" + username+ "With user id" +userid );
 					users.put(userid, new User(userid, username, resources.values()));
-					System.out.println("(!!) Attempting to add resource to the user: "+ resourceid+ "and resource type"+ resourcetype);
+					System.out.println("(!!) Attempting to add resource to the user: "+ resourceid+ " and resource type "+ resourcetype);
 					
 				}
 				

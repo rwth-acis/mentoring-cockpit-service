@@ -1098,6 +1098,7 @@ public class MentoringCockpitService extends RESTService {
 	    		int numOfSuggestions = bodyObj.getAsNumber("numOfSuggestions").intValue();
 	    		if (courseid != null) {
 	    			if (service.courses.containsKey(courseid)) {
+						this.service.courses.get(courseid).update();
 		    			returnObj.put("text", this.service.courses.get(courseid).getSuggestion(userid, numOfSuggestions));
 		    		} 
 	    		} else {
