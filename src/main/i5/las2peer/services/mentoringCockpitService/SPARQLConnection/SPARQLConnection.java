@@ -79,7 +79,7 @@ public class SPARQLConnection {
 				"    	ulo:chatbot rdfs:subclassOf ulo:user .\r\n" + 
 				"	}\r\n" + 
 				"}";
-		String response = sparqlUpdate(query);;
+		String response = sparqlUpdate(query);
 	}
 	
 	public void addResources (JSONArray objects) {
@@ -110,8 +110,9 @@ public class SPARQLConnection {
 				JSONObject obj = (JSONObject) objects.get(i);
 				String id = obj.getAsString("_id");
 				String type = obj.getAsString("type");
+				System.out.println("(!!!!: Attempting to add RESOURCE: "+ id+ "type:" +type);
 
-				if (resourceIds.contains(id) || type.equals("post") || type.equals("forum")) {
+				if (resourceIds.contains(id) || type.equals("post") || type.equals("forum")||type.equals("quiz")||type.equals("file")) {
 					if (type.equals("post")) {
 						id = id.split("#parent")[0];
 					}
@@ -131,6 +132,7 @@ public class SPARQLConnection {
 			}
 
 			String response = sparqlUpdate(query + "}\r\n}");
+			System.out.println("Attempting to add resources to sparql :"+ query);
 			System.out.println("(!!): Response from sparql after attempting to update resources: "+ response);
 			
 		} catch (Exception e) {
@@ -159,14 +161,15 @@ public class SPARQLConnection {
 
 		
 		String responseString = sparqlUpdate(query + "}}");
+		System.out.println("(!!!!) Attempting to add users with query: "+ query);
 	}
 	
 	public void addInteractions (JSONArray objects) {
-		System.out.println("(!!): Adding following interactions to Sparql: " + objects.toString());
+		System.out.println("(!!!!): Adding following interactions to Sparql: " + objects.toString());
 
 		//I think this first query gets all the distinct resources in the graph
 		String resourceQuery = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
-				"PREFIX rdfs\r\n" + 
+				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
 				"    SELECT DISTINCT ?resourceid WHERE {\r\n" + 
 				"  		GRAPH <%s> {\r\n" + 
 				"    		?b ulo:discussResource ?resourceid .\r\n" + 
@@ -174,12 +177,15 @@ public class SPARQLConnection {
 				"    }";
 		
 		try {
+			
 			JSONArray bindingsArray = getBindings(sparqlQuery(resourceQuery));
 			
 			
 			HashSet<String> resourceIds = new HashSet<String>();
 			for (int i = 0; i < bindingsArray.size(); i++) {
 				JSONObject bindingObj = (JSONObject) bindingsArray.get(i);
+
+				System.out.println("(!!!!): Adding a resouce to ResourceID: "+ bindingObj.get("resourceid"));
 
 
 				// String x = ((JSONObject) bindingObj.get("resourceid")).getAsString("value");
@@ -220,6 +226,7 @@ public class SPARQLConnection {
 
 
 			String response = sparqlUpdate(query + "}}");
+			System.out.println("(!!!!) Attempting to add interactions is the query being sent to SPARQL:"+ query);
 			System.out.println("(!!): Response from sparql after attempting to update interactions: "+ response);
 
 			

@@ -70,26 +70,34 @@ public class MoodleCourse extends Course {
 				if (!users.containsKey(userid)) {
 					System.out.println("(!!) Complete new user is being added!:-->" + username+ "With user id" +userid );
 					users.put(userid, new User(userid, username, resources.values()));
+					System.out.println("(!!) Attempting to add resource to the user: "+ resourceid+ "and resource type"+ resourcetype);
 					
 				}
 				
 				Resource resource = null;
 				if (!resources.containsKey(resourceid)) {
+					// System.out.println("!!!: Resource was not in the hashlist before: "+ resourceid);
 					if (resourcetype.contains("file")) {
+						System.out.println("Resource is a file");
 						resource = new File(resourceid, resourcename, resourceid);
 					} else if (resourcetype.contains("hyperlink")) {
+						System.out.println("Resource is a link");
 						resource = new Hyperlink(resourceid, resourcename, resourceid);
 					} else if (resourcetype.contains("quiz")) {
+						System.out.println("Resource is a quiz");
 						resource = new Quiz(resourceid, resourcename, resourceid);
 					}
 					if (resource != null) {
+						System.out.println("Adding a new resource:" + resourceid);
 						resources.put(resourceid, resource);
 						newResources.add(resource);
 					}
 				} else {
+					System.out.println("(!!): Resource was already in the hashlist");
 					resource = resources.get(resourceid);
 				}
 				if (resource != null) {
+					System.out.println("(!!!): Adding updates to the user: "+ users.get(userid));
 					users.get(userid).getUpdateSet().add(resource);
 				}
 			}
@@ -108,6 +116,8 @@ public class MoodleCourse extends Course {
 	public String getSuggestion(String userid, int numOfSuggestions) {
 		String result = "";
 		if (users.containsKey(userid)) {
+			System.out.println("(!!!!): Attempting to update Suggestions for user: "+ userid);
+			if(newResources.isEmpty()){System.out.println("The newResources list is empty");}
 			users.get(userid).updateSuggestions(newResources);
 			ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
 			ArrayList<String> suggestionTexts = new ArrayList<String>();
@@ -127,10 +137,10 @@ public class MoodleCourse extends Course {
 	}
 
 	@Override
-	public String getSuggestionFuture(String userid, int numOfSuggestions, int emotion){return "";}
+	 public String getSuggestionFuture(String userid, double valence, int numOfSuggestions){return "The getSuggestionFuture function was triggered in the moodle course";}
 
 	@Override
-	public String getSuggestionPast(String userid, int numOfSuggestions, int emotion){return "";}
+	 public String getSuggestionPast(String userid,double valence, int numOfSuggestions){return "The getSuggestionPast function was triggered in the moodle course ";}
 
 	@Override
 	public String getThemeSuggestions(String shortid) {
@@ -260,7 +270,7 @@ public class MoodleCourse extends Course {
 			sb.append("%" + String.format("%02X", b));
 		}
 
-		System.out.println("Requesting resource with pipeline:\n" + pipeline);
+		System.out.println("(!!!!) Requesting resource with pipeline:\n" + pipeline);
 		//System.out.println("(!): The pipeline string used to connect with the LRS: "+ sb.toString());
 
 		String res = service.LRSconnect(sb.toString());
@@ -288,7 +298,7 @@ public class MoodleCourse extends Course {
 				resourceObj.put("courseid", courseid);
 				resourcesArray.add(resourceObj);
 			}
-			System.out.println("(!): Adding resources to sparl with resources array: " + resourcesArray.toString());	
+			System.out.println("(!!!!): Adding resources to sparl with resources array: " + resourcesArray.toString());	
 			SPARQLConnection.getInstance().addResources(resourcesArray);
 		} catch (Exception e) {
 			e.printStackTrace();

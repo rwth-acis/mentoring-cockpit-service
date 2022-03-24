@@ -141,29 +141,27 @@ public class ERecCourse extends Course {
 	}
 	
 	@Override
-	public String getSuggestionFuture(String userid, int emotion, int numOfSuggestions) {
+	public String getSuggestionFuture(String userid, double valence, int numOfSuggestions) {
 
 		//This first part will remain probably the same. It checks if the user is part of the course, updates the suggestion with added resources and or interactions. Then calls the getSuggestion method from the user class. This is ultimately where the final suggestion string is comuter. From the USER
-		// String result = "";
-		// if (users.containsKey(userid)) {
-		// 	users.get(userid).updateSuggestions(newResources);
-		// 	ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
-		// 	ArrayList<String> suggestionTexts = new ArrayList<String>();
-		// 	for (Suggestion suggestion : suggestions) {
-		// 		suggestionTexts.add(suggestion.getSuggestionText());
-		// 	}
+		String result = "";
+		if (users.containsKey(userid)) {
+			users.get(userid).updateSuggestionsEmotion(newResources, valence);
+			ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
+			ArrayList<String> suggestionTexts = new ArrayList<String>();
+			for (Suggestion suggestion : suggestions) {
+				suggestionTexts.add(suggestion.getSuggestionText());
+			}
 			
-		// 	if (!suggestions.isEmpty()) {
-		// 		result = "Here is a couple suggestions based on your Moodle activity:" + TextFormatter.createList(suggestionTexts) + "\n Would you like another suggestion?";
-		// 	} else {
-		// 		result = "No suggestions available";
-		// 	}
-		// } else {
-		// 	result = "Error: User not initialized!";
-		// }
-		// return result;
+			if (!suggestions.isEmpty()) {
+				result = "Here is a couple suggestions based on your Moodle activity:" + TextFormatter.createList(suggestionTexts) + "\n Would you like another suggestion?";
+			} else {
+				result = "No suggestions available";
+			}
+		} else {
+			result = "Error: User not initialized!";
+		}
 
-        String result = "";
 
         //dummy variables in order to test the functioning
 
@@ -187,7 +185,7 @@ public class ERecCourse extends Course {
 
 
     @Override
-    public String getSuggestionPast(String userid, int numOfSuggestions, int emotion){
+    public String getSuggestionPast(String userid, double valence,int numOfSuggestions){
 
         //This method should receieved the current emotion of the user, and look at the history of interaction of the user and the items, and return the items which best match their emotion. 
         //This can be either items to review, or new items which should pose a hgiher challenge to the user.
@@ -203,7 +201,7 @@ public class ERecCourse extends Course {
 			JSONObject payloadJson = new JSONObject();
 			payloadJson.put("userid", userid);
 			payloadJson.put("numOfSuggestions", numOfSuggestions);
-			payloadJson.put("emotion", emotion);
+			payloadJson.put("valence", valence);
 			payloadJson.put("coursid", courseid);
 
 			System.out.println("Establishing connection with Emotion Service");

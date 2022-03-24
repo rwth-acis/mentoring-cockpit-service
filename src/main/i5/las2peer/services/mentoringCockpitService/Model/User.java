@@ -18,6 +18,8 @@ public class User {
 	protected ArrayList<Resource> updateSet; // Resources with which the user has interacted since the last data update
 	protected SuggestionEvaluator suggestionEvaluator;
 	protected SuggestionQueue suggestionQueue;
+	//list where the last current emotion is saved
+	protected ArrayList<Double> valence; 
 	
 	public User(String userid, String name, Collection<Resource> resources) {
 		this.userid = userid;
@@ -35,6 +37,30 @@ public class User {
 	}
 	
 	public void updateSuggestions(Collection<Resource> resources) {
+		System.out.println("Updating suggestions for user:"+ userid);
+		//update the last current emotion from the mongodb
+		//todo: create a function which gets the last emotion reading from the user, from the mognodb
+		//this does not work either
+		HashSet<Resource> updates = new HashSet<Resource>(resources);
+		updates.addAll(updateSet);
+		updateSet.clear();
+		for (Resource resource : updates) {
+			System.out.println("(!!): Going through resource" +resource.getName());
+			SuggestionReason reason = suggestionEvaluator.getSuggestionReason(this, resource);
+			if (reason != SuggestionReason.NOT_SUGGESTED) {
+				System.out.println("(!!): Adding resource to the prio queue");
+				double priority = suggestionEvaluator.getSuggestionPriority(this, resource, reason);
+				Suggestion suggestion = new Suggestion(resource, priority, reason);
+				suggestionQueue.addSuggestion(suggestion);
+			} else {
+				suggestionQueue.dropSuggestion(resource);
+			}
+		}
+	}
+
+	public void updateSuggestionsEmotion(Collection<Resource> resources, double valence) {
+		//update the last current emotion from the mongodb
+		//todo: create a function which gets the last emotion reading from the user, from the mognodb
 		HashSet<Resource> updates = new HashSet<Resource>(resources);
 		updates.addAll(updateSet);
 		updateSet.clear();
