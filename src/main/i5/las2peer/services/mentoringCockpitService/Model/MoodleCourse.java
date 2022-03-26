@@ -138,7 +138,55 @@ public class MoodleCourse extends Course {
 	}
 
 	@Override
-	 public String getSuggestionFuture(String userid, double valence, int numOfSuggestions){return "The getSuggestionFuture function was triggered in the moodle course";}
+	//  public String getSuggestionFuture(String userid, double valence, int numOfSuggestions){return "The getSuggestionFuture function was triggered in the moodle course";}
+
+	 public String getSuggestionFuture(String userid, double valence, int numOfSuggestions) {
+
+		//This first part will remain probably the same. It checks if the user is part of the course, updates the suggestion with added resources and or interactions. Then calls the getSuggestion method from the user class. This is ultimately where the final suggestion string is comuter. From the USER
+
+		//the only valuable think i could add to this class would be some data from the users about emotion, otherwise the moodle course is good enough for everythin
+
+		String result = "";
+		if (users.containsKey(userid)) {
+			//update current emotion for the user
+			users.get(userid).updateValence(valence);
+			users.get(userid).updateSuggestions(newResources);
+			ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
+			ArrayList<String> suggestionTexts = new ArrayList<String>();
+			for (Suggestion suggestion : suggestions) {
+				suggestionTexts.add(suggestion.getSuggestionText());
+			}
+			
+			if (!suggestions.isEmpty()) {
+				result = "Here is a couple suggestions based on your Moodle activity:" + TextFormatter.createList(suggestionTexts) + "\n Would you like another suggestion?";
+			} else {
+				result = "No suggestions available";
+			}
+		} else {
+			result = "Error: User not initialized!";
+		}
+
+
+        //dummy variables in order to test the functioning
+
+        String userid_temp = "juan.stuecker@gmail.com";
+        int numOfSuggestions_temp = 3; 
+        int emotion_temp = 2; 
+
+
+        //The basic idea is: This suggestion mehtod is triggered, so now we look at all the items which remain unseen by the user, and choose the one which matches the emotion; which should be current.
+
+        //This should be triggered by the course, and before that the user, and suggestion evaluator, and suggestion queue need to be updated, for now i will just test the connection to the mongo db to querie the emotional data from there whic is the most important part
+
+        //For the future suggestion function we want JUST THE **CURRENT EMOTION**, the more complicated of the two is the past recommendation function
+
+
+
+
+        return result; 
+	}
+
+
 
 	@Override
 	 public String getSuggestionPast(String userid,double valence, int numOfSuggestions){return "The getSuggestionPast function was triggered in the moodle course ";}

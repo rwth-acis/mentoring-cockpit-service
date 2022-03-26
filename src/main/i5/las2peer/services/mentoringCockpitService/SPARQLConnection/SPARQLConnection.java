@@ -310,7 +310,7 @@ public class SPARQLConnection {
 			"  GRAPH <https://triplestore.tech4comp.dbis.rwth-aachen.de/LMSData/data> {\r\n" + 
 			"    ?b a ulo:resource .\r\n" + 
 			"  	?b ulo:cognitiveLoad ?cognitiveLoad .\r\n" +
-			"  	?b ulo:url ?resourceid.\r\n" +  
+			"  	?b ulo:url "+'"'+resourceid+'"'+".\r\n" +  
 			"  }\r\n" + 
 			"}";
 		System.out.println("Attempting Cognitive Load query: "+query+ "\r\n and endpoint: "+ endpoint);

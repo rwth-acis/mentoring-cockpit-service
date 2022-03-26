@@ -15,40 +15,75 @@ public class ERecSuggestionEvaluator extends SuggestionEvaluator {
 
 	@Override
 	public double getSuggestionPriority(User user, Resource resource, SuggestionReason reason) {
-		switch (reason) {
-		case NOT_VIEWED:
-			return 0.5;
-		case NOT_COMPLETED:
-			return 1.0;
-		case NOT_MAX_GRADE:
-			return 1.0; //- getMaxGrade(user, (CompletableResource) resource)
-		default:
-			return 0;
+		if (user.getValence() > 0/*which is the default value when valence is not initialized*/){
+			double valence = user.getValence(); 
+			double cognitiveLoad = getCognitiveLoad(resource);
+			double priority = 0; 
+
+			switch(reason){
+	
+				case NOT_VIEWED: 
+					//Here priority is normalize into (0.1) (!)todo: replace 5, and 0 to min and max depending on the values of emotion and cognitive load
+					priority = ((1-(valence-cognitiveLoad))-5)/5;
+					return priority;
+				case NOT_COMPLETED: 
+					//NOT_COMPLETED also covers quizes for which the maximum grade has not been achieved, not so clar
+
+					priority = ((1-(valence-cognitiveLoad))-5)/5-0.3;
+					return priority; 
+
+
+	
+					//Since we are concentrated in unseen items, every item that has been interacted with already receieves a priority of 0.
+				default: 
+					return 0 ;  	
+	
+			}
 		}
+		else{
+
+			//default suggestion architecture
+
+			switch (reason) {
+				case NOT_VIEWED:
+					return 0.5;
+				case NOT_COMPLETED:
+					return 1.0;
+				case NOT_MAX_GRADE:
+					return 1.0; //- getMaxGrade(user, (CompletableResource) resource)
+				default:
+					return 0;
+				}
+
+		}
+
+
 	}
 
 
-	public double getSuggestionPriorityEmotion(User user, Resource resource, SuggestionReason reason, double currentEmotion, double cognitiveLoad) {
+	// public double getSuggestionPriorityEmotion(User user, Resource resource, SuggestionReason reason) {
 
-		double priority = 0; 
+		// double priority = 0; 
 
-		switch(reason){
+		// switch(reason){
 
-			case NOT_VIEWED: 
-				//Here priority is normalize into (0.1) (!)todo: replace 5, and 0 to min and max depending on the values of emotion and cognitive load
-				priority = ((1-(currentEmotion-cognitiveLoad))-5)/5;
+		// 	case NOT_VIEWED: 
+		// 		//Here priority is normalize into (0.1) (!)todo: replace 5, and 0 to min and max depending on the values of emotion and cognitive load
+		// 		priority = ((1-(currentEmotion-cognitiveLoad))-5)/5;
 
-				//Since we are concentrated in unseen items, every item that has been interacted with already receieves a priority of 0.
-			default: 
-				priority = 0; 	
+		// 		//Since we are concentrated in unseen items, every item that has been interacted with already receieves a priority of 0.
+		// 	default: 
+		// 		priority = 0; 	
 
-		}
+		// }
 
-		return priority;
-	}
+	// 	return priority;
+	// }
 	
 	@Override
 	public SuggestionReason getSuggestionReason(User user, Resource resource) {
+
+
 		if (resource instanceof CompletableResource) {
 			CompletableResource completable = (CompletableResource) resource;
 			if (!hasInteraction(user, resource, "completed")) {
@@ -74,6 +109,16 @@ public class ERecSuggestionEvaluator extends SuggestionEvaluator {
 		double result = 0;
 		try {
 			return SPARQLConnection.getInstance().getBestGrade(user.getUserid(), completable.getId());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+	public double getCognitiveLoad(Resource resource) {
+		double result = 0; 
+		try {
+			result = SPARQLConnection.getInstance().getCognitiveLoad(resource.getId());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

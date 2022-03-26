@@ -23,10 +23,6 @@ import java.io.OutputStream;
 
 
 
-
-
-
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -102,7 +98,7 @@ public class ERecCourse extends Course {
 				JSONObject obj = (JSONObject) updates.get(i);
 				String userid = ((JSONObject) obj.get("userid")).getAsString("value");
 				
-				//userid = userid.replace("https://moodle.tech4comp.dbis.rwth-aachen.de/user/profile.php?id=", "");
+				userid = userid.replace("https://moodle.tech4comp.dbis.rwth-aachen.de/user/profile.php?id=", "");
 				System.out.println("(!!) Going through user: --->" + userid);
 				String username = ((JSONObject) obj.get("username")).getAsString("value");
 				String resourceid = ((JSONObject) obj.get("resourceid")).getAsString("value");
@@ -144,9 +140,15 @@ public class ERecCourse extends Course {
 	public String getSuggestionFuture(String userid, double valence, int numOfSuggestions) {
 
 		//This first part will remain probably the same. It checks if the user is part of the course, updates the suggestion with added resources and or interactions. Then calls the getSuggestion method from the user class. This is ultimately where the final suggestion string is comuter. From the USER
+
+		//the only valuable think i could add to this class would be some data from the users about emotion, otherwise the moodle course is good enough for everythin
+
+		//todo: Think about valuable additions to this "emotion" class
 		String result = "";
 		if (users.containsKey(userid)) {
-			users.get(userid).updateSuggestionsEmotion(newResources, valence);
+			//update current emotion for the user
+			users.get(userid).updateValence(valence);
+			users.get(userid).updateSuggestions(newResources);
 			ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
 			ArrayList<String> suggestionTexts = new ArrayList<String>();
 			for (Suggestion suggestion : suggestions) {

@@ -117,7 +117,7 @@ public class MentoringCockpitService extends RESTService {
 	private String feedbackLRSAuth = "Basic OTRjMjYxNjdmYzY1MzFmNmM1M2RjZDEyYzJjOWI1OGNiZDc5ZGFkYzo3YWY3ZDFhN2MxYzliYTIyNzMyMDk3NTNhN2E0YjEwNjNiYjYyZjUx";
 	private String feedbackLRSDomain = "https://lrs.tech4comp.dbis.rwth-aachen.de";
 	private static String kubeErecUrl = "http://137.226.232.75:32111/static/";
-	private static String localErecUrl = "http://host.docker.internal:5002/";
+	private static String localErecUrl = "http://host.docker.internal:5002/static/";
 
 	/**
 	 * 
@@ -859,6 +859,7 @@ public class MentoringCockpitService extends RESTService {
 					mysqlUser, mysqlPassword);
 			
 			Statement stmt = con.createStatement();
+			//this is where the course ids of the new course should be initialized
 			ResultSet rs = stmt.executeQuery("select COURSELINK from ACCESS");
 			while(rs.next()) {
 				String courseid = rs.getString("COURSELINK");
@@ -906,7 +907,7 @@ public class MentoringCockpitService extends RESTService {
 	    @Produces(MediaType.APPLICATION_JSON)
 	    @ApiOperation(
 				value = "Get Suggestion",
-				notes = "Returns a resource suggestion for the given course and user.")
+				notes = "Returns a resource suggestion for the given course and user based on the current and past emotional responses.")
 	    @ApiResponses(
 	            value = { @ApiResponse(
 	                    code = HttpURLConnection.HTTP_OK,
@@ -923,17 +924,14 @@ public class MentoringCockpitService extends RESTService {
 	    		String courseid = bodyObj.getAsString("courseid");
 	    		int numOfSuggestions = bodyObj.getAsNumber("numOfSuggestions").intValue();
 
-				//CHECKS if the course exists, else updates and check again.
 
 
 
 				String line = null;
 				StringBuilder sb = new StringBuilder ();
 				String res = null;
-				//In case of testing local use: "http://host.docker.internal:5002/static/emotion/speech/" localErecUrl + "emotion/speech/"
 				System.out.println("WTFFFF is happening???");
-				URL url = UriBuilder.fromPath("http://137.226.232.75:32111/static/emotion/speech/")
-							//.path(URLEncoder.encode(payloadJson.toString(), "UTF-8").replace("+","%20"))
+				URL url = UriBuilder.fromPath(localErecUrl+"emotion/speech/")
 							.build()
 							.toURL();
 				System.out.println("Attempting connection with url:" + url.toString());
@@ -950,19 +948,23 @@ public class MentoringCockpitService extends RESTService {
 				}
 				connection.connect();
 			
-				
 				BufferedReader rd  = new BufferedReader( new InputStreamReader(connection.getInputStream(), "UTF-8"));
 	
 				while ((line = rd.readLine()) != null ) {
 					sb.append(line);
 				}
-				String suggestion = "";
-				//response string conatins: (text): speech to text from the audio file, (predicted_emotion): from the emotion recognition service, in the future maybe the keyword for the function to be triggered from rasa directly, (metadata): userid, time,  
+
 
 
 				res = sb.toString();
+
+				/*Res string from the Emotion Recognition Service contains: 
+				(text): speech to text from the audio file,
+				(predicted_emotion): from the emotion recognition service,
+				(metadata): userid, time, */
+
 				try{
-					System.out.println("Attempting to extract JSON response from server");
+					System.out.println("Attempting to extract JSON response from Emotion REcognition Service");
 					JSONObject bodyObj2 = (JSONObject) parser.parse(res);
 					String intent = bodyObj2.getAsString("intent");
 					System.out.println("Intent correctly extracted:" + intent);
@@ -972,13 +974,12 @@ public class MentoringCockpitService extends RESTService {
 
 					if (intent.equals("past")){
 
-						System.out.println("Past suggestion!");
+						System.out.println("Past suggestion intention was detected!");
 						//trigger past suggestions, call function from erec with userid, numOfSuggestions, valence
-						url = UriBuilder.fromPath("http://137.226.232.75:32111/static/getLowest/")
-								//.path(URLEncoder.encode(payloadJson.toString(), "UTF-8").replace("+","%20"))
+						url = UriBuilder.fromPath(localErecUrl+"getLowest/")
 					 			.build()
 								.toURL();
-						System.out.println("Attempting connection with url:" + url.toString());
+						System.out.println("Attempting connection with Emotion Recognition Service with :" + url.toString());
 						connection = (HttpURLConnection) url.openConnection();
 						connection.setRequestMethod("POST");
 						connection.setRequestProperty("Content-Type", "application-json; utf-8");
@@ -1000,18 +1001,19 @@ public class MentoringCockpitService extends RESTService {
 						}
 						res = sb.toString();
 						//todo: create a method to format the reponses from the 2 suggestion methods.
-						System.out.println("Output from lowestK" +res);
-						returnObj.put("text", res);
-
-						
-
+						System.out.println("Output from lowest K items  " +res);
+						returnObj.put("text", "You seem to be feeling happy :smile:, sad :worried:, angry :angry: , frustrated :hot_face:, try to focus on these items! " +res);
 
 					}
-					else if(intent.equals("future")){
+
+
+
+					else if (intent.equals("future")) {
+
 						System.out.println("Future suggestion!");
 						if (courseid != null) {
 							if (service.courses.containsKey(courseid)) {
-								returnObj.put("text", this.service.courses.get(courseid).getSuggestionFuture(userid, valence, numOfSuggestions));
+								returnObj.put("text", "You seem to be feeling happy :smile:, sad :worried:, angry :angry: , frustrated :hot_face:, try to focus on these items!: " +this.service.courses.get(courseid).getSuggestionFuture(userid, valence, numOfSuggestions));
 							} 
 						} else {
 							for (Entry<String, Course> entry : this.service.courses.entrySet()) {
@@ -1026,7 +1028,7 @@ public class MentoringCockpitService extends RESTService {
 					}
 					else{
 						System.out.println("Not intent found in the request");
-						returnObj.put("text", "No intent found, please try again");
+						returnObj.put("text", "I did not understand what you wanted, please try again :smile: ");
 					}
 
 
@@ -1250,11 +1252,11 @@ public class MentoringCockpitService extends RESTService {
 					// 	sb.append(line);
 					// }
 					// res = sb.toString();
-					System.out.println("Extracting cognitive load");
+					System.out.println("Testing the future suggestion function!");
 					try{
-						Number cognitiveLoad =  SPARQLConnection.getInstance().getCognitiveLoad("https://moodle.tech4comp.dbis.rwth-aachen.de/mod/quiz/view.php?id=214");
-					System.out.println(cognitiveLoad);
-					return Response.ok().entity(cognitiveLoad).build();
+						returnObj.put("text", this.service.courses.get("https://moodle.tech4comp.dbis.rwth-aachen.de/course/view.php?id=18").getSuggestionFuture("juan.stuecker@rwth-aachen.de", 3, 3));
+
+					return Response.ok().entity(returnObj).build();
 				}
 					catch(Exception e){
 						e.printStackTrace();
