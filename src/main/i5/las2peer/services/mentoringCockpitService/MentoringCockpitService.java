@@ -37,6 +37,8 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
 import javax.ws.rs.core.UriBuilder;
+import i5.las2peer.services.mentoringCockpitService.SPARQLConnection.SPARQLConnection;
+
 
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
@@ -1098,7 +1100,7 @@ public class MentoringCockpitService extends RESTService {
 	    		int numOfSuggestions = bodyObj.getAsNumber("numOfSuggestions").intValue();
 	    		if (courseid != null) {
 	    			if (service.courses.containsKey(courseid)) {
-						this.service.courses.get(courseid).update();
+						//this.service.courses.get(courseid).update();
 		    			returnObj.put("text", this.service.courses.get(courseid).getSuggestion(userid, numOfSuggestions));
 		    		} 
 	    		} else {
@@ -1209,46 +1211,59 @@ public class MentoringCockpitService extends RESTService {
 				//JSONObject entity = (JSONObject) bodyObj.get("entities"); Entities are used for the theme based suggestions, as keywords the server has to look for
 	    		if (bodyObj != null) {
 
-					String userid = bodyObj.getAsString("userid");
-					String courseid = bodyObj.getAsString("courseid");
-					int numOfSuggestions = bodyObj.getAsNumber("numOfSuggestions").intValue();
+					// String userid = bodyObj.getAsString("userid");
+					// String courseid = bodyObj.getAsString("courseid");
+					// int numOfSuggestions = bodyObj.getAsNumber("numOfSuggestions").intValue();
 
-					payloadJson.put("userid", userid);
-					payloadJson.put("courseid", courseid);
-					payloadJson.put("numOfSuggestions", numOfSuggestions);
+					// payloadJson.put("userid", userid);
+					// payloadJson.put("courseid", courseid);
+					// payloadJson.put("numOfSuggestions", numOfSuggestions);
 
 
-					String line = null;
-					StringBuilder sb = new StringBuilder ();
-					String res = null;
-					//kube: http://137.226.232.75:32111/static/emotion/speech/
-					//local: http://host.docker.internal:5002/static/getLowest/
-					URL url = UriBuilder.fromPath("http://137.226.232.75:32111/static/getLowest/")
-								//.path(URLEncoder.encode(payloadJson.toString(), "UTF-8").replace("+","%20"))
-					 			.build()
-					 			.toURL();
-					System.out.println("Attempting connection with url:" + url.toString());
-					HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-					connection.setRequestMethod("POST");
-					connection.setRequestProperty("Content-Type", "application-json; utf-8");
-					connection.setRequestProperty("Accept", "application/json");
-					connection.setDoOutput(true);
-					try(OutputStream os = connection.getOutputStream()){
+					// String line = null;
+					// StringBuilder sb = new StringBuilder ();
+					// String res = null;
+					// //kube: http://137.226.232.75:32111/static/emotion/speech/
+					// //local: http://host.docker.internal:5002/static/getLowest/
+					// URL url = UriBuilder.fromPath("http://137.226.232.75:32111/static/getLowest/")
+					// 			//.path(URLEncoder.encode(payloadJson.toString(), "UTF-8").replace("+","%20"))
+					//  			.build()
+					//  			.toURL();
+					// System.out.println("Attempting connection with url:" + url.toString());
+					// HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+					// connection.setRequestMethod("POST");
+					// connection.setRequestProperty("Content-Type", "application-json; utf-8");
+					// connection.setRequestProperty("Accept", "application/json");
+					// connection.setDoOutput(true);
+					// try(OutputStream os = connection.getOutputStream()){
 
-						byte[] input = bodyObj.toJSONString().getBytes("utf-8");
-						os.write(input, 0, input.length);
+					// 	byte[] input = bodyObj.toJSONString().getBytes("utf-8");
+					// 	os.write(input, 0, input.length);
 
-					}
-					connection.connect();
+					// }
+					// connection.connect();
 				
 					
-					BufferedReader rd  = new BufferedReader( new InputStreamReader(connection.getInputStream(), "UTF-8"));
+					// BufferedReader rd  = new BufferedReader( new InputStreamReader(connection.getInputStream(), "UTF-8"));
 		
-					while ((line = rd.readLine()) != null ) {
-						sb.append(line);
+					// while ((line = rd.readLine()) != null ) {
+					// 	sb.append(line);
+					// }
+					// res = sb.toString();
+					System.out.println("Extracting cognitive load");
+					try{
+						Number cognitiveLoad =  SPARQLConnection.getInstance().getCognitiveLoad("https://moodle.tech4comp.dbis.rwth-aachen.de/mod/quiz/view.php?id=214");
+					System.out.println(cognitiveLoad);
+					return Response.ok().entity(cognitiveLoad).build();
+				}
+					catch(Exception e){
+						e.printStackTrace();
+						System.out.println(e.toString());
+						returnObj.put("text", "Error");
+						return Response.status(400).entity(returnObj).build();
 					}
-					res = sb.toString();
-					return Response.ok().entity(res).build();
+					
+					// return Response.ok().entity(res).build();
 
 	    		} else {
 	    			returnObj.put("text", "I wasn´t able to find any information in you´r request, please try again");

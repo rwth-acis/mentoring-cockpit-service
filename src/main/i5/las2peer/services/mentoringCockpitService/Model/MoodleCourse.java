@@ -94,6 +94,7 @@ public class MoodleCourse extends Course {
 					}
 				} else {
 					System.out.println("(!!): Resource was already in the hashlist");
+					System.out.println("(!!!!!): Adding resource to the UPDATESET");
 					resource = resources.get(resourceid);
 				}
 				if (resource != null) {

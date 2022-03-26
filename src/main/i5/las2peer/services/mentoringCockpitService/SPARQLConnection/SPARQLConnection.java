@@ -252,7 +252,7 @@ public class SPARQLConnection {
 				"    ?b ulo:timestamp ?timestamp .\r\n" + 
 				"    ?resourceid a ?resourcetype .\r\n" + 
 				"    ?resourcetype rdfs:subclassOf ulo:resource .\r\n" + 
-				//"    FILTER (xsd:integer(?timestamp) > " + since + ").\r\n" + 
+				"    FILTER (xsd:integer(?timestamp) > " + since + ").\r\n" + 
 				"  }\r\n" + 
 				"}";
 		
@@ -300,6 +300,35 @@ public class SPARQLConnection {
 		}
 		return result;
 	} 
+
+	public double getCognitiveLoad(String resourceid) {
+		double result =  0; 
+		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
+			"PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\r\n" + 
+			"\r\n" + 
+			"SELECT DISTINCT ?cognitiveLoad WHERE {\r\n" + 
+			"  GRAPH <https://triplestore.tech4comp.dbis.rwth-aachen.de/LMSData/data> {\r\n" + 
+			"    ?b a ulo:resource .\r\n" + 
+			"  	?b ulo:cognitiveLoad ?cognitiveLoad .\r\n" +
+			"  	?b ulo:url ?resourceid.\r\n" +  
+			"  }\r\n" + 
+			"}";
+		System.out.println("Attempting Cognitive Load query: "+query+ "\r\n and endpoint: "+ endpoint);
+		System.out.println(sparqlQuery(query));
+		JSONArray bindings = getBindings(sparqlQuery(query));
+		if (!bindings.isEmpty()) {
+			JSONObject obj = (JSONObject) bindings.get(0); 
+			// result = ((JSONObject) obj.get("cognitiveLoad")).getAsNumber("value").doubleValue();
+			String result2 = ((JSONObject) obj.get("cognitiveLoad")).getAsString("value");
+			System.out.println(result2);
+			result = Double.parseDouble(result2);
+
+		}
+		else{
+			System.out.println("The return from sparql was empty searching for Cognitiveload");
+		}
+		return result;
+	}
 	
 	public JSONArray getThemes() {
 		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
