@@ -17,6 +17,8 @@ import i5.las2peer.services.mentoringCockpitService.Model.Resources.Hyperlink;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
+import i5.las2peer.services.mentoringCockpitService.Suggestion.Emotion;
+
 
 public class MoodleCourse extends Course {
 
@@ -122,6 +124,7 @@ public class MoodleCourse extends Course {
 			users.get(userid).updateSuggestions(newResources);
 			ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
 			ArrayList<String> suggestionTexts = new ArrayList<String>();
+			//todo: Change the text formating in order to deliver more aesthetical text
 			for (Suggestion suggestion : suggestions) {
 				suggestionTexts.add(suggestion.getSuggestionText());
 			}
@@ -140,7 +143,7 @@ public class MoodleCourse extends Course {
 	@Override
 	//  public String getSuggestionFuture(String userid, double valence, int numOfSuggestions){return "The getSuggestionFuture function was triggered in the moodle course";}
 
-	 public String getSuggestionFuture(String userid, double valence, int numOfSuggestions) {
+	 public String getSuggestionFuture(String userid, double valence, Emotion maxEmotion, int numOfSuggestions) {
 
 		//This first part will remain probably the same. It checks if the user is part of the course, updates the suggestion with added resources and or interactions. Then calls the getSuggestion method from the user class. This is ultimately where the final suggestion string is comuter. From the USER
 
@@ -150,6 +153,7 @@ public class MoodleCourse extends Course {
 		if (users.containsKey(userid)) {
 			//update current emotion for the user
 			users.get(userid).updateValence(valence);
+			users.get(userid).updateEmotion(maxEmotion);
 			users.get(userid).updateSuggestions(newResources);
 			ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
 			ArrayList<String> suggestionTexts = new ArrayList<String>();
@@ -158,9 +162,9 @@ public class MoodleCourse extends Course {
 			}
 			
 			if (!suggestions.isEmpty()) {
-				result = "Here is a couple suggestions based on your Moodle activity:" + TextFormatter.createList(suggestionTexts) + "\n Would you like another suggestion?";
+				result = TextFormatter.emotion(users.get(userid).getEmotion())+" "+ TextFormatter.createList(suggestionTexts) + "\n Would you like other suggestions?";
 			} else {
-				result = "No suggestions available";
+				result = "There are currently no suggestions avaliable for you, try interacting with some Moodle items, and come back!";
 			}
 		} else {
 			result = "Error: User not initialized!";

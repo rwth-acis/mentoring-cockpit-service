@@ -6,11 +6,14 @@ import java.util.HashSet;
 
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.ERecSuggestionEvaluator;
+import i5.las2peer.services.mentoringCockpitService.Suggestion.Emotion;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.MoodleSuggestionEvaluator;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.Suggestion;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.SuggestionEvaluator;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.SuggestionQueue;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.SuggestionReason;
+import i5.las2peer.services.mentoringCockpitService.Suggestion.Emotion;
+
 
 public class User {
 	protected String userid;
@@ -20,6 +23,7 @@ public class User {
 	protected SuggestionQueue suggestionQueue;
 	//last current emotion reading for the user, or null for non-emotional contexti
 	protected double valence; 
+	protected Emotion emotion; 
 	
 	public User(String userid, String name, Collection<Resource> resources) {
 		this.userid = userid;
@@ -33,6 +37,7 @@ public class User {
 		updateSuggestions(resources);
 		//default value for valence
 		this.valence = -1;
+		this.emotion = Emotion.UNDEFINED;
 	}
 	
 	public ArrayList<Suggestion> getSuggestion(int numOfSuggestions) {	
@@ -41,6 +46,15 @@ public class User {
 	public void updateValence(double valence)
 	{
 		this.valence = valence; 
+	}
+	public void updateEmotion(Emotion emotion)
+	{
+		this.emotion = emotion; 
+	}
+
+	public Emotion getEmotion()
+	{
+		return this.emotion; 
 	}
 
 	public double getValence(){

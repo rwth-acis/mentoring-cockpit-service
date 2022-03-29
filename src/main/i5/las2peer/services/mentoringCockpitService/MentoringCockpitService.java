@@ -38,6 +38,10 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 
 import javax.ws.rs.core.UriBuilder;
 import i5.las2peer.services.mentoringCockpitService.SPARQLConnection.SPARQLConnection;
+import i5.las2peer.services.mentoringCockpitService.Suggestion.Emotion;
+import i5.las2peer.services.mentoringCockpitService.Suggestion.TextFormatter;
+
+
 
 
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -920,7 +924,7 @@ public class MentoringCockpitService extends RESTService {
 	    	JSONObject returnObj = new JSONObject();
 	    	try {
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
-	    		String userid = bodyObj.getAsString("user");
+	    		String userid = bodyObj.getAsString("email");
 	    		String courseid = bodyObj.getAsString("courseid");
 	    		int numOfSuggestions = bodyObj.getAsNumber("numOfSuggestions").intValue();
 
@@ -930,8 +934,7 @@ public class MentoringCockpitService extends RESTService {
 				String line = null;
 				StringBuilder sb = new StringBuilder ();
 				String res = null;
-				System.out.println("WTFFFF is happening???");
-				URL url = UriBuilder.fromPath(localErecUrl+"emotion/speech/")
+				URL url = UriBuilder.fromPath(kubeErecUrl+"emotion/speech/")
 							.build()
 							.toURL();
 				System.out.println("Attempting connection with url:" + url.toString());
@@ -968,7 +971,40 @@ public class MentoringCockpitService extends RESTService {
 					JSONObject bodyObj2 = (JSONObject) parser.parse(res);
 					String intent = bodyObj2.getAsString("intent");
 					System.out.println("Intent correctly extracted:" + intent);
-					//for cases where user asked for suggestions via text emotion might be a neutral token with no influence in Recommendations
+					/*maxEmotion is the emotion with the highest activation coefficient
+					angry, sad, happy, ps(pleasently surprised), neutral*/
+					String emotion = bodyObj2.getAsString("emotion");
+					String max = bodyObj2.getAsString("max_emotion");
+					Emotion maxEmotion = Emotion.UNDEFINED; 
+					System.out.println("Emotion: The maximal value from the emotion prediction was: "+ max);
+						if (max.equals("happy")){
+							System.out.println("happy!");
+							maxEmotion = Emotion.HAPPY;
+						}
+						else if (max.equals("angry")){
+							System.out.println("antry!");
+							maxEmotion = Emotion.ANGRY; 
+						}
+						else if (max.equals("ps")){
+							System.out.println("ps!");
+							maxEmotion = Emotion.PS;
+						}
+						else if (max.equals("sad")){
+							System.out.println("sad!");
+							maxEmotion = Emotion.SAD; 
+						}
+						else if (max.equals("neutral")){
+							System.out.println("neutral!");
+							maxEmotion = Emotion.NEUTRAL; 
+						}
+						else{
+							System.out.println("default case:!");
+							maxEmotion = Emotion.UNDEFINED; 
+						}
+					
+					
+
+					JSONObject emotionArray = (JSONObject) parser.parse(emotion);
 					double valence = bodyObj2.getAsNumber("valence").doubleValue();
 					System.out.println("Valence correctly extracted: "+ valence);
 
@@ -976,7 +1012,7 @@ public class MentoringCockpitService extends RESTService {
 
 						System.out.println("Past suggestion intention was detected!");
 						//trigger past suggestions, call function from erec with userid, numOfSuggestions, valence
-						url = UriBuilder.fromPath(localErecUrl+"getLowest/")
+						url = UriBuilder.fromPath(kubeErecUrl+"getLowest/")
 					 			.build()
 								.toURL();
 						System.out.println("Attempting connection with Emotion Recognition Service with :" + url.toString());
@@ -1001,8 +1037,10 @@ public class MentoringCockpitService extends RESTService {
 						}
 						res = sb.toString();
 						//todo: create a method to format the reponses from the 2 suggestion methods.
-						System.out.println("Output from lowest K items  " +res);
-						returnObj.put("text", "You seem to be feeling happy :smile:, sad :worried:, angry :angry: , frustrated :hot_face:, try to focus on these items! " +res);
+						// System.out.println("Output from lowest K items  " +res);
+						// returnObj.put("text", "You seem to be feeling happy :smile:, sad :worried:, angry :angry: , frustrated :hot_face:, try to focus on these items! " +res);
+						returnObj.put("text", "You appear to be feeling : "+maxEmotion+"\r\nYou were less satisfied after interacting with the following items: \r\n"+res +"\r\n Try recofusing on them :chart_with_upwards_trend: :muscle:!");
+
 
 					}
 
@@ -1013,13 +1051,14 @@ public class MentoringCockpitService extends RESTService {
 						System.out.println("Future suggestion!");
 						if (courseid != null) {
 							if (service.courses.containsKey(courseid)) {
-								returnObj.put("text", "You seem to be feeling happy :smile:, sad :worried:, angry :angry: , frustrated :hot_face:, try to focus on these items!: " +this.service.courses.get(courseid).getSuggestionFuture(userid, valence, numOfSuggestions));
+								System.out.println("Mentoring: CourseID identified, trying to get suggestions for user with userid: "+ userid);
+								returnObj.put("text", this.service.courses.get(courseid).getSuggestionFuture(userid, valence, maxEmotion, numOfSuggestions));
 							} 
 						} else {
 							for (Entry<String, Course> entry : this.service.courses.entrySet()) {
 								entry.getValue().update();
 								if (entry.getValue().getUsers().containsKey(userid)) {
-									returnObj.put("text", entry.getValue().getSuggestionFuture(userid, valence,numOfSuggestions));
+									returnObj.put("text","--debug:\r\n"+ emotionArray+"\r\n"+  entry.getValue().getSuggestionFuture(userid, valence, maxEmotion,numOfSuggestions));
 									break;
 								}
 							}
@@ -1097,7 +1136,7 @@ public class MentoringCockpitService extends RESTService {
 	    	JSONObject returnObj = new JSONObject();
 	    	try {
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
-	    		String userid = bodyObj.getAsString("user");
+	    		String userid = bodyObj.getAsString("email");
 	    		String courseid = bodyObj.getAsString("courseid");
 	    		int numOfSuggestions = bodyObj.getAsNumber("numOfSuggestions").intValue();
 	    		if (courseid != null) {
@@ -1254,7 +1293,7 @@ public class MentoringCockpitService extends RESTService {
 					// res = sb.toString();
 					System.out.println("Testing the future suggestion function!");
 					try{
-						returnObj.put("text", this.service.courses.get("https://moodle.tech4comp.dbis.rwth-aachen.de/course/view.php?id=18").getSuggestionFuture("juan.stuecker@rwth-aachen.de", 3, 3));
+						returnObj.put("text", this.service.courses.get("https://moodle.tech4comp.dbis.rwth-aachen.de/course/view.php?id=18").getSuggestionFuture("juan.stuecker@rwth-aachen.de", 3,Emotion.HAPPY, 3));
 
 					return Response.ok().entity(returnObj).build();
 				}

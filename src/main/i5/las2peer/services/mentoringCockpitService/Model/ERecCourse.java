@@ -55,6 +55,9 @@ import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
 import net.minidev.json.parser.ParseException;
 
+import i5.las2peer.services.mentoringCockpitService.Suggestion.Emotion;
+
+
 public class ERecCourse extends Course {
 
 	public ERecCourse(String courseid, String courseURL, MentoringCockpitService service) {
@@ -137,7 +140,7 @@ public class ERecCourse extends Course {
 	}
 	
 	@Override
-	public String getSuggestionFuture(String userid, double valence, int numOfSuggestions) {
+	public String getSuggestionFuture(String userid, double valence, Emotion maxEmotion, int numOfSuggestions) {
 
 		//This first part will remain probably the same. It checks if the user is part of the course, updates the suggestion with added resources and or interactions. Then calls the getSuggestion method from the user class. This is ultimately where the final suggestion string is comuter. From the USER
 
