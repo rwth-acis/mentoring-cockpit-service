@@ -10,6 +10,6 @@ public class Quiz extends CompletableResource {
 
 	@Override
 	public String getSuggestionItemText() {
-		return "Quiz " + TextFormatter.quote(TextFormatter.createHyperlink(name, url));
+		return  TextFormatter.quote(TextFormatter.createHyperlink(name, url));
 	}
 }

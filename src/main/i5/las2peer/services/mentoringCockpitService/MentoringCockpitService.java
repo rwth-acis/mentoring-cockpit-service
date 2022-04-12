@@ -122,6 +122,10 @@ public class MentoringCockpitService extends RESTService {
 	private String feedbackLRSDomain = "https://lrs.tech4comp.dbis.rwth-aachen.de";
 	private static String kubeErecUrl = "http://137.226.232.75:32111/static/";
 	private static String localErecUrl = "http://host.docker.internal:5002/static/";
+	private static String localLimeUrl = "http://host.docker.internal:5000/get_link";
+	private static String kubeLimeUrl = "http://137.226.232.75:32113/get_link";
+
+
 
 	/**
 	 * 
@@ -136,7 +140,7 @@ public class MentoringCockpitService extends RESTService {
 		setFieldValues();
 		userEmail = "askabot@fakemail.de"; //TODO: remove this
 		courses = new HashMap<String, Course>();
-		System.out.println("creating course...");
+		System.out.println("Creating course...");
 		createCourses();
 	}
 	
@@ -1012,7 +1016,7 @@ public class MentoringCockpitService extends RESTService {
 
 						System.out.println("Past suggestion intention was detected!");
 						//trigger past suggestions, call function from erec with userid, numOfSuggestions, valence
-						url = UriBuilder.fromPath(kubeErecUrl+"getLowest/")
+						url = UriBuilder.fromPath("http://137.226.232.75:32113/getLowest")
 					 			.build()
 								.toURL();
 						System.out.println("Attempting connection with Emotion Recognition Service with :" + url.toString());
@@ -1037,13 +1041,22 @@ public class MentoringCockpitService extends RESTService {
 						}
 						res = sb.toString();
 						//todo: create a method to format the reponses from the 2 suggestion methods.
-						// System.out.println("Output from lowest K items  " +res);
-						// returnObj.put("text", "You seem to be feeling happy :smile:, sad :worried:, angry :angry: , frustrated :hot_face:, try to focus on these items! " +res);
-						returnObj.put("text", "You appear to be feeling : "+maxEmotion+"\r\nYou were less satisfied after interacting with the following items: \r\n"+res +"\r\n Try recofusing on them :chart_with_upwards_trend: :muscle:!");
+
+
+						JSONObject bodyObj3 = (JSONObject) parser.parse(res);
+
+
+						Iterator<String> keys = bodyObj3.keySet().iterator(); 
+						String resFormated = ""; 
+						while(keys.hasNext()){
+							String key = keys.next(); 
+							resFormated = "\r\n" +key +" : "+  bodyObj3.getAsString(key)+"\r\n"+ resFormated;
+						}
+
+						returnObj.put("text", " \r\n "+TextFormatter.emotionPast(maxEmotion, valence, resFormated));
 
 
 					}
-
 
 
 					else if (intent.equals("future")) {
@@ -1051,7 +1064,7 @@ public class MentoringCockpitService extends RESTService {
 						System.out.println("Future suggestion!");
 						if (courseid != null) {
 							if (service.courses.containsKey(courseid)) {
-								System.out.println("Mentoring: CourseID identified, trying to get suggestions for user with userid: "+ userid);
+								System.out.println("Mentoring: courseid identified, trying to get suggestions for user with userid: "+ userid);
 								returnObj.put("text", this.service.courses.get(courseid).getSuggestionFuture(userid, valence, maxEmotion, numOfSuggestions));
 							} 
 						} else {
@@ -1078,15 +1091,6 @@ public class MentoringCockpitService extends RESTService {
 				}
 
 				
-
-
-
-
-
-
-
-
-
 
 	    		if (!returnObj.containsKey("text")) {
     				returnObj.put("text", res +"(!) Error: Something went wrong");
@@ -1140,11 +1144,14 @@ public class MentoringCockpitService extends RESTService {
 	    		String courseid = bodyObj.getAsString("courseid");
 	    		int numOfSuggestions = bodyObj.getAsNumber("numOfSuggestions").intValue();
 	    		if (courseid != null) {
+					System.out.println("DEBUG: CourseID is not null" + courseid);
 	    			if (service.courses.containsKey(courseid)) {
-						//this.service.courses.get(courseid).update();
+						System.out.println("DEBUG: Service has the course initialized");
+						this.service.courses.get(courseid).update();
 		    			returnObj.put("text", this.service.courses.get(courseid).getSuggestion(userid, numOfSuggestions));
 		    		} 
 	    		} else {
+					System.out.println("DEBUG: Course id is null");
 	    			for (Entry<String, Course> entry : this.service.courses.entrySet()) {
 	    				entry.getValue().update();
 	    				if (entry.getValue().getUsers().containsKey(userid)) {
@@ -1229,98 +1236,74 @@ public class MentoringCockpitService extends RESTService {
 		//todo: Figure out how to route the connection from the Social Bot Manager Service. 
 		//(A) The MCS receives the JSON file with metadata and the Filebody in base64. It would then have to send it to the Erec service, after that the correct Suggestion Function would be passed, which would return the emotion, and it would respond.
 		@POST
-		@Path("/testConnection")
+		@Path("/getLimeLink")
 		@Consumes(MediaType.TEXT_PLAIN)
 	    @Produces(MediaType.APPLICATION_JSON)
 	    @ApiOperation(
-				value = "Test connection with the MongoDB, and the quering function in the Web Emotion Recognition Server",
+				value = "Request the Lime questionnaire link for a user",
 				notes = "Return 200 for a valid connection")
 	    @ApiResponses(
 	            value = { @ApiResponse(
 	                    code = HttpURLConnection.HTTP_OK,
 	                    message = "Connection works") })
-		public Response testConnection(String body) {
+		public Response getLimeLink(String body) {
 	    	JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 	    	JSONObject returnObj = new JSONObject();
-			JSONObject payloadJson = new JSONObject();
 
 
-	    	try {
-				//todo: There is something wrong going on with the body variable, it is not casted in to JSONObject, and it is not shown on the logstoekncd
-	    		System.out.println("Incoming message:\n" + body);
+			try {
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
-				//JSONObject entity = (JSONObject) bodyObj.get("entities"); Entities are used for the theme based suggestions, as keywords the server has to look for
-	    		if (bodyObj != null) {
+	    		String userid = bodyObj.getAsString("email");
+				String line = null;
+				StringBuilder sb = new StringBuilder ();
+				String res = null;
+				URL url = UriBuilder.fromPath(kubeLimeUrl)
+							.build()
+							.toURL();
+				System.out.println("Attempting connection with url:" + url.toString());
+				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+				connection.setRequestMethod("GET");
+				connection.setRequestProperty("Content-Type", "application-json; utf-8");
+				connection.setRequestProperty("Accept", "application/json");
+				connection.setDoOutput(true);
+				try(OutputStream os = connection.getOutputStream()){
 
-					// String userid = bodyObj.getAsString("userid");
-					// String courseid = bodyObj.getAsString("courseid");
-					// int numOfSuggestions = bodyObj.getAsNumber("numOfSuggestions").intValue();
+					byte[] input = bodyObj.toJSONString().getBytes("utf-8");
+					os.write(input, 0, input.length);		
 
-					// payloadJson.put("userid", userid);
-					// payloadJson.put("courseid", courseid);
-					// payloadJson.put("numOfSuggestions", numOfSuggestions);
-
-
-					// String line = null;
-					// StringBuilder sb = new StringBuilder ();
-					// String res = null;
-					// //kube: http://137.226.232.75:32111/static/emotion/speech/
-					// //local: http://host.docker.internal:5002/static/getLowest/
-					// URL url = UriBuilder.fromPath("http://137.226.232.75:32111/static/getLowest/")
-					// 			//.path(URLEncoder.encode(payloadJson.toString(), "UTF-8").replace("+","%20"))
-					//  			.build()
-					//  			.toURL();
-					// System.out.println("Attempting connection with url:" + url.toString());
-					// HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-					// connection.setRequestMethod("POST");
-					// connection.setRequestProperty("Content-Type", "application-json; utf-8");
-					// connection.setRequestProperty("Accept", "application/json");
-					// connection.setDoOutput(true);
-					// try(OutputStream os = connection.getOutputStream()){
-
-					// 	byte[] input = bodyObj.toJSONString().getBytes("utf-8");
-					// 	os.write(input, 0, input.length);
-
-					// }
-					// connection.connect();
-				
-					
-					// BufferedReader rd  = new BufferedReader( new InputStreamReader(connection.getInputStream(), "UTF-8"));
-		
-					// while ((line = rd.readLine()) != null ) {
-					// 	sb.append(line);
-					// }
-					// res = sb.toString();
-					System.out.println("Testing the future suggestion function!");
-					try{
-						returnObj.put("text", this.service.courses.get("https://moodle.tech4comp.dbis.rwth-aachen.de/course/view.php?id=18").getSuggestionFuture("juan.stuecker@rwth-aachen.de", 3,Emotion.HAPPY, 3));
-
-					return Response.ok().entity(returnObj).build();
 				}
-					catch(Exception e){
-						e.printStackTrace();
-						System.out.println(e.toString());
-						returnObj.put("text", "Error");
-						return Response.status(400).entity(returnObj).build();
-					}
-					
-					// return Response.ok().entity(res).build();
+				connection.connect();
+			
+				BufferedReader rd  = new BufferedReader( new InputStreamReader(connection.getInputStream(), "UTF-8"));
+	
+				while ((line = rd.readLine()) != null ) {
+					sb.append(line);
+				}
 
-	    		} else {
-	    			returnObj.put("text", "I wasn´t able to find any information in you´r request, please try again");
-					returnObj.put("closeContext", "true");
-					System.out.println("The return response from the service is:\n" + returnObj);
-					return Response.status(200).entity(returnObj).build();
-	    		}
 
-	    	} catch (Exception e) {
-	    		e.printStackTrace();
-				System.out.println(e.toString());
-	    		returnObj.put("text", "Error");
-	    		return Response.status(400).entity(returnObj).build();
-	    	}
 
-		}				
+
+				res = sb.toString();
+				JSONObject bodyObj2 = (JSONObject) parser.parse(res);
+
+
+				Iterator<String> keys = bodyObj2.keySet().iterator(); 
+				String resFormated = ""; 
+				while(keys.hasNext()){
+					String key = keys.next(); 
+					resFormated = resFormated +"\r\n"+TextFormatter.createHyperlink(key, bodyObj2.getAsString(key));
+				}
+				returnObj.put("text", resFormated);
+				return Response.status(400).entity(returnObj).build();
+
+		}catch (Exception e) {
+			e.printStackTrace();
+			returnObj.put("text", "Error");
+			return Response.status(400).entity(returnObj).build();
+		}
+		
+		
+	}
 
 
 

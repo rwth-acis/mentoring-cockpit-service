@@ -206,7 +206,7 @@ public class SPARQLConnection {
 				//todo: fix the formatting FROM THE LRS, not the triple store of how the resources are described
 				//! resourceid format is unequal to the format from the triplestore. resource id has .demod in the string instead of .de/mod... need to fix this.
 				String interaction = obj.getAsString("verbShort");
-				if (resourceIds.contains(resourceid) || interaction.equals("posted") || interaction.equals("interacted") /*|| interaction.equals("viewed") This doesnt help as it adds resources which are not identifiable, the solution should be to repair the string directly form the LRS*/){
+				if (resourceIds.contains(resourceid) || interaction.equals("posted") || interaction.equals("interacted") || interaction.equals("viewed") /*This doesnt help as it adds resources which are not identifiable, the solution should be to repair the string directly form the LRS*/){
 					String userid = "https://moodle.tech4comp.dbis.rwth-aachen.de/user/profile.php?id=" + obj.getAsString("userid");
 					
 					JSONObject information = (JSONObject) obj.get("info");
@@ -266,17 +266,17 @@ public class SPARQLConnection {
 				"\r\n" + 
 				"SELECT DISTINCT ?interaction WHERE {\r\n" + 
 				"  GRAPH <%s> {\r\n" + 
-				"    <" + userid + "> ?interaction ?b .\r\n" + 
+				"    <https://moodle.tech4comp.dbis.rwth-aachen.de/user/profile.php?id=" + userid + "> ?interaction ?b .\r\n" + 
 				"    ?interaction rdfs:subclassOf ulo:interaction .\r\n" + 
 				"  	?b ulo:interactionResource <" + resourceid + "> .\r\n" + 
 				"  }\r\n" + 
 				"}";
-		
 		JSONArray bindings = getBindings(sparqlQuery(query));
 		for (int i = 0; i < bindings.size(); i++) {
 			JSONObject obj = (JSONObject) bindings.get(i);
 			interactions.add(((JSONObject) obj.get("interaction")).getAsString("value"));
 		}
+		System.out.println("--DEBUG: REturning interaction from spaqrl for user and resource with query: "+query+ interactions);
 		return interactions;
 	}
 	
@@ -296,7 +296,9 @@ public class SPARQLConnection {
 		JSONArray bindings = getBindings(sparqlQuery(query));
 		if (!bindings.isEmpty()) {
 			JSONObject obj = (JSONObject) bindings.get(0);
-			result = ((JSONObject) obj.get("score")).getAsNumber("value").doubleValue();
+			String resultTemp = ((JSONObject) obj.get("score")).getAsString("value");
+			System.out.println(resultTemp);
+			result = Double.parseDouble(resultTemp);
 		}
 		return result;
 	} 

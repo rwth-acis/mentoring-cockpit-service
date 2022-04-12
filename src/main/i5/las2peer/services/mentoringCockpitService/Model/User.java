@@ -35,8 +35,8 @@ public class User {
 		this.suggestionQueue = new SuggestionQueue();
 		this.updateSet = new ArrayList<Resource>();
 		updateSuggestions(resources);
-		//default value for valence
-		this.valence = -1;
+		//default value for valence, when undefined.
+		this.valence = -100;
 		this.emotion = Emotion.UNDEFINED;
 	}
 	
@@ -63,24 +63,21 @@ public class User {
 	
 	public void updateSuggestions(Collection<Resource> resources) {
 		System.out.println("Updating suggestions for user:"+ userid);
-		//update the last current emotion from the mongodb
+
 		//todo: create a function which gets the last emotion reading from the user, from the mognodb
 		//This resources are the <<newResources>>
 		HashSet<Resource> updates = new HashSet<Resource>(resources);
-		//the <<<updateSet>>> in the course.updateProfiles(long since) method, resources come from sparql.getupdates(since, courseid)
-		//the <<newResources>> comes from resources which were NOT stored previously in the course class. This is passed on user.updateSuggestions(newResources)
-		//both serve the exact same fucntion of storing the resources which should be analysed for possible recommendation
 
-		//both are added to the updates HashSet
-		//todo: One of the problems is that both newResources, and updateSet are only updated while creating the course!
 		updates.addAll(updateSet);
 		updateSet.clear();
 		for (Resource resource : updates) {
 			System.out.println("(!!): Going through resource" +resource.getName());
 			SuggestionReason reason = suggestionEvaluator.getSuggestionReason(this, resource);
+			System.out.println("--DEBUG: Suggestion evaluator reason: " + reason);
 			if (reason != SuggestionReason.NOT_SUGGESTED) {
 				System.out.println("(!!): Adding resource to the prio queue");
 				double priority = suggestionEvaluator.getSuggestionPriority(this, resource, reason);
+				System.out.println("--DEBUG: Priority given: "+ priority);
 				Suggestion suggestion = new Suggestion(resource, priority, reason);
 				suggestionQueue.addSuggestion(suggestion);
 			} else {
@@ -88,23 +85,7 @@ public class User {
 			}
 		}
 	}
-//Solved the ridiculoud need for a new method by adding the valence a protected variable to each user
-	// public void updateSuggestionsEmotion(Collection<Resource> resources, double valence) {
-	// 	//update the last current emotion from the mongodb
-	// 	HashSet<Resource> updates = new HashSet<Resource>(resources);
-	// 	updates.addAll(updateSet);
-	// 	updateSet.clear();
-	// 	for (Resource resource : updates) {
-	// 		SuggestionReason reason = suggestionEvaluator.getSuggestionReason(this, resource);
-	// 		if (reason != SuggestionReason.NOT_SUGGESTED) {
-	// 			double priority = suggestionEvaluator.getSuggestionPriority(this, resource, reason);
-	// 			Suggestion suggestion = new Suggestion(resource, priority, reason);
-	// 			suggestionQueue.addSuggestion(suggestion);
-	// 		} else {
-	// 			suggestionQueue.dropSuggestion(resource);
-	// 		}
-	// 	}
-	// }
+
 	
 	public String getUserid() {
 		return userid;

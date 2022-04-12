@@ -2,6 +2,8 @@ package i5.las2peer.services.mentoringCockpitService.Suggestion;
 
 import java.util.ArrayList;
 
+import javax.print.attribute.PrintJobAttribute;
+
 import i5.las2peer.services.mentoringCockpitService.Model.User;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.CompletableResource;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
@@ -15,22 +17,37 @@ public class ERecSuggestionEvaluator extends SuggestionEvaluator {
 
 	@Override
 	public double getSuggestionPriority(User user, Resource resource, SuggestionReason reason) {
-		if (user.getValence() > 0/*which is the default value when valence is not initialized*/){
+		double cognitiveLoadTemp = getCognitiveLoad(resource);
+		if (user.getValence() != -100/*which is the default value when valence is not initialized*/ && cognitiveLoadTemp != 0){
+			System.out.println("--DEBUG: Attempting to get priority with emotion");
 			double valence = user.getValence(); 
 			double cognitiveLoad = getCognitiveLoad(resource);
 			double priority = 0; 
+
 
 			switch(reason){
 	
 				case NOT_VIEWED: 
 					//Here priority is normalize into (0.1) (!)todo: replace 5, and 0 to min and max depending on the values of emotion and cognitive load
-					priority = ((1-(valence-cognitiveLoad))-5)/5;
+					if (valence > 0){
+						priority = valence*cognitiveLoad;
+					}
+					else{
+						priority = valence/cognitiveLoad; 
+					}
+					//priority = ((1-(valence-cognitiveLoad))-5)/5;
 					return priority;
 				case NOT_COMPLETED: 
 					//NOT_COMPLETED also covers quizes for which the maximum grade has not been achieved, not so clar
 
-					priority = ((1-(valence-cognitiveLoad))-5)/5-0.3;
-					return priority; 
+					// priority = ((1-(valence-cognitiveLoad))-5)/5-0.3;
+					if (valence > 0){
+						priority = valence*cognitiveLoad;
+					}
+					else{
+						priority = valence/cognitiveLoad; 
+					}
+					return priority-0.3; 
 
 
 	
@@ -41,6 +58,7 @@ public class ERecSuggestionEvaluator extends SuggestionEvaluator {
 			}
 		}
 		else{
+			System.out.println("--DEUBG: Defaulting to standard suggestions");
 
 			//default suggestion architecture
 
@@ -128,14 +146,19 @@ public class ERecSuggestionEvaluator extends SuggestionEvaluator {
 	@Override
 	public boolean hasInteraction(User user, Resource resource, String interactionName) {
 		boolean result = false;
+		System.out.println("--DEBUG: Proving wether the item "+ resource.getName()+ " has been seen by: "+ user.getName()+"userid"+ user.getUserid()+ " with interaction: "+ interactionName+" with resourceid "+ resource.getId());
 		try {
+			System.out.println("--DEBUG: Attemting to look for interaction in SPARQL: ");
 			ArrayList<String> interactions = SPARQLConnection.getInstance().getInteractions(user.getUserid(), resource.getId());
 			for (String interaction : interactions) {
+				System.out.println("--DEBUG: looking at interaction "+ interaction+ "comparing to interactionname  "+interactionName);
+				System.out.println(interaction.contains(interactionName));
 				if (interaction.contains(interactionName)) { //TODO: change to equals
 					result = true;
 				}
 			}
 		} catch (Exception e) {
+			System.out.println("--DEBUG: Somthing went wrong looking for the intaraction of a user");
 			e.printStackTrace();
 		}
 		return result;

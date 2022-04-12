@@ -17,13 +17,14 @@ import i5.las2peer.services.mentoringCockpitService.Model.Resources.Hyperlink;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
+import i5.las2peer.services.mentoringCockpitService.Suggestion.ERecSuggestionEvaluator;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.Emotion;
 
 
 public class MoodleCourse extends Course {
 
 	public MoodleCourse(String courseid, String courseURL, MentoringCockpitService service) {
-		super(courseid, courseURL, service, new MoodleSuggestionEvaluator(0, 1));
+		super(courseid, courseURL, service, new ERecSuggestionEvaluator(0, 1));
 	}
 	
 	@Override
@@ -141,13 +142,11 @@ public class MoodleCourse extends Course {
 	}
 
 	@Override
-	//  public String getSuggestionFuture(String userid, double valence, int numOfSuggestions){return "The getSuggestionFuture function was triggered in the moodle course";}
+
 
 	 public String getSuggestionFuture(String userid, double valence, Emotion maxEmotion, int numOfSuggestions) {
 
-		//This first part will remain probably the same. It checks if the user is part of the course, updates the suggestion with added resources and or interactions. Then calls the getSuggestion method from the user class. This is ultimately where the final suggestion string is comuter. From the USER
 
-		//the only valuable think i could add to this class would be some data from the users about emotion, otherwise the moodle course is good enough for everythin
 
 		String result = "";
 		if (users.containsKey(userid)) {
@@ -162,28 +161,13 @@ public class MoodleCourse extends Course {
 			}
 			
 			if (!suggestions.isEmpty()) {
-				result = TextFormatter.emotion(users.get(userid).getEmotion())+" "+ TextFormatter.createList(suggestionTexts) + "\n Would you like other suggestions?";
+				result = TextFormatter.emotion(users.get(userid).getEmotion(), users.get(userid).getValence(),TextFormatter.createList(suggestionTexts));
 			} else {
-				result = "There are currently no suggestions avaliable for you, try interacting with some Moodle items, and come back!";
+				result = "There are currently no suggestions avaliable for you, try interacting with some Moodle items, or responding some Item questionnaires and come back! :space_invader: ";
 			}
 		} else {
 			result = "Error: User not initialized!";
 		}
-
-
-        //dummy variables in order to test the functioning
-
-        String userid_temp = "juan.stuecker@gmail.com";
-        int numOfSuggestions_temp = 3; 
-        int emotion_temp = 2; 
-
-
-        //The basic idea is: This suggestion mehtod is triggered, so now we look at all the items which remain unseen by the user, and choose the one which matches the emotion; which should be current.
-
-        //This should be triggered by the course, and before that the user, and suggestion evaluator, and suggestion queue need to be updated, for now i will just test the connection to the mongo db to querie the emotional data from there whic is the most important part
-
-        //For the future suggestion function we want JUST THE **CURRENT EMOTION**, the more complicated of the two is the past recommendation function
-
 
 
 

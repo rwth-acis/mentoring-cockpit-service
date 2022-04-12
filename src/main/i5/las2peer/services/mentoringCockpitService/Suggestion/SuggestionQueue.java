@@ -24,6 +24,10 @@ public class SuggestionQueue {
 		// Return the first resource in the queue that has not been removed from the suggestion set
 		System.out.println("DEBUG --- SIZE: " + suggestionList.size());
 		System.out.println("DEBUG --- LIST: " + suggestionList);
+		for (Suggestion i : suggestionList){
+			System.out.println(i.getSuggestionText());
+			System.out.println(i.getPriority());
+		}
 		ArrayList<Suggestion> suggestions = new ArrayList<Suggestion>();
 		if (!suggestionSet.isEmpty() && number < suggestionSet.size()) {
 			sort();

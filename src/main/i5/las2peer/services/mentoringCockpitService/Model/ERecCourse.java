@@ -192,17 +192,12 @@ public class ERecCourse extends Course {
     @Override
     public String getSuggestionPast(String userid, double valence,int numOfSuggestions){
 
-        //This method should receieved the current emotion of the user, and look at the history of interaction of the user and the items, and return the items which best match their emotion. 
-        //This can be either items to review, or new items which should pose a hgiher challenge to the user.
 
         String result = "";
 
 		if (users.containsKey(userid)) {
 
-			//step one: get the lowest valnence scored items from the mongo db for the specific user. 
-			//todo: make sure how to querie the data either with a user id, or with an email. Find a way to possibly seamlessly switch between the 2. Or just standarize everything to one only. --->Probably the easiest way is to check in the python server, as it has the direct connection to mongo
 
-			//setting json request file
 			JSONObject payloadJson = new JSONObject();
 			payloadJson.put("userid", userid);
 			payloadJson.put("numOfSuggestions", numOfSuggestions);
