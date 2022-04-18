@@ -50,6 +50,7 @@ import org.knowm.xchart.BitmapEncoder;
 import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYSeries;
 import org.knowm.xchart.style.markers.SeriesMarkers;
+import org.w3c.dom.Text;
 
 import i5.las2peer.api.Context;
 import i5.las2peer.api.ManualDeployment;
@@ -986,7 +987,7 @@ public class MentoringCockpitService extends RESTService {
 							maxEmotion = Emotion.HAPPY;
 						}
 						else if (max.equals("angry")){
-							System.out.println("antry!");
+							System.out.println("angry!");
 							maxEmotion = Emotion.ANGRY; 
 						}
 						else if (max.equals("ps")){
@@ -1050,7 +1051,8 @@ public class MentoringCockpitService extends RESTService {
 						String resFormated = ""; 
 						while(keys.hasNext()){
 							String key = keys.next(); 
-							resFormated = "\r\n" +key +" : "+  bodyObj3.getAsString(key)+"\r\n"+ resFormated;
+							// resFormated = "\r\n" +key +" : "+  bodyObj3.getAsString(key)+"\r\n"+ resFormated;
+							resFormated = "\r\n" + TextFormatter.createHyperlink(key, bodyObj3.getAsString(key))+ "\r\n "+resFormated;
 						}
 
 						returnObj.put("text", " \r\n "+TextFormatter.emotionPast(maxEmotion, valence, resFormated));
@@ -1151,7 +1153,7 @@ public class MentoringCockpitService extends RESTService {
 		    			returnObj.put("text", this.service.courses.get(courseid).getSuggestion(userid, numOfSuggestions));
 		    		} 
 	    		} else {
-					System.out.println("DEBUG: Course id is null");
+					System.out.println("DEBUG: Course ID is null");
 	    			for (Entry<String, Course> entry : this.service.courses.entrySet()) {
 	    				entry.getValue().update();
 	    				if (entry.getValue().getUsers().containsKey(userid)) {

@@ -29,6 +29,7 @@ public class ERecSuggestionEvaluator extends SuggestionEvaluator {
 	
 				case NOT_VIEWED: 
 					//Here priority is normalize into (0.1) (!)todo: replace 5, and 0 to min and max depending on the values of emotion and cognitive load
+					System.out.println("--DEBUG: Resource was not seen, valence : "+valence+" cognitiveLoad: "+cognitiveLoad);
 					if (valence > 0){
 						priority = valence*cognitiveLoad;
 					}
@@ -38,6 +39,7 @@ public class ERecSuggestionEvaluator extends SuggestionEvaluator {
 					//priority = ((1-(valence-cognitiveLoad))-5)/5;
 					return priority;
 				case NOT_COMPLETED: 
+					System.out.println("--DEBUG: Resource was not completed, valence : "+valence+" cognitiveLoad: "+cognitiveLoad);
 					//NOT_COMPLETED also covers quizes for which the maximum grade has not been achieved, not so clar
 
 					// priority = ((1-(valence-cognitiveLoad))-5)/5-0.3;
@@ -47,7 +49,19 @@ public class ERecSuggestionEvaluator extends SuggestionEvaluator {
 					else{
 						priority = valence/cognitiveLoad; 
 					}
-					return priority-0.3; 
+					return (priority-0.3); 
+
+				case NOT_MAX_GRADE: 
+					System.out.println("--DEBUG: Max grade was not achieved, valence : "+valence+" cognitiveLoad: "+cognitiveLoad);
+
+					if (valence > 0){
+						priority = valence*cognitiveLoad;
+					}
+					else{
+						priority = valence/cognitiveLoad; 
+					}
+					//priority = ((1-(valence-cognitiveLoad))-5)/5;
+					return (priority-0.4);
 
 
 	

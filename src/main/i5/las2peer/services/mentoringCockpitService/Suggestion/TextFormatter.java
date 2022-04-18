@@ -45,7 +45,7 @@ public class TextFormatter {
 					return "You seem to be feeling sad :confused: , consider taking a short break :person_in_lotus_position: and comming back, you´ll be more concentraded! ";
 				}
 				else{
-				return "You seem to be feeling a little down :worried: , maybe try something easier, like these items:   " ;
+				return "You seem to be feeling a little down :worried: , maybe try something easier, like these items:   "+ "\r\n" +text ;
 				}
 			case PS:  
 				return "You seem exited :star_struck: , challenge yourself with the following items:   " +valence + "\r\n"+ text; 
