@@ -36,37 +36,38 @@ public class TextFormatter {
 			case HAPPY:
 				if (valence > 0.9)
 				{
-					return "You seem to be feeling it! :sunglasses: , here is a challenge for you!   "+ "\r\n"+ text;
+					return "You seem to be feeling it! :sunglasses: , here is a challenge for you! Try working on the items which should be a little **more complicated**   "+ "\r\n"+ text;
 				}
-				return "You seem to be feeling happy :smile:, take advantage of it, challenge yourself try to work on these items:   " + "\r\n"+ text;
+				return "You seem to be feeling happy :smile:, take advantage of it, challenge yourself try something a little **more complex** and work on these items:   " + "\r\n"+ text;
 			case SAD:
 				if (valence < -0.9)
 				{
 					return "You seem to be feeling sad :confused: , consider taking a short break :person_in_lotus_position: and comming back, you´ll be more concentraded! ";
 				}
 				else{
-				return "You seem to be feeling a little down :worried: , maybe try something easier, like these items:   "+ "\r\n" +text ;
+				return "You seem to be feeling a little down :worried: , maybe try something **a litle easier**, like these items:   "+ "\r\n" +text ;
 				}
 			case PS:  
-				return "You seem exited :star_struck: , challenge yourself with the following items:   " +valence + "\r\n"+ text; 
+				return "You seem exited :star_struck: , challenge yourself with the following items which should be **more challenging**:   " +valence + "\r\n"+ text; 
 			case ANGRY: 
 			if (valence < -0.9)
 				{
 					return "You seem to be feeling angry :face_with_symbols_over_mouth: , consider coming back once you´re calmer to tackle the next challenge! :muscle: ";
 				}
-				return "You seem angry :angry: , maybe try something less demanding, like, these items:   "  + "\r\n"+ text;
+				return "You seem angry :angry: , maybe try some **less demanding** items, like the following :   "  + "\r\n"+ text;
 			case NEUTRAL:
 			if (valence > 0)
 			{
-				return "You seem to be feeling calmed :person_getting_massage: , take advantage of it, here are some items that might be more complicated "+ "\r\n" + text;
+				return "You seem to be feeling calmed :person_getting_massage: , take advantage of your mental state , here are some items that might be **more complicated** "+ "\r\n" + text;
 			}
-			return "You seem calmed :person_getting_massage: , here are some items you should work on  "  + "\r\n"+ text;
+			return "You seem calmed :person_getting_massage: , here are some items which should not me so **complicated** for you to work on and start to get in learning rythm "  + "\r\n"+ text;
 			default:
 				return "ERROR: Current emotion not found in user";
 			}
 	}
 
 	public static String emotionPast(Emotion emotion, double valence, String text){
+		if(text.length()<1){return "You seem "+ emotion+ " but you haven´t reponsded any lime questionnaire, try one by asking for the Lime Surveys in the chat! :clipboard: ";}
 		switch (emotion) {
 			case UNDEFINED:
 				return "You had lower scores in these items: "  + "\r\n"+ text+ "\r\n try and review these topics!";
@@ -97,7 +98,7 @@ public class TextFormatter {
 			{
 				return "You seem to be feeling calmed :person_getting_massage: , take advantage of it, here are some items where you **struggled** in the past "+ "\r\n" + text;
 			}
-			return "You seem calmed :person_getting_massage: , continue like this, heare are some items for you to revise  "  + "\r\n"+ text;
+			return "You seem calmed :person_getting_massage: , continue like this, here are some items for you to revise  "  + "\r\n"+ text;
 			default:
 				return "ERROR: Current emotion not found in user";
 			}

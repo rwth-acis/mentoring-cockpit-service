@@ -1067,6 +1067,8 @@ public class MentoringCockpitService extends RESTService {
 						if (courseid != null) {
 							if (service.courses.containsKey(courseid)) {
 								System.out.println("Mentoring: courseid identified, trying to get suggestions for user with userid: "+ userid);
+								//todo: Create an separate update function for curren emotion and valence
+								// this.service.courses.get(courseid).update();
 								returnObj.put("text", this.service.courses.get(courseid).getSuggestionFuture(userid, valence, maxEmotion, numOfSuggestions));
 							} 
 						} else {
