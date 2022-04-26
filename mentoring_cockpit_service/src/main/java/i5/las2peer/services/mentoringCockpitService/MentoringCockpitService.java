@@ -298,7 +298,7 @@ public class MentoringCockpitService extends RESTService {
 	/**
      * A function that is called by a chatbot to generate a suggestion for a user.
      *
-     * @body Request body of the chatbot
+     * @param body Request body of the chatbot
      *
      */
     @GET
@@ -887,7 +887,7 @@ public class MentoringCockpitService extends RESTService {
 		/**
 	     * A function that is called by a chatbot to generate a list of resource recommendations based on the user's LMS data.
 	     *
-	     * @body Request body of the chatbot
+	     * @param body Request body of the chatbot
 	     *
 	     */
 	    @POST
@@ -940,7 +940,7 @@ public class MentoringCockpitService extends RESTService {
 	    /**
 	     * A function that is called by a chatbot to generate a list of recommendations based on the given theme.
 	     *
-	     * @body Request body of the chatbot
+	     * @param body Request body of the chatbot
 	     *
 	     */
 	    @POST

@@ -1,5 +1,6 @@
 /output/
 /export/
+/mentoring_cockpit_service/export/
 /node-storage/
 /.las2peer/
 /tmp/
@@ -19,4 +20,9 @@
 archiva_credentials.xml
 /servicebundle/
 /.vscode/
-/bin/
+
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
