@@ -71,6 +71,8 @@ public abstract class Course {
 
 	public abstract String getSuggestionPast(String userid, double valence, int numOfSuggestions);
 
+	public abstract void updateEmotion(String userid, double valence);
+
 	public abstract String getThemeSuggestions(String themeid);
 	
 	public String getCourseid() {

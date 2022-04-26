@@ -24,6 +24,7 @@ public class User {
 	//last current emotion reading for the user, or null for non-emotional contexti
 	protected double valence; 
 	protected Emotion emotion; 
+	protected Collection<Resource> firstResources;
 	
 	public User(String userid, String name, Collection<Resource> resources) {
 		this.userid = userid;
@@ -34,7 +35,9 @@ public class User {
 		//this.suggestionEvaluator = new ERecSuggestionEvaluator(0,1);
 		this.suggestionQueue = new SuggestionQueue();
 		this.updateSet = new ArrayList<Resource>();
-		updateSuggestions(resources);
+		this.firstResources = resources;
+
+		//updateSuggestions(resources);
 		//default value for valence, when undefined.
 		this.valence = -100;
 		this.emotion = Emotion.UNDEFINED;
@@ -67,6 +70,12 @@ public class User {
 		//todo: create a function which gets the last emotion reading from the user, from the mognodb
 		//This resources are the <<newResources>>
 		HashSet<Resource> updates = new HashSet<Resource>(resources);
+		if(!this.firstResources.isEmpty()){
+			System.out.println("DEBUGFINAL: There are fist resources! ");
+			HashSet<Resource> firstUpdates = new HashSet<Resource>(this.firstResources);
+			updates.addAll(firstUpdates);
+			this.firstResources.clear();
+		}
 
 		updates.addAll(updateSet);
 		updateSet.clear();

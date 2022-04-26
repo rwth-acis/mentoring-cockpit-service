@@ -91,6 +91,10 @@ public class ERecCourse extends Course {
 		createInteractions(since);
 		createThemes(since);
 	}
+	@Override
+	public void updateEmotion(String userid, double valence){
+		
+	}
 	
 	protected void updateProfiles(long since) {
 		try {

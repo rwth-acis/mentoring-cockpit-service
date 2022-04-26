@@ -141,6 +141,12 @@ public class MoodleCourse extends Course {
 		return result;
 	}
 
+
+	@Override
+	public void updateEmotion(String userid, double valence)
+	{
+		users.get(userid).updateValence(valence);
+	}
 	@Override
 
 
@@ -153,6 +159,7 @@ public class MoodleCourse extends Course {
 			//update current emotion for the user
 			users.get(userid).updateValence(valence);
 			users.get(userid).updateEmotion(maxEmotion);
+			System.out.println("DEBUG: Updating valence for user : "+ valence);
 			users.get(userid).updateSuggestions(newResources);
 			ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
 			ArrayList<String> suggestionTexts = new ArrayList<String>();
