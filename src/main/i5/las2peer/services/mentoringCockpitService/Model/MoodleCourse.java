@@ -94,6 +94,10 @@ public class MoodleCourse extends Course {
 						System.out.println("Adding a new resource:" + resourceid);
 						resources.put(resourceid, resource);
 						newResources.add(resource);
+						// if(since == 0){
+						// 	//In the first iteration of the update method, a copy of all interaction resources
+						// 	firstResources.add(resource);
+						// }
 					}
 				} else {
 					System.out.println("(!!): Resource was already in the hashlist");
@@ -136,7 +140,7 @@ public class MoodleCourse extends Course {
 				result = "No suggestions available";
 			}
 		} else {
-			result = "Error: User not initialized!";
+			result = "Error: User not initialized! Try interacting with the first resource in the course :smile: "+ "[Moodle Course]"+"("+courseid+")";
 		}
 		return result;
 	}
@@ -160,6 +164,7 @@ public class MoodleCourse extends Course {
 			users.get(userid).updateValence(valence);
 			users.get(userid).updateEmotion(maxEmotion);
 			System.out.println("DEBUG: Updating valence for user : "+ valence);
+			// users.get(userid).updateSuggestions(firstResources); // from the first iteration resources, to reevaluate with the current emotional valence
 			users.get(userid).updateSuggestions(newResources);
 			ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
 			ArrayList<String> suggestionTexts = new ArrayList<String>();
@@ -173,7 +178,7 @@ public class MoodleCourse extends Course {
 				result = "There are currently no suggestions avaliable for you, try interacting with some Moodle items, or responding some Item questionnaires and come back! :space_invader: ";
 			}
 		} else {
-			result = "Error: User not initialized!";
+			result = "Error: User not initialized! Try interacting with the first resource in the course :smile: "+ "[Moodle Course]"+"("+courseid+")";
 		}
 
 

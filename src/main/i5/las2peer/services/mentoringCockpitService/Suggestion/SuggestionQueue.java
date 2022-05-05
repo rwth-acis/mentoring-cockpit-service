@@ -54,6 +54,7 @@ public class SuggestionQueue {
 		Resource resource = suggestion.getSuggestedResource();
 		if (suggestionMap.containsKey(resource.getId())) {
 			dropSuggestion(resource);
+			//no element will be suggested twice, if there is a new interaction, the last suggestion will be removed
 		} 
 		suggestionSet.add(suggestion);
 		suggestionMap.put(resource.getId(), suggestion);

@@ -258,6 +258,29 @@ public class SPARQLConnection {
 		
 		return getBindings(sparqlQuery(query));
 	}
+	// public JSONArray getLastInteraction(String courseid, String userid) { // The idea is to get the last interaction of every element
+	// 	String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
+	// 			"PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\r\n" + 
+	// 			"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
+	// 			"\r\n" + 
+	// 			"SELECT DISTINCT ?username ?resourceid ?resourcename ?resourcetype WHERE {\r\n" + 
+	// 			"  GRAPH <%s> {\r\n" + 
+	// 			"    <" + courseid + "> ulo:hasResource ?resourceid .\r\n" + 
+	// 			"    <" + courseid + "> ulo:hasUser <" + userid + "> .\r\n" + 
+	// 			"    ?resourceid rdfs:label ?resourcename .\r\n" + 
+	// 			"    <" + userid + "> rdfs:label ?username .\r\n" + 
+	// 			"    <" + userid + "> ?interaction ?b .\r\n" + 
+	// 			"    ?interaction rdfs:subclassOf ulo:interaction .\r\n" + 
+	// 			"  	 ?b ulo:interactionResource ?resourceid .\r\n" + 
+	// 			"    ?b ulo:timestamp ?timestamp .\r\n" + 
+	// 			"    ?resourceid a ?resourcetype .\r\n" + 
+	// 			"    ?resourcetype rdfs:subclassOf ulo:resource .\r\n" + 
+	// 			"    FILTER (xsd:integer(?timestamp) > " + since + ").\r\n" + 
+	// 			"  }\r\n" + 
+	// 			"}";
+		
+	// 	return getBindings(sparqlQuery(query));
+	// }
 	
 	public ArrayList<String> getInteractions (String userid, String resourceid) {
 		ArrayList<String> interactions = new ArrayList<String>();

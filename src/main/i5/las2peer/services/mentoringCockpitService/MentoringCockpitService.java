@@ -497,6 +497,15 @@ public class MentoringCockpitService extends RESTService {
 		return qualifiedUploadFilePath;
 	}
 
+	// public String checkUserInCourse(String courseid, String userid) {
+
+	// 	if(this.service.courses.get(courseid).getUsers().containsKey(userid){}
+
+
+
+
+	// }
+
 	/**
 	 * A function that gets all the courses a tutor can see from a MySQL database.
 	 *
@@ -903,13 +912,77 @@ public class MentoringCockpitService extends RESTService {
 		MentoringCockpitService service = (MentoringCockpitService) Context.get().getService();
 		
 		/**
-	     * A function that is called by a chatbot to generate a list of resource recommendations based on the user's LMS data.
+	     * A function that is called to check wether a users is initialized in the course list in the Mentoring
+		 * Cockpit Service
 	     *
 	     * @body Request body of the chatbot
+		 * 
+		 * Returns either positive or negative formated message string
 	     *
 	     */
+		@POST
+	    @Path("/checkStudentStatus")
+		@Consumes(MediaType.TEXT_PLAIN)
+	    @Produces(MediaType.APPLICATION_JSON)
+	    @ApiOperation(
+				value = "Check user status in course",
+				notes = "Checks wether the user is initialized in the course, and returns a negative or positive message")
+	    @ApiResponses(
+	            value = { @ApiResponse(
+	                    code = HttpURLConnection.HTTP_OK,
+	                    message = "Connection works") })
+		public Response checkStudentStatus(String body) {
+			JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
+	    	JSONObject returnObj = new JSONObject();
+	    	try {
+
+				System.out.println("-DEBUG: "+body);
+	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
+	    		String userid = bodyObj.getAsString("email");
+				System.out.println("-DEBUG: "+userid);
+	    		String courseid = bodyObj.getAsString("courseid");
+				System.out.println("-DEBUG:"+courseid);
+
+				if (courseid != null) {
+					System.out.println("DEBUG: courseid is not null" + courseid);
+	    			if (service.courses.containsKey(courseid)) {
+						System.out.println("DEBUG: Service has the course initialized");
+						returnObj.put("text", "You are initialized in the course \n"+courseid+"\n and are ready to go :vertical_traffic_light:!");
+		    		} 
+					else{
+						returnObj.put("text", "You are not initialized in the course, interact with an item in the course. If you have already opened and item, wait a little, you should be initialized in a moment! :bulb:");
+					}
+	    		} else {
+					System.out.println("DEBUG: courseid is null");
+					String courses = "Courses: \n"; 
+	    			for (Entry<String, Course> entry : this.service.courses.entrySet()) {
+
+	    				if (entry.getValue().getUsers().containsKey(userid)) {
+							courses = courses +"\n"+entry.getValue().getCourseid();
+	    				}
+	    			}
+					returnObj.put("text", "You are not initialized for the course this bot is working on, but for the following courses");
+	    		}
 
 
+				returnObj.put("closeContext", "true");
+	    		return Response.status(200).entity(returnObj).build();
+			
+			}catch (Exception e) {
+				e.printStackTrace();
+				returnObj.put("text", "Something went wrong checking your status in the course");
+				return Response.status(400).entity(returnObj).build();
+			}
+		}
+		/**
+	     * A function which takes an audio message codified in base64, user email, and courseid, and 
+		 * makes a request to the Emotion Recognition Service to make a prediction and recommendation based on the predicted emotion
+	     *
+	     * @body Request body of the chatbot
+		 * 
+		 * Returns a formated message of the item predictions for the given course and user
+	     *
+	     */
 		@POST
 	    @Path("/getEmotionSuggestion")
 		@Consumes(MediaType.TEXT_PLAIN)
@@ -923,7 +996,6 @@ public class MentoringCockpitService extends RESTService {
 	                    message = "Connection works") })
 	    public Response getEmotionSuggestion(String body) {
 
-			//before anything, the service will have to connect to the speech emotion recognition service to make speech to text and emotion recognition.
 
 	    	JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 	    	JSONObject returnObj = new JSONObject();
@@ -972,7 +1044,7 @@ public class MentoringCockpitService extends RESTService {
 				(metadata): userid, time, */
 
 				try{
-					System.out.println("Attempting to extract JSON response from Emotion REcognition Service");
+					System.out.println("Attempting to extract JSON response from Emotion Recognition Service");
 					JSONObject bodyObj2 = (JSONObject) parser.parse(res);
 					String intent = bodyObj2.getAsString("intent");
 					System.out.println("Intent correctly extracted:" + intent);
@@ -981,6 +1053,7 @@ public class MentoringCockpitService extends RESTService {
 					String emotion = bodyObj2.getAsString("emotion");
 					String max = bodyObj2.getAsString("max_emotion");
 					Emotion maxEmotion = Emotion.UNDEFINED; 
+					//todo: update switch statement to a self-evaluating function
 					System.out.println("Emotion: The maximal value from the emotion prediction was: "+ max);
 						if (max.equals("happy")){
 							System.out.println("happy!");
@@ -1015,8 +1088,30 @@ public class MentoringCockpitService extends RESTService {
 
 					if (intent.equals("past")){
 
-						System.out.println("Past suggestion intention was detected!");
+						System.out.println("-debug: Generating PAST suggestion");
+						//updating the valence, not for the functioning of past recommendation, but to keep track in case of a problem with a next iteration future suggestion
+						if (courseid != null) {
+							if (service.courses.containsKey(courseid)) {
+								System.out.println("Mentoring: courseid identified, trying to get suggestions for user with userid: "+ userid);
+								if(this.service.courses.get(courseid).getUsers().containsKey(userid))
+								{
+									this.service.courses.get(courseid).updateEmotion(userid,valence);
+								}
+								else{
+									returnObj.put("text", "User is not initialized, try interacting with the some item in the course! :pencil:");
+								}
+							} 
+						} else {
+							for (Entry<String, Course> entry : this.service.courses.entrySet()) {
+								entry.getValue().update();
+								if (entry.getValue().getUsers().containsKey(userid)) {
+									entry.getValue().updateEmotion(userid,valence);
+									break;
+								}
+							}
+						}
 						//trigger past suggestions, call function from erec with userid, numOfSuggestions, valence
+						//todo: change the Path string to an enviromental variable to control on deployment
 						url = UriBuilder.fromPath("http://137.226.232.75:32113/getLowest")
 					 			.build()
 								.toURL();
@@ -1041,21 +1136,26 @@ public class MentoringCockpitService extends RESTService {
 							sb.append(line);
 						}
 						res = sb.toString();
-						//todo: create a method to format the reponses from the 2 suggestion methods.
-
 
 						JSONObject bodyObj3 = (JSONObject) parser.parse(res);
-
-
 						Iterator<String> keys = bodyObj3.keySet().iterator(); 
 						String resFormated = ""; 
-						while(keys.hasNext()){
-							String key = keys.next(); 
-							// resFormated = "\r\n" +key +" : "+  bodyObj3.getAsString(key)+"\r\n"+ resFormated;
-							resFormated = "\r\n" + TextFormatter.createHyperlink(key, bodyObj3.getAsString(key))+ "\r\n "+resFormated;
+						String key = keys.next(); 
+						if (bodyObj3.getAsString(key).equals("No results")){
+							returnObj.put("text", "There are not results for your Items, try asking me for the _lime links_ and fill one out :smile: ");
+						}
+						else{
+
+							do{
+								// resFormated = "\r\n" +key +" : "+  bodyObj3.getAsString(key)+"\r\n"+ resFormated;
+								resFormated = "\r\n" + TextFormatter.createHyperlink(key, bodyObj3.getAsString(key))+ "\r\n "+resFormated;
+								key = keys.next(); 
+							}while(keys.hasNext());
+	
+							returnObj.put("text", " \r\n "+TextFormatter.emotionPast(maxEmotion, valence, resFormated));
 						}
 
-						returnObj.put("text", " \r\n "+TextFormatter.emotionPast(maxEmotion, valence, resFormated));
+
 
 
 					}
@@ -1066,7 +1166,7 @@ public class MentoringCockpitService extends RESTService {
 						System.out.println("Future suggestion!");
 						if (courseid != null) {
 							if (service.courses.containsKey(courseid)) {
-								System.out.println("Mentoring: courseid identified, trying to get suggestions for user with userid: "+ userid);
+								System.out.println("-debug: courseid in list, generating suggestions for user "+ userid);
 								if(this.service.courses.get(courseid).getUsers().containsKey(userid))
 								{
 									this.service.courses.get(courseid).updateEmotion(userid,valence);
@@ -1074,7 +1174,7 @@ public class MentoringCockpitService extends RESTService {
 									returnObj.put("text", this.service.courses.get(courseid).getSuggestionFuture(userid, valence, maxEmotion, numOfSuggestions));
 								}
 								else{
-									returnObj.put("text", "User is not initialized, try interacting with the first item in the course! :pencil:");
+									returnObj.put("text", "User is not initialized, try interacting with some item in the course! :pencil:");
 								}
 							} 
 						} else {
@@ -1116,20 +1216,6 @@ public class MentoringCockpitService extends RESTService {
 	    	}
 	    	
 		}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1243,8 +1329,15 @@ public class MentoringCockpitService extends RESTService {
 	    	}
 	    	
 		}
-		//todo: Figure out how to route the connection from the Social Bot Manager Service. 
-		//(A) The MCS receives the JSON file with metadata and the Filebody in base64. It would then have to send it to the Erec service, after that the correct Suggestion Function would be passed, which would return the emotion, and it would respond.
+		/**
+	     * A function which generates a personalized link to fill a Item lime questionnaire for Affibot
+		 * it routes the request to the lime-proxy service
+	     *
+	     * @body Request body of the chatbot
+		 * 
+		 * Returns a formated list of the lime links for the user identified in the request json, or an error text
+	     *
+	     */
 		@POST
 		@Path("/getLimeLink")
 		@Consumes(MediaType.TEXT_PLAIN)
@@ -1294,17 +1387,28 @@ public class MentoringCockpitService extends RESTService {
 
 
 				res = sb.toString();
+
+				
 				JSONObject bodyObj2 = (JSONObject) parser.parse(res);
-
-
 				Iterator<String> keys = bodyObj2.keySet().iterator(); 
 				String resFormated = ""; 
-				while(keys.hasNext()){
-					String key = keys.next(); 
-					resFormated = resFormated +"\r\n"+TextFormatter.createHyperlink(key, bodyObj2.getAsString(key));
+				String key = keys.next();
+				if(bodyObj2.getAsString(key).equals("Not initialized")){
+					returnObj.put("text", "The user is not initialized for the lime links! Contact the administrator with : juan.stuecker@rwth-aachen.de");
 				}
-				returnObj.put("text", resFormated);
+				else{
+					do{
+						resFormated = resFormated +"\r\n"+TextFormatter.createHyperlink(key, bodyObj2.getAsString(key));
+						key = keys.next(); 
+					}while(keys.hasNext());
+					returnObj.put("text", resFormated);
+				}
+
+			
+
 				return Response.status(400).entity(returnObj).build();
+
+
 
 		}catch (Exception e) {
 			e.printStackTrace();
@@ -1314,9 +1418,6 @@ public class MentoringCockpitService extends RESTService {
 		
 		
 	}
-
-
-
 
 
 	}

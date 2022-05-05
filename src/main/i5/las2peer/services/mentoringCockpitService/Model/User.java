@@ -74,7 +74,7 @@ public class User {
 			System.out.println("DEBUGFINAL: There are fist resources! ");
 			HashSet<Resource> firstUpdates = new HashSet<Resource>(this.firstResources);
 			updates.addAll(firstUpdates);
-			this.firstResources.clear();
+			 //this.firstResources.clear(); These are not clear given we need to reprocess the priority in further iterations
 		}
 
 		updates.addAll(updateSet);

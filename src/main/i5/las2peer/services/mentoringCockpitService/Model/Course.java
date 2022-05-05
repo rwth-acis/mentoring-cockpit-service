@@ -22,6 +22,7 @@ public abstract class Course {
 	protected MentoringCockpitService service;
 	protected long lastUpdated = 0;
 	protected ArrayList<Resource> newResources;
+	protected ArrayList<Resource> firstResources;
 	
 	public Course(String courseid, String courseURL, MentoringCockpitService service, SuggestionEvaluator suggestionEvaluator) {
 		this.courseid = courseid;
@@ -42,7 +43,7 @@ public abstract class Course {
 		updateOntology(lastUpdated);
 		updateProfiles(0);
 		setTimeToCurrent();
-		System.out.println("Created course. Course id: " + courseid + "\nUsers: " + users);
+		System.out.println("Created course. Course id: " + courseid + "\n Users: " + users);
 	}
 	
 	protected void setTimeToCurrent() {
