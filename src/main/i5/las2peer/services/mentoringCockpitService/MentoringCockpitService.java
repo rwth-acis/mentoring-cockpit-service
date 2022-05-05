@@ -946,19 +946,23 @@ public class MentoringCockpitService extends RESTService {
 				if (courseid != null) {
 					System.out.println("DEBUG: courseid is not null" + courseid);
 	    			if (service.courses.containsKey(courseid)) {
-						System.out.println("DEBUG: Service has the course initialized");
-						returnObj.put("text", "You are initialized in the course \n"+courseid+"\n and are ready to go :vertical_traffic_light:!");
+						if(this.service.courses.get(courseid).getUsers().containsKey(userid)){
+							System.out.println("DEBUG: Service has the course initialized");
+							returnObj.put("text", "You are initialized in the course \n"+courseid+"\n and are ready to go :vertical_traffic_light:!");
+						}
+						else{
+							returnObj.put("text", "You are not initialized in the course, interact with an item in the course. If you have already opened and item, wait a little, you should be initialized in a moment! :bulb:");
+						}
+
 		    		} 
-					else{
-						returnObj.put("text", "You are not initialized in the course, interact with an item in the course. If you have already opened and item, wait a little, you should be initialized in a moment! :bulb:");
-					}
+
 	    		} else {
 					System.out.println("DEBUG: courseid is null");
-					String courses = "Courses: \n"; 
+					String coursesList = "Courses: \n"; 
 	    			for (Entry<String, Course> entry : this.service.courses.entrySet()) {
 
 	    				if (entry.getValue().getUsers().containsKey(userid)) {
-							courses = courses +"\n"+entry.getValue().getCourseid();
+							coursesList = coursesList +"\n"+entry.getValue().getCourseid();
 	    				}
 	    			}
 					returnObj.put("text", "You are not initialized for the course this bot is working on, but for the following courses");
