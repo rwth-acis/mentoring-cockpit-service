@@ -2,7 +2,7 @@
 
 set -e
 
-find . -type f -exec dos2unix {} \;
+#find . -type f -exec dos2unix {} \;
 
 # print all comands to console if DEBUG is set
 if [[ ! -z "${DEBUG}" ]]; then

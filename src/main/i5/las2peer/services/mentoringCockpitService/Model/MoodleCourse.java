@@ -71,9 +71,9 @@ public class MoodleCourse extends Course {
 				String resourcetype = ((JSONObject) obj.get("resourcetype")).getAsString("value");
 				
 				if (!users.containsKey(userid)) {
-					System.out.println("(!!) Complete new user is being added!:-->" + username+ "With user id" +userid );
+					//System.out.println("-DEBUG:  Complete new user is being added!:-->" + username+ "With user id" +userid );
 					users.put(userid, new User(userid, username, resources.values()));
-					System.out.println("(!!) Attempting to add resource to the user: "+ resourceid+ " and resource type "+ resourcetype);
+					//System.out.println("-DEBUG: Attempting to add resource to the user: "+ resourceid+ " and resource type "+ resourcetype);
 					
 				}
 				
@@ -81,17 +81,17 @@ public class MoodleCourse extends Course {
 				if (!resources.containsKey(resourceid)) {
 					// System.out.println("!!!: Resource was not in the hashlist before: "+ resourceid);
 					if (resourcetype.contains("file")) {
-						System.out.println("Resource is a file");
+						//System.out.println("Resource is a file");
 						resource = new File(resourceid, resourcename, resourceid);
 					} else if (resourcetype.contains("hyperlink")) {
-						System.out.println("Resource is a link");
+						//System.out.println("Resource is a link");
 						resource = new Hyperlink(resourceid, resourcename, resourceid);
 					} else if (resourcetype.contains("quiz")) {
-						System.out.println("Resource is a quiz");
+						//System.out.println("Resource is a quiz");
 						resource = new Quiz(resourceid, resourcename, resourceid);
 					}
 					if (resource != null) {
-						System.out.println("Adding a new resource:" + resourceid);
+						//System.out.println("Adding a new resource:" + resourceid);
 						resources.put(resourceid, resource);
 						newResources.add(resource);
 						// if(since == 0){
@@ -100,17 +100,17 @@ public class MoodleCourse extends Course {
 						// }
 					}
 				} else {
-					System.out.println("(!!): Resource was already in the hashlist");
-					System.out.println("(!!!!!): Adding resource to the UPDATESET");
+					//System.out.println("(!!): Resource was already in the hashlist");
+					//System.out.println("(!!!!!): Adding resource to the UPDATESET");
 					resource = resources.get(resourceid);
 				}
 				if (resource != null) {
-					System.out.println("(!!!): Adding updates to the user: "+ users.get(userid));
+					//System.out.println("(!!!): Adding updates to the user: "+ users.get(userid));
 					users.get(userid).getUpdateSet().add(resource);
 				}
 			}
 
-			System.out.println(("(!) Showing all the users in the course: "+ courseid));
+			//System.out.println(("-DEBUG:  Showing all the users in the course: "+ courseid));
 			for(String key: users.keySet()) {
 				System.out.print(key);
 				System.out.print(", ");
@@ -124,7 +124,7 @@ public class MoodleCourse extends Course {
 	public String getSuggestion(String userid, int numOfSuggestions) {
 		String result = "";
 		if (users.containsKey(userid)) {
-			System.out.println("(!!!!): Attempting to update Suggestions for user: "+ userid);
+			//System.out.println("-DEBUG: Attempting to update Suggestions for user: "+ userid);
 			if(newResources.isEmpty()){System.out.println("The newResources list is empty");}
 			users.get(userid).updateSuggestions(newResources);
 			ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
@@ -450,7 +450,7 @@ public class MoodleCourse extends Course {
 		pipeline.add(projectObj);
 		pipeline.add(groupObject);
 
-		System.out.println("Requesting interactions with pipeline:\n" + pipeline);
+		//DEBUG: System.out.println("Requesting interactions with pipeline:\n" + pipeline);
 		
 		StringBuilder sb = new StringBuilder();
 		for (byte b : pipeline.toString().getBytes()) {
@@ -458,7 +458,7 @@ public class MoodleCourse extends Course {
 		}
 		
 		String res = service.LRSconnect(sb.toString());
-		System.out.println("(!!!) This is the result of the query of interaction to the triple store: " + res);
+		//DEBUG: System.out.println("(!!!) This is the result of the query of interaction to the triple store: " + res);
 		JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 		try {
 			JSONArray data = (JSONArray) parser.parse(res);

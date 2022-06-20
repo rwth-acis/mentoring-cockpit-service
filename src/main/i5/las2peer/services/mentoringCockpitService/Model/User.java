@@ -65,7 +65,7 @@ public class User {
 	}
 	
 	public void updateSuggestions(Collection<Resource> resources) {
-		System.out.println("Updating suggestions for user:"+ userid);
+		System.out.println("-DEBUG: Updating suggestions for user:"+ userid);
 
 		//todo: create a function which gets the last emotion reading from the user, from the mognodb
 		//This resources are the <<newResources>>
@@ -80,13 +80,13 @@ public class User {
 		updates.addAll(updateSet);
 		updateSet.clear();
 		for (Resource resource : updates) {
-			System.out.println("(!!): Going through resource" +resource.getName());
+			//DEBUG: System.out.println("(!!): Going through resource" +resource.getName());
 			SuggestionReason reason = suggestionEvaluator.getSuggestionReason(this, resource);
-			System.out.println("--DEBUG: Suggestion evaluator reason: " + reason);
+			//DEBUG: System.out.println("--DEBUG: Suggestion evaluator reason: " + reason);
 			if (reason != SuggestionReason.NOT_SUGGESTED) {
-				System.out.println("(!!): Adding resource to the prio queue");
+				//DEBUG: System.out.println("(!!): Adding resource to the prio queue");
 				double priority = suggestionEvaluator.getSuggestionPriority(this, resource, reason);
-				System.out.println("--DEBUG: Priority given: "+ priority);
+				//DEBUG: System.out.println("--DEBUG: Priority given: "+ priority);
 				Suggestion suggestion = new Suggestion(resource, priority, reason);
 				suggestionQueue.addSuggestion(suggestion);
 			} else {

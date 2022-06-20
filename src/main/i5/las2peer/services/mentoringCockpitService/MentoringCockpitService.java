@@ -18,6 +18,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 import java.net.URLEncoder;
 
 import javax.ws.rs.*;
@@ -618,7 +619,7 @@ public class MentoringCockpitService extends RESTService {
 		for (byte b : arr.toString().getBytes()) {
 			sb.append("%" + String.format("%02X", b));
 		}
-		System.out.println("Requesting Students of course " + course + " from LRS with JSONArray:\n" + arr);
+		//DEBUG: System.out.println("Requesting Students of course " + course + " from LRS with JSONArray:\n" + arr);
 
 		return LRSconnect(sb.toString());
 	}
@@ -685,7 +686,7 @@ public class MentoringCockpitService extends RESTService {
 		for (byte b : arr.toString().getBytes()) {
 			sb.append("%" + String.format("%02X", b));
 		}
-		System.out.println("Requesting results of students of course " + course + " from LRS");
+		//DEBUG: System.out.println("Requesting results of students of course " + course + " from LRS");
 
 		return LRSconnect(sb.toString());
 	}
@@ -789,7 +790,7 @@ public class MentoringCockpitService extends RESTService {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			System.out.println("Got LRS response: " + response.toString());
+			//DEBUG: System.out.println("Got LRS response: " + response.toString());
 			return response.toString();
 		}
 		else {
@@ -936,25 +937,40 @@ public class MentoringCockpitService extends RESTService {
 	    	JSONObject returnObj = new JSONObject();
 	    	try {
 
-				System.out.println("-DEBUG: "+body);
+				//DEBUG: System.out.println("-DEBUG: "+body);
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
 	    		String userid = bodyObj.getAsString("email");
-				System.out.println("-DEBUG: "+userid);
+				//DEBUG: System.out.println("-DEBUG: "+userid);
 	    		String courseid = bodyObj.getAsString("courseid");
-				System.out.println("-DEBUG:"+courseid);
+				//DEBUG System.out.println("-DEBUG:"+courseid);
 
 				if (courseid != null) {
 					System.out.println("DEBUG: courseid is not null" + courseid);
 	    			if (service.courses.containsKey(courseid)) {
+						
 						if(this.service.courses.get(courseid).getUsers().containsKey(userid)){
 							System.out.println("DEBUG: Service has the course initialized");
-							returnObj.put("text", "You are initialized in the course \n"+courseid+"\n and are ready to go :vertical_traffic_light:!");
+							returnObj.put("text", "You are initialized in the course and are ready to go :vertical_traffic_light:!");
 						}
 						else{
-							returnObj.put("text", "You are not initialized in the course, interact with an item in the course. If you have already opened and item, wait a little, you should be initialized in a moment! :bulb:");
+							//wait 5 seconds for the proxy to have time
+							TimeUnit.SECONDS.sleep(5);
+							this.service.courses.get(courseid).update(); 
+							System.out.println("-DEBUG: After update status check");
+							if(this.service.courses.get(courseid).getUsers().containsKey(userid))
+							{
+								returnObj.put("text", "You are now initialized in the course! :bulb:");
+							}
+							else{
+								returnObj.put("text", "You are not initialized in the course, interact with an item in the course. If you have already opened and item, wait a little, you should be initialized in a moment! :bulb:");
+							}
+
 						}
 
 		    		} 
+					else{
+						returnObj.put("text", "The course you are attempting to use this bot with is not initialized on the system, please contact an admin");
+					}
 
 	    		} else {
 					System.out.println("DEBUG: courseid is null");
@@ -965,7 +981,7 @@ public class MentoringCockpitService extends RESTService {
 							coursesList = coursesList +"\n"+entry.getValue().getCourseid();
 	    				}
 	    			}
-					returnObj.put("text", "You are not initialized for the course this bot is working on, but for the following courses");
+					returnObj.put("text", "You are initialized for the following courses  "+ coursesList);
 	    		}
 
 
@@ -1018,7 +1034,7 @@ public class MentoringCockpitService extends RESTService {
 				URL url = UriBuilder.fromPath(kubeErecUrl+"emotion/speech/")
 							.build()
 							.toURL();
-				System.out.println("Attempting connection with url:" + url.toString());
+				//DEBUG: System.out.println("Attempting connection with url:" + url.toString());
 				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 				connection.setRequestMethod("POST");
 				connection.setRequestProperty("Content-Type", "application-json; utf-8");
@@ -1096,7 +1112,7 @@ public class MentoringCockpitService extends RESTService {
 						//updating the valence, not for the functioning of past recommendation, but to keep track in case of a problem with a next iteration future suggestion
 						if (courseid != null) {
 							if (service.courses.containsKey(courseid)) {
-								System.out.println("Mentoring: courseid identified, trying to get suggestions for user with userid: "+ userid);
+								System.out.println("-DEBUG: Mentoring: courseid identified, trying to get suggestions for user with userid: "+ userid);
 								if(this.service.courses.get(courseid).getUsers().containsKey(userid))
 								{
 									this.service.courses.get(courseid).updateEmotion(userid,valence);
@@ -1119,7 +1135,7 @@ public class MentoringCockpitService extends RESTService {
 						url = UriBuilder.fromPath("http://137.226.232.75:32113/getLowest")
 					 			.build()
 								.toURL();
-						System.out.println("Attempting connection with Emotion Recognition Service with :" + url.toString());
+						System.out.println("-DEBUG: Attempting connection with Emotion Recognition Service with :" + url.toString());
 						connection = (HttpURLConnection) url.openConnection();
 						connection.setRequestMethod("POST");
 						connection.setRequestProperty("Content-Type", "application-json; utf-8");
@@ -1153,7 +1169,9 @@ public class MentoringCockpitService extends RESTService {
 							do{
 								// resFormated = "\r\n" +key +" : "+  bodyObj3.getAsString(key)+"\r\n"+ resFormated;
 								resFormated = "\r\n" + TextFormatter.createHyperlink(key, bodyObj3.getAsString(key))+ "\r\n "+resFormated;
-								key = keys.next(); 
+								if (keys.hasNext()){
+									key = keys.next(); 
+								}
 							}while(keys.hasNext());
 	
 							returnObj.put("text", " \r\n "+TextFormatter.emotionPast(maxEmotion, valence, resFormated));
@@ -1167,10 +1185,10 @@ public class MentoringCockpitService extends RESTService {
 
 					else if (intent.equals("future")) {
 
-						System.out.println("Future suggestion!");
+						//DEBUG: System.out.println("Future suggestion!");
 						if (courseid != null) {
 							if (service.courses.containsKey(courseid)) {
-								System.out.println("-debug: courseid in list, generating suggestions for user "+ userid);
+								System.out.println("-DEBUG: courseid in list, generating suggestions for user "+ userid);
 								if(this.service.courses.get(courseid).getUsers().containsKey(userid))
 								{
 									this.service.courses.get(courseid).updateEmotion(userid,valence);
@@ -1324,7 +1342,7 @@ public class MentoringCockpitService extends RESTService {
 	    		}
 	    		
 	    		returnObj.put("closeContext", "true");
-	    		System.out.println("suggestionByTheme returns:\n" + returnObj);
+	    		//DEBUG: System.out.println("suggestionByTheme returns:\n" + returnObj);
 	    		return Response.status(200).entity(returnObj).build();
 	    	} catch (Exception e) {
 	    		e.printStackTrace();
@@ -1367,7 +1385,7 @@ public class MentoringCockpitService extends RESTService {
 				URL url = UriBuilder.fromPath(kubeLimeUrl)
 							.build()
 							.toURL();
-				System.out.println("Attempting connection with url:" + url.toString());
+				//DEBUG: System.out.println("Attempting connection with url:" + url.toString());
 				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 				connection.setRequestMethod("GET");
 				connection.setRequestProperty("Content-Type", "application-json; utf-8");

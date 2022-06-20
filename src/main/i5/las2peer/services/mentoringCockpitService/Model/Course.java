@@ -43,7 +43,7 @@ public abstract class Course {
 		updateOntology(lastUpdated);
 		updateProfiles(0);
 		setTimeToCurrent();
-		System.out.println("Created course. Course id: " + courseid + "\n Users: " + users);
+		//System.out.println("Created course. Course id: " + courseid + "\n Users: " + users);
 	}
 	
 	protected void setTimeToCurrent() {
