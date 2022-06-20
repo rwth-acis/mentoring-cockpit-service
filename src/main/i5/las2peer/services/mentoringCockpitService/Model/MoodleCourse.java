@@ -57,19 +57,19 @@ public class MoodleCourse extends Course {
 	protected void updateProfiles(long since) {
 		try {
 			JSONArray updates = SPARQLConnection.getInstance().getUpdates(since, courseid); // This is where the error is, the updates don´t contain also the new users!!!
-			System.out.println("(!!): this should be where the new users are actually updated to the hash list");
-			System.out.println("Update profiles with updates: " + updates);
+			//Addding new users to the Course
+			//DEBUG: System.out.println("Update profiles with updates: " + updates);
 			for (int i = 0; i < updates.size(); i++) {
 				JSONObject obj = (JSONObject) updates.get(i);
 				String userid = ((JSONObject) obj.get("userid")).getAsString("value");
 				
 				userid = userid.replace("https://moodle.tech4comp.dbis.rwth-aachen.de/user/profile.php?id=", "");
-				System.out.println("(!!) Going through user: --->" + userid);
+				//DEBUG: System.out.println("(!!) Going through user: --->" + userid);
 				String username = ((JSONObject) obj.get("username")).getAsString("value");
 				String resourceid = ((JSONObject) obj.get("resourceid")).getAsString("value");
 				String resourcename = ((JSONObject) obj.get("resourcename")).getAsString("value");
 				String resourcetype = ((JSONObject) obj.get("resourcetype")).getAsString("value");
-				
+				//Adding resources to individual users
 				if (!users.containsKey(userid)) {
 					//System.out.println("-DEBUG:  Complete new user is being added!:-->" + username+ "With user id" +userid );
 					users.put(userid, new User(userid, username, resources.values()));
@@ -112,8 +112,8 @@ public class MoodleCourse extends Course {
 
 			//System.out.println(("-DEBUG:  Showing all the users in the course: "+ courseid));
 			for(String key: users.keySet()) {
-				System.out.print(key);
-				System.out.print(", ");
+				//System.out.print(key);
+				//System.out.print(", ");
 			  }
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -213,7 +213,7 @@ public class MoodleCourse extends Course {
 
 	@Override
 	public void createUsers(long since) {
-		System.out.println("(!) Creating users for the course ");
+		System.out.println("DEBUG:  Creating users for the course ");
 		// Match
 		JSONObject match = new JSONObject();
 		match.put("statement.context.extensions.https://tech4comp&46;de/xapi/context/extensions/courseInfo.courseid", Integer.parseInt(courseid.split("id=")[1]));
@@ -253,13 +253,13 @@ public class MoodleCourse extends Course {
 		pipeline.add(projectObj);
 		pipeline.add(groupObject);
 
-		System.out.println("Requesting user with pipeline:\n" + pipeline);
+		//Requesting user pipeline
 		
 		StringBuilder sb = new StringBuilder();
 		for (byte b : pipeline.toString().getBytes()) {
 			sb.append("%" + String.format("%02X", b));
 		}
-		System.out.println("(!) Establishing connection with the Learning Record Store");
+		//Establishing connection with the Learning Record Store"
 		String res = service.LRSconnect(sb.toString());
 		
 		JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
@@ -272,12 +272,12 @@ public class MoodleCourse extends Course {
 				userObj.put("courseid", courseid);
 				usersArray.add(userObj);
 			}
-			System.out.println("Add users to SPARQL: " + usersArray);
+			//DEBUG: System.out.println("Add users to SPARQL: " + usersArray);
 			SPARQLConnection.getInstance().addUser(usersArray);
-			System.out.println("(!)Users where added succesfully to the SPARql update");
+			System.out.println("DEBUG:Users where added succesfully to the SPARql update");
 		} catch (Exception e) {
 			e.printStackTrace();
-			System.out.println("(!) Creation of users did not conclude correctly");
+			System.out.println("DEBUG: Creation of users did not conclude correctly");
 		}
 	}
 
@@ -319,8 +319,8 @@ public class MoodleCourse extends Course {
 			sb.append("%" + String.format("%02X", b));
 		}
 
-		System.out.println("(!!!!) Requesting resource with pipeline:\n" + pipeline);
-		//System.out.println("(!): The pipeline string used to connect with the LRS: "+ sb.toString());
+		//System.out.println("(!!!!) Requesting resource with pipeline:\n" + pipeline);
+
 
 		String res = service.LRSconnect(sb.toString());
 		
@@ -450,7 +450,7 @@ public class MoodleCourse extends Course {
 		pipeline.add(projectObj);
 		pipeline.add(groupObject);
 
-		//DEBUG: System.out.println("Requesting interactions with pipeline:\n" + pipeline);
+		//Requesting interactions pipeline
 		
 		StringBuilder sb = new StringBuilder();
 		for (byte b : pipeline.toString().getBytes()) {
@@ -458,7 +458,7 @@ public class MoodleCourse extends Course {
 		}
 		
 		String res = service.LRSconnect(sb.toString());
-		//DEBUG: System.out.println("(!!!) This is the result of the query of interaction to the triple store: " + res);
+		//Analazing query result
 		JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 		try {
 			JSONArray data = (JSONArray) parser.parse(res);

@@ -1108,7 +1108,7 @@ public class MentoringCockpitService extends RESTService {
 
 					if (intent.equals("past")){
 
-						System.out.println("-debug: Generating PAST suggestion");
+						System.out.println("-DEBUG: Generating PAST suggestion");
 						//updating the valence, not for the functioning of past recommendation, but to keep track in case of a problem with a next iteration future suggestion
 						if (courseid != null) {
 							if (service.courses.containsKey(courseid)) {
