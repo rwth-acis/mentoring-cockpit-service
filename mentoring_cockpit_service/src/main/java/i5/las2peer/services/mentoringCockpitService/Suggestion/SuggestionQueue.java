@@ -22,8 +22,12 @@ public class SuggestionQueue {
 	
 	public ArrayList<Suggestion> getSuggestion(int number) {
 		// Return the first resource in the queue that has not been removed from the suggestion set
-		//System.out.println("DEBUG --- SIZE: " + suggestionList.size());
-		//System.out.println("DEBUG --- LIST: " + suggestionList);
+		System.out.println("DEBUG --- SIZE: " + suggestionList.size());
+		System.out.println("DEBUG --- LIST: " + suggestionList);
+		for (Suggestion i : suggestionList){
+			System.out.println(i.getSuggestionText());
+			System.out.println(i.getPriority());
+		}
 		ArrayList<Suggestion> suggestions = new ArrayList<Suggestion>();
 		if (!suggestionSet.isEmpty() && number < suggestionSet.size()) {
 			sort();
@@ -50,6 +54,7 @@ public class SuggestionQueue {
 		Resource resource = suggestion.getSuggestedResource();
 		if (suggestionMap.containsKey(resource.getId())) {
 			dropSuggestion(resource);
+			//no element will be suggested twice, if there is a new interaction, the last suggestion will be removed
 		} 
 		suggestionSet.add(suggestion);
 		suggestionMap.put(resource.getId(), suggestion);

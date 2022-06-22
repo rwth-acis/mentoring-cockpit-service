@@ -4,6 +4,8 @@ import i5.las2peer.services.mentoringCockpitService.MentoringCockpitService;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
 import i5.las2peer.services.mentoringCockpitService.SPARQLConnection.SPARQLConnection;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.SuggestionEvaluator;
+import i5.las2peer.services.mentoringCockpitService.Suggestion.Emotion;
+
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -20,6 +22,7 @@ public abstract class Course {
 	protected MentoringCockpitService service;
 	protected long lastUpdated = 0;
 	protected ArrayList<Resource> newResources;
+	protected ArrayList<Resource> firstResources;
 	
 	public Course(String courseid, String courseURL, MentoringCockpitService service, SuggestionEvaluator suggestionEvaluator) {
 		this.courseid = courseid;
@@ -40,7 +43,7 @@ public abstract class Course {
 		updateOntology(lastUpdated);
 		updateProfiles(0);
 		setTimeToCurrent();
-		System.out.println("Created course. Course id: " + courseid + "\nUsers: " + users);
+		//System.out.println("Created course. Course id: " + courseid + "\n Users: " + users);
 	}
 	
 	protected void setTimeToCurrent() {
@@ -64,6 +67,12 @@ public abstract class Course {
 	protected abstract void createInteractions(long since);
 	
 	public abstract String getSuggestion(String userid, int numOfSuggestions);
+	
+	public abstract String getSuggestionFuture(String userid, double valence,Emotion maxEmotion, int numOfSuggestions);
+
+	public abstract String getSuggestionPast(String userid, double valence, int numOfSuggestions);
+
+	public abstract void updateEmotion(String userid, double valence);
 
 	public abstract String getThemeSuggestions(String themeid);
 	

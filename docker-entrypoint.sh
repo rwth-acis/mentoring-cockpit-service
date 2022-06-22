@@ -2,6 +2,8 @@
 
 set -e
 
+#find . -type f -exec dos2unix {} \;
+
 # print all comands to console if DEBUG is set
 if [[ ! -z "${DEBUG}" ]]; then
     set -x
@@ -105,6 +107,7 @@ function selectMnemonic {
 echo external_address = $(curl -s https://ipinfo.io/ip):${LAS2PEER_PORT} > etc/pastry.properties
 
 # start the service within a las2peer node
+echo "now comes the moment of thruth"
 if [[ -z "${@}" ]]
 then
     if [ -n "$LAS2PEER_ETH_HOST" ]; then

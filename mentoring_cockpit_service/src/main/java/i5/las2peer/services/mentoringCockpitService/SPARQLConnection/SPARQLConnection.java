@@ -79,7 +79,7 @@ public class SPARQLConnection {
 				"    	ulo:chatbot rdfs:subclassOf ulo:user .\r\n" + 
 				"	}\r\n" + 
 				"}";
-		String response = sparqlUpdate(query);;
+		String response = sparqlUpdate(query);
 	}
 	
 	public void addResources (JSONArray objects) {
@@ -110,8 +110,9 @@ public class SPARQLConnection {
 				JSONObject obj = (JSONObject) objects.get(i);
 				String id = obj.getAsString("_id");
 				String type = obj.getAsString("type");
+				System.out.println("(!!!!: Attempting to add RESOURCE: "+ id+ "type:" +type);
 
-				if (resourceIds.contains(id) || type.equals("post") || type.equals("forum")) {
+				if (resourceIds.contains(id) || type.equals("post") || type.equals("forum")||type.equals("quiz")||type.equals("file")) {
 					if (type.equals("post")) {
 						id = id.split("#parent")[0];
 					}
@@ -131,6 +132,8 @@ public class SPARQLConnection {
 			}
 
 			String response = sparqlUpdate(query + "}\r\n}");
+			System.out.println("Attempting to add resources to sparql :"+ query);
+			System.out.println("(!!): Response from sparql after attempting to update resources: "+ response);
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -158,9 +161,13 @@ public class SPARQLConnection {
 
 		
 		String responseString = sparqlUpdate(query + "}}");
+		System.out.println("(!!!!) Attempting to add users with query: "+ query);
 	}
 	
 	public void addInteractions (JSONArray objects) {
+		System.out.println("(!!!!): Adding following interactions to Sparql: " + objects.toString());
+
+		//I think this first query gets all the distinct resources in the graph
 		String resourceQuery = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
 				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
 				"    SELECT DISTINCT ?resourceid WHERE {\r\n" + 
@@ -170,11 +177,21 @@ public class SPARQLConnection {
 				"    }";
 		
 		try {
+			
 			JSONArray bindingsArray = getBindings(sparqlQuery(resourceQuery));
+			
 			
 			HashSet<String> resourceIds = new HashSet<String>();
 			for (int i = 0; i < bindingsArray.size(); i++) {
 				JSONObject bindingObj = (JSONObject) bindingsArray.get(i);
+
+				System.out.println("(!!!!): Adding a resouce to ResourceID: "+ bindingObj.get("resourceid"));
+
+
+				// String x = ((JSONObject) bindingObj.get("resourceid")).getAsString("value");
+				// fixedSyntaxResourceId = x.substring(0,x.length()-)+"B"+x.substring(3);
+
+
 				resourceIds.add(((JSONObject) bindingObj.get("resourceid")).getAsString("value"));
 			}
 			
@@ -186,8 +203,10 @@ public class SPARQLConnection {
 			for (int i = 0; i < objects.size(); i++) {
 				JSONObject obj = (JSONObject) objects.get(i);
 				String resourceid = obj.getAsString("objectid");
+				//todo: fix the formatting FROM THE LRS, not the triple store of how the resources are described
+				//! resourceid format is unequal to the format from the triplestore. resource id has .demod in the string instead of .de/mod... need to fix this.
 				String interaction = obj.getAsString("verbShort");
-				if (resourceIds.contains(resourceid) || interaction.equals("posted") || interaction.equals("interacted")) {
+				if (resourceIds.contains(resourceid) || interaction.equals("posted") || interaction.equals("interacted") || interaction.equals("viewed") /*This doesnt help as it adds resources which are not identifiable, the solution should be to repair the string directly form the LRS*/){
 					String userid = "https://moodle.tech4comp.dbis.rwth-aachen.de/user/profile.php?id=" + obj.getAsString("userid");
 					
 					JSONObject information = (JSONObject) obj.get("info");
@@ -198,20 +217,25 @@ public class SPARQLConnection {
 							+ "ulo:timestamp " + "\"" + Instant.parse(obj.getAsString("timestamp")).getEpochSecond() + "\";\r\n";
 					
 					for (Entry<String, Object> entry : information.entrySet()) {
-						query = query + ";\r\nulo:" + entry.getKey() + " \"" + entry.getValue().toString() + "\"";
+						query = query + ";\r\n ulo:" + entry.getKey() + " \"" + entry.getValue().toString() + "\"";
 					}
 					
 					query = query + "] .\r\n";
 				}
 			}
+
+
 			String response = sparqlUpdate(query + "}}");
+			System.out.println("(!!!!) Attempting to add interactions is the query being sent to SPARQL:"+ query);
+			System.out.println("(!!): Response from sparql after attempting to update interactions: "+ response);
+
 			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public JSONArray getUpdates(long since, String courseid) {
+	public JSONArray getUpdates(long since, String courseid) { // Probably some formating error doesnt allow for all the correct results to come through. It seems to be the string is simply built for the courses for the leipzig university, still is strange that some RWTh users come through.
 		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
 				"PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\r\n" + 
 				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
@@ -234,6 +258,29 @@ public class SPARQLConnection {
 		
 		return getBindings(sparqlQuery(query));
 	}
+	// public JSONArray getLastInteraction(String courseid, String userid) { // The idea is to get the last interaction of every element
+	// 	String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
+	// 			"PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\r\n" + 
+	// 			"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
+	// 			"\r\n" + 
+	// 			"SELECT DISTINCT ?username ?resourceid ?resourcename ?resourcetype WHERE {\r\n" + 
+	// 			"  GRAPH <%s> {\r\n" + 
+	// 			"    <" + courseid + "> ulo:hasResource ?resourceid .\r\n" + 
+	// 			"    <" + courseid + "> ulo:hasUser <" + userid + "> .\r\n" + 
+	// 			"    ?resourceid rdfs:label ?resourcename .\r\n" + 
+	// 			"    <" + userid + "> rdfs:label ?username .\r\n" + 
+	// 			"    <" + userid + "> ?interaction ?b .\r\n" + 
+	// 			"    ?interaction rdfs:subclassOf ulo:interaction .\r\n" + 
+	// 			"  	 ?b ulo:interactionResource ?resourceid .\r\n" + 
+	// 			"    ?b ulo:timestamp ?timestamp .\r\n" + 
+	// 			"    ?resourceid a ?resourcetype .\r\n" + 
+	// 			"    ?resourcetype rdfs:subclassOf ulo:resource .\r\n" + 
+	// 			"    FILTER (xsd:integer(?timestamp) > " + since + ").\r\n" + 
+	// 			"  }\r\n" + 
+	// 			"}";
+		
+	// 	return getBindings(sparqlQuery(query));
+	// }
 	
 	public ArrayList<String> getInteractions (String userid, String resourceid) {
 		ArrayList<String> interactions = new ArrayList<String>();
@@ -242,17 +289,17 @@ public class SPARQLConnection {
 				"\r\n" + 
 				"SELECT DISTINCT ?interaction WHERE {\r\n" + 
 				"  GRAPH <%s> {\r\n" + 
-				"    <" + userid + "> ?interaction ?b .\r\n" + 
+				"    <https://moodle.tech4comp.dbis.rwth-aachen.de/user/profile.php?id=" + userid + "> ?interaction ?b .\r\n" + 
 				"    ?interaction rdfs:subclassOf ulo:interaction .\r\n" + 
 				"  	?b ulo:interactionResource <" + resourceid + "> .\r\n" + 
 				"  }\r\n" + 
 				"}";
-		
 		JSONArray bindings = getBindings(sparqlQuery(query));
 		for (int i = 0; i < bindings.size(); i++) {
 			JSONObject obj = (JSONObject) bindings.get(i);
 			interactions.add(((JSONObject) obj.get("interaction")).getAsString("value"));
 		}
+		System.out.println("--DEBUG: REturning interaction from spaqrl for user and resource with query: "+query+ interactions);
 		return interactions;
 	}
 	
@@ -272,10 +319,41 @@ public class SPARQLConnection {
 		JSONArray bindings = getBindings(sparqlQuery(query));
 		if (!bindings.isEmpty()) {
 			JSONObject obj = (JSONObject) bindings.get(0);
-			result = ((JSONObject) obj.get("score")).getAsNumber("value").doubleValue();
+			String resultTemp = ((JSONObject) obj.get("score")).getAsString("value");
+			System.out.println(resultTemp);
+			result = Double.parseDouble(resultTemp);
 		}
 		return result;
 	} 
+
+	public double getCognitiveLoad(String resourceid) {
+		double result =  0; 
+		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
+			"PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\r\n" + 
+			"\r\n" + 
+			"SELECT DISTINCT ?cognitiveLoad WHERE {\r\n" + 
+			"  GRAPH <https://triplestore.tech4comp.dbis.rwth-aachen.de/LMSData/data> {\r\n" + 
+			"    ?b a ulo:resource .\r\n" + 
+			"  	?b ulo:cognitiveLoad ?cognitiveLoad .\r\n" +
+			"  	?b ulo:url "+'"'+resourceid+'"'+".\r\n" +  
+			"  }\r\n" + 
+			"}";
+		System.out.println("Attempting Cognitive Load query: "+query+ "\r\n and endpoint: "+ endpoint);
+		System.out.println(sparqlQuery(query));
+		JSONArray bindings = getBindings(sparqlQuery(query));
+		if (!bindings.isEmpty()) {
+			JSONObject obj = (JSONObject) bindings.get(0); 
+			// result = ((JSONObject) obj.get("cognitiveLoad")).getAsNumber("value").doubleValue();
+			String result2 = ((JSONObject) obj.get("cognitiveLoad")).getAsString("value");
+			System.out.println(result2);
+			result = Double.parseDouble(result2);
+
+		}
+		else{
+			System.out.println("The return from sparql was empty searching for Cognitiveload");
+		}
+		return result;
+	}
 	
 	public JSONArray getThemes() {
 		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 

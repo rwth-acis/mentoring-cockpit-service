@@ -17,24 +17,62 @@ import i5.las2peer.services.mentoringCockpitService.Model.Resources.Hyperlink;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
-import i5.las2peer.services.mentoringCockpitService.Suggestion.ERecSuggestionEvaluator;
+
+
+import java.io.OutputStream;
+
+
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+
+import i5.las2peer.restMapper.RESTService;
+import i5.las2peer.restMapper.annotations.ServicePath;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Contact;
+import io.swagger.annotations.Info;
+import io.swagger.annotations.License;
+import io.swagger.annotations.SwaggerDefinition;
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
+import net.minidev.json.parser.JSONParser;
+import net.minidev.json.parser.ParseException;
+
 import i5.las2peer.services.mentoringCockpitService.Suggestion.Emotion;
 
 
-public class MoodleCourse extends Course {
+public class ERecCourse extends Course {
 
-	public MoodleCourse(String courseid, String courseURL, MentoringCockpitService service) {
-		super(courseid, courseURL, service, new ERecSuggestionEvaluator(0, 1));
+	public ERecCourse(String courseid, String courseURL, MentoringCockpitService service) {
+		super(courseid, courseURL, service, /*(!) todo: subsitute this with the new Suggestion Evaluator*/new MoodleSuggestionEvaluator(0, 1));
 	}
 	
 	@Override
 	public void update() {
-		long since = lastUpdated;
+        
+		long since = lastUpdated; //gets latest time from the Sparql method
 		setTimeToCurrent();
 		newResources.clear();
 		
-		updateOntology(since);
-		updateProfiles(since);
+		updateOntology(since); //queries not processed xAPI statements from the LRS
+		updateProfiles(since); //initiates Resources, Users, Themes, and Themelink objects
 	}
 	
 	@Override
@@ -53,83 +91,73 @@ public class MoodleCourse extends Course {
 		createInteractions(since);
 		createThemes(since);
 	}
+	@Override
+	public void updateEmotion(String userid, double valence){
+		
+	}
 	
 	protected void updateProfiles(long since) {
 		try {
 			JSONArray updates = SPARQLConnection.getInstance().getUpdates(since, courseid); // This is where the error is, the updates don´t contain also the new users!!!
-			//Addding new users to the Course
-			//DEBUG: System.out.println("Update profiles with updates: " + updates);
+			System.out.println("(!!): this should be where the new users are actually updated to the hash list");
+			System.out.println("Update profiles with updates: " + updates);
 			for (int i = 0; i < updates.size(); i++) {
 				JSONObject obj = (JSONObject) updates.get(i);
 				String userid = ((JSONObject) obj.get("userid")).getAsString("value");
 				
 				userid = userid.replace("https://moodle.tech4comp.dbis.rwth-aachen.de/user/profile.php?id=", "");
-				//DEBUG: System.out.println("(!!) Going through user: --->" + userid);
+				System.out.println("(!!) Going through user: --->" + userid);
 				String username = ((JSONObject) obj.get("username")).getAsString("value");
 				String resourceid = ((JSONObject) obj.get("resourceid")).getAsString("value");
 				String resourcename = ((JSONObject) obj.get("resourcename")).getAsString("value");
 				String resourcetype = ((JSONObject) obj.get("resourcetype")).getAsString("value");
-				//Adding resources to individual users
+				
 				if (!users.containsKey(userid)) {
-					//System.out.println("-DEBUG:  Complete new user is being added!:-->" + username+ "With user id" +userid );
+					System.out.println("(!!) Complete new user is being added!:-->" + username+ "With user id" +userid );
 					users.put(userid, new User(userid, username, resources.values()));
-					//System.out.println("-DEBUG: Attempting to add resource to the user: "+ resourceid+ " and resource type "+ resourcetype);
 					
 				}
 				
 				Resource resource = null;
 				if (!resources.containsKey(resourceid)) {
-					// System.out.println("!!!: Resource was not in the hashlist before: "+ resourceid);
 					if (resourcetype.contains("file")) {
-						//System.out.println("Resource is a file");
 						resource = new File(resourceid, resourcename, resourceid);
 					} else if (resourcetype.contains("hyperlink")) {
-						//System.out.println("Resource is a link");
 						resource = new Hyperlink(resourceid, resourcename, resourceid);
 					} else if (resourcetype.contains("quiz")) {
-						//System.out.println("Resource is a quiz");
 						resource = new Quiz(resourceid, resourcename, resourceid);
 					}
 					if (resource != null) {
-						//System.out.println("Adding a new resource:" + resourceid);
 						resources.put(resourceid, resource);
 						newResources.add(resource);
-						// if(since == 0){
-						// 	//In the first iteration of the update method, a copy of all interaction resources
-						// 	firstResources.add(resource);
-						// }
 					}
 				} else {
-					//System.out.println("(!!): Resource was already in the hashlist");
-					//System.out.println("(!!!!!): Adding resource to the UPDATESET");
 					resource = resources.get(resourceid);
 				}
 				if (resource != null) {
-					//System.out.println("(!!!): Adding updates to the user: "+ users.get(userid));
 					users.get(userid).getUpdateSet().add(resource);
 				}
 			}
-
-			//System.out.println(("-DEBUG:  Showing all the users in the course: "+ courseid));
-			for(String key: users.keySet()) {
-				//System.out.print(key);
-				//System.out.print(", ");
-			  }
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
 	@Override
-	public String getSuggestion(String userid, int numOfSuggestions) {
+	public String getSuggestionFuture(String userid, double valence, Emotion maxEmotion, int numOfSuggestions) {
+
+		//This first part will remain probably the same. It checks if the user is part of the course, updates the suggestion with added resources and or interactions. Then calls the getSuggestion method from the user class. This is ultimately where the final suggestion string is comuter. From the USER
+
+		//the only valuable think i could add to this class would be some data from the users about emotion, otherwise the moodle course is good enough for everythin
+
+		//todo: Think about valuable additions to this "emotion" class
 		String result = "";
 		if (users.containsKey(userid)) {
-			//System.out.println("-DEBUG: Attempting to update Suggestions for user: "+ userid);
-			if(newResources.isEmpty()){System.out.println("The newResources list is empty");}
+			//update current emotion for the user
+			users.get(userid).updateValence(valence);
 			users.get(userid).updateSuggestions(newResources);
 			ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
 			ArrayList<String> suggestionTexts = new ArrayList<String>();
-			//todo: Change the text formating in order to deliver more aesthetical text
 			for (Suggestion suggestion : suggestions) {
 				suggestionTexts.add(suggestion.getSuggestionText());
 			}
@@ -140,46 +168,23 @@ public class MoodleCourse extends Course {
 				result = "No suggestions available";
 			}
 		} else {
-			result = "Error: User not initialized! Try interacting with the first resource in the course :smile: "+ "[Moodle Course]"+"("+courseid+")";
+			result = "Error: User not initialized!";
 		}
-		return result;
-	}
 
 
-	@Override
-	public void updateEmotion(String userid, double valence)
-	{
-		users.get(userid).updateValence(valence);
-	}
-	@Override
+        //dummy variables in order to test the functioning
+
+        String userid_temp = "juan.stuecker@gmail.com";
+        int numOfSuggestions_temp = 3; 
+        int emotion_temp = 2; 
 
 
-	 public String getSuggestionFuture(String userid, double valence, Emotion maxEmotion, int numOfSuggestions) {
+        //The basic idea is: This suggestion mehtod is triggered, so now we look at all the items which remain unseen by the user, and choose the one which matches the emotion; which should be current.
 
+        //This should be triggered by the course, and before that the user, and suggestion evaluator, and suggestion queue need to be updated, for now i will just test the connection to the mongo db to querie the emotional data from there whic is the most important part
 
+        //For the future suggestion function we want JUST THE **CURRENT EMOTION**, the more complicated of the two is the past recommendation function
 
-		String result = "";
-		if (users.containsKey(userid)) {
-			//update current emotion for the user
-			users.get(userid).updateValence(valence);
-			users.get(userid).updateEmotion(maxEmotion);
-			System.out.println("DEBUG: Updating valence for user : "+ valence);
-			// users.get(userid).updateSuggestions(firstResources); // from the first iteration resources, to reevaluate with the current emotional valence
-			users.get(userid).updateSuggestions(newResources);
-			ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
-			ArrayList<String> suggestionTexts = new ArrayList<String>();
-			for (Suggestion suggestion : suggestions) {
-				suggestionTexts.add(suggestion.getSuggestionText());
-			}
-			
-			if (!suggestions.isEmpty()) {
-				result = TextFormatter.emotion(users.get(userid).getEmotion(), users.get(userid).getValence(),TextFormatter.createList(suggestionTexts));
-			} else {
-				result = "There are currently no suggestions avaliable for you, try interacting with some Moodle items, or responding some Item questionnaires and come back! :space_invader: ";
-			}
-		} else {
-			result = "Error: User not initialized! Try interacting with the first resource in the course :smile: "+ "[Moodle Course]"+"("+courseid+")";
-		}
 
 
 
@@ -188,8 +193,103 @@ public class MoodleCourse extends Course {
 
 
 
-	@Override
-	 public String getSuggestionPast(String userid,double valence, int numOfSuggestions){return "The getSuggestionPast function was triggered in the moodle course ";}
+    @Override
+    public String getSuggestionPast(String userid, double valence,int numOfSuggestions){
+
+
+        String result = "";
+
+		if (users.containsKey(userid)) {
+
+
+			JSONObject payloadJson = new JSONObject();
+			payloadJson.put("userid", userid);
+			payloadJson.put("numOfSuggestions", numOfSuggestions);
+			payloadJson.put("valence", valence);
+			payloadJson.put("coursid", courseid);
+
+			System.out.println("Establishing connection with Emotion Service");
+
+			try{
+				String line = null;
+				StringBuilder sb = new StringBuilder ();
+
+				
+				URL url = UriBuilder.fromPath("http://host.docker.internal:5002/static/getLowest/")
+							.build()
+							.toURL();
+				System.out.println("Attempting connection with url:" + url.toString());
+				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+				connection.setRequestMethod("GET");
+				connection.setRequestProperty("Content-Type", "application-json; utf-8");
+				connection.setRequestProperty("Accept", "application/json");
+				connection.setDoOutput(true);
+				try(OutputStream os = connection.getOutputStream()){
+
+					byte[] input = payloadJson.toJSONString().getBytes("utf-8");
+					os.write(input, 0, input.length);
+
+				}
+				connection.connect();
+			
+				
+				BufferedReader rd  = new BufferedReader( new InputStreamReader(connection.getInputStream(), "UTF-8"));
+
+				while ((line = rd.readLine()) != null ) {
+					sb.append(line);
+				}
+				result = sb.toString();
+
+			}catch (Exception e) {
+				System.out.println("Error in the request to the Emotion Server");
+				e.printStackTrace();
+			}
+			return result;
+
+		} else {
+			result = "Error: User not initialized!";
+		}
+		return result; 
+
+	    	
+
+
+			
+
+
+
+	}
+
+
+
+
+
+
+    
+
+
+    @Override
+	public String getSuggestion(String userid, int numOfSuggestions) {
+
+		String result = "";
+		if (users.containsKey(userid)) {
+			users.get(userid).updateSuggestions(newResources);
+			ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
+			ArrayList<String> suggestionTexts = new ArrayList<String>();
+			for (Suggestion suggestion : suggestions) {
+				suggestionTexts.add(suggestion.getSuggestionText());
+			}
+			
+			if (!suggestions.isEmpty()) {
+				result = "Here is a couple suggestions based on your Moodle activity:" + TextFormatter.createList(suggestionTexts) + "\n Would you like another suggestion?";
+			} else {
+				result = "No suggestions available";
+			}
+		} else {
+			result = "Error: User not initialized!";
+		}
+		return result;
+        }
 
 	@Override
 	public String getThemeSuggestions(String shortid) {
@@ -213,7 +313,7 @@ public class MoodleCourse extends Course {
 
 	@Override
 	public void createUsers(long since) {
-		System.out.println("DEBUG:  Creating users for the course ");
+		System.out.println("(!) Creating users for the course ");
 		// Match
 		JSONObject match = new JSONObject();
 		match.put("statement.context.extensions.https://tech4comp&46;de/xapi/context/extensions/courseInfo.courseid", Integer.parseInt(courseid.split("id=")[1]));
@@ -253,13 +353,13 @@ public class MoodleCourse extends Course {
 		pipeline.add(projectObj);
 		pipeline.add(groupObject);
 
-		//Requesting user pipeline
+		System.out.println("Requesting user with pipeline:\n" + pipeline);
 		
 		StringBuilder sb = new StringBuilder();
 		for (byte b : pipeline.toString().getBytes()) {
 			sb.append("%" + String.format("%02X", b));
 		}
-		//Establishing connection with the Learning Record Store"
+		System.out.println("(!) Establishing connection with the Learning Record Store");
 		String res = service.LRSconnect(sb.toString());
 		
 		JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
@@ -272,12 +372,12 @@ public class MoodleCourse extends Course {
 				userObj.put("courseid", courseid);
 				usersArray.add(userObj);
 			}
-			//DEBUG: System.out.println("Add users to SPARQL: " + usersArray);
+			System.out.println("Add users to SPARQL: " + usersArray);
 			SPARQLConnection.getInstance().addUser(usersArray);
-			System.out.println("DEBUG:Users where added succesfully to the SPARql update");
+			System.out.println("(!)Users where added succesfully to the SPARql update");
 		} catch (Exception e) {
 			e.printStackTrace();
-			System.out.println("DEBUG: Creation of users did not conclude correctly");
+			System.out.println("(!) Creation of users did not conclude correctly");
 		}
 	}
 
@@ -319,8 +419,8 @@ public class MoodleCourse extends Course {
 			sb.append("%" + String.format("%02X", b));
 		}
 
-		//System.out.println("(!!!!) Requesting resource with pipeline:\n" + pipeline);
-
+		System.out.println("Requesting resource with pipeline:\n" + pipeline);
+		//System.out.println("(!): The pipeline string used to connect with the LRS: "+ sb.toString());
 
 		String res = service.LRSconnect(sb.toString());
 		
@@ -346,8 +446,7 @@ public class MoodleCourse extends Course {
 				}
 				resourceObj.put("courseid", courseid);
 				resourcesArray.add(resourceObj);
-			}
-			System.out.println("(!!!!): Adding resources to sparl with resources array: " + resourcesArray.toString());	
+			}	
 			SPARQLConnection.getInstance().addResources(resourcesArray);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -450,7 +549,7 @@ public class MoodleCourse extends Course {
 		pipeline.add(projectObj);
 		pipeline.add(groupObject);
 
-		//Requesting interactions pipeline
+		System.out.println("Requesting interactions with pipeline:\n" + pipeline);
 		
 		StringBuilder sb = new StringBuilder();
 		for (byte b : pipeline.toString().getBytes()) {
@@ -458,7 +557,6 @@ public class MoodleCourse extends Course {
 		}
 		
 		String res = service.LRSconnect(sb.toString());
-		//Analazing query result
 		JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 		try {
 			JSONArray data = (JSONArray) parser.parse(res);
