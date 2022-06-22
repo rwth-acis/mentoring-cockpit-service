@@ -916,7 +916,7 @@ public class MentoringCockpitService extends RESTService {
 	     * A function that is called to check wether a users is initialized in the course list in the Mentoring
 		 * Cockpit Service
 	     *
-	     * @body Request body of the chatbot
+	     * @param body Request body of the chatbot
 		 * 
 		 * Returns either positive or negative formated message string
 	     *
@@ -998,7 +998,7 @@ public class MentoringCockpitService extends RESTService {
 	     * A function which takes an audio message codified in base64, user email, and courseid, and 
 		 * makes a request to the Emotion Recognition Service to make a prediction and recommendation based on the predicted emotion
 	     *
-	     * @body Request body of the chatbot
+	     * @param body Request body of the chatbot
 		 * 
 		 * Returns a formated message of the item predictions for the given course and user
 	     *
@@ -1361,7 +1361,7 @@ public class MentoringCockpitService extends RESTService {
 	     * A function which generates a personalized link to fill a Item lime questionnaire for Affibot
 		 * it routes the request to the lime-proxy service
 	     *
-	     * @body Request body of the chatbot
+	     * @param body Request body of the chatbot
 		 * 
 		 * Returns a formated list of the lime links for the user identified in the request json, or an error text
 	     *
