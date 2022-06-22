@@ -29,8 +29,9 @@ public abstract class CompletableResource extends Resource {
 	public String getSuggestionText(SuggestionReason reason) {
 		switch(reason) {
 			case NOT_COMPLETED:
-				return "You still haven't completed the " + type + " " + TextFormatter.quote(TextFormatter.createHyperlink(name, url));
+				return "Here is this quiz :bar_chart: " +  " " + TextFormatter.quote(TextFormatter.createHyperlink(name, url));
 			case NOT_MAX_GRADE:
+				System.out.println("Themes suggestions!!");
 				ArrayList<String> resources = new ArrayList<String>();
 				for (int i = 0 ; i < 3 ; i++) {
 					resources.add(themes.get(i).getResourceTextForCompletable());
