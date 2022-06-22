@@ -10,8 +10,8 @@
     <property name="user_agent3.path" value="${startup}/agent-user-${las2peer_user3.name}.xml" />
     <property name="passphrases.path" value="${startup}/passphrases.txt" />
     
-    <property name="src.main" location="src/main" />
-    <property name="src.junit" location="src/test" />
+    <property name="src.main" location="mentoring_cockpit_service/src/main" />
+    <property name="src.junit" location="mentoring_cockpit_service/src/test" />
     
     <property name="tmp" location="tmp" />
     <property name="log" location="log" />

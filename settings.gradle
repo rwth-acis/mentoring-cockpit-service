@@ -1,0 +1,2 @@
+rootProject.name = 'mentoring-cockpit-service'
+include('mentoring_cockpit_service')
