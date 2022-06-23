@@ -30,8 +30,8 @@ public class ThemeResourceLink {
 		}
 	}
 	
-	public String getSuggestionText() {
-		String resultString = linkedResource.getSuggestionItemText();
+	public String getSuggestionText(boolean html) {
+		String resultString = linkedResource.getSuggestionItemText(html);
 		if (!linkInformation.isEmpty()) {
 			resultString = resultString + " (";
 			Iterator<Information> iterator = linkInformation.iterator();

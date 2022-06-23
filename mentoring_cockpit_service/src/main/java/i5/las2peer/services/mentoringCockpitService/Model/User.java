@@ -5,39 +5,32 @@ import java.util.Collection;
 import java.util.HashSet;
 
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
-import i5.las2peer.services.mentoringCockpitService.Suggestion.ERecSuggestionEvaluator;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.Emotion;
-import i5.las2peer.services.mentoringCockpitService.Suggestion.MoodleSuggestionEvaluator;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.Suggestion;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.SuggestionEvaluator;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.SuggestionQueue;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.SuggestionReason;
-import i5.las2peer.services.mentoringCockpitService.Suggestion.Emotion;
 
 
 public class User {
 	protected String userid;
 	protected String name;
 	protected ArrayList<Resource> updateSet; // Resources with which the user has interacted since the last data update
-	protected SuggestionEvaluator suggestionEvaluator;
+	protected SuggestionEvaluator suggestEvaluator;
 	protected SuggestionQueue suggestionQueue;
-	//last current emotion reading for the user, or null for non-emotional contexti
+	// last current emotion reading for the user, or null for non-emotional context
 	protected double valence; 
 	protected Emotion emotion; 
 	protected Collection<Resource> firstResources;
 	
-	public User(String userid, String name, Collection<Resource> resources) {
+	public User(String userid, String name, Collection<Resource> resources, SuggestionEvaluator evaluator) {
 		this.userid = userid;
 		this.name = name;
-		//changed to the new suggestion evaluator to test it a little
-		this.suggestionEvaluator = new ERecSuggestionEvaluator(0, 1);
-		//(!) todo: Once the transmition of data from the LRS -> Sparql -> MCS work fine, we can change the suggestion Evaluator to the new one.
-		//this.suggestionEvaluator = new ERecSuggestionEvaluator(0,1);
+		this.suggestEvaluator = evaluator;
 		this.suggestionQueue = new SuggestionQueue();
 		this.updateSet = new ArrayList<Resource>();
 		this.firstResources = resources;
 
-		//updateSuggestions(resources);
 		//default value for valence, when undefined.
 		this.valence = -100;
 		this.emotion = Emotion.UNDEFINED;
@@ -81,11 +74,11 @@ public class User {
 		updateSet.clear();
 		for (Resource resource : updates) {
 			//DEBUG: System.out.println("(!!): Going through resource" +resource.getName());
-			SuggestionReason reason = suggestionEvaluator.getSuggestionReason(this, resource);
+			SuggestionReason reason = suggestEvaluator.getSuggestionReason(this, resource);
 			//DEBUG: System.out.println("--DEBUG: Suggestion evaluator reason: " + reason);
 			if (reason != SuggestionReason.NOT_SUGGESTED) {
 				//DEBUG: System.out.println("(!!): Adding resource to the prio queue");
-				double priority = suggestionEvaluator.getSuggestionPriority(this, resource, reason);
+				double priority = suggestEvaluator.getSuggestionPriority(this, resource, reason);
 				//DEBUG: System.out.println("--DEBUG: Priority given: "+ priority);
 				Suggestion suggestion = new Suggestion(resource, priority, reason);
 				suggestionQueue.addSuggestion(suggestion);

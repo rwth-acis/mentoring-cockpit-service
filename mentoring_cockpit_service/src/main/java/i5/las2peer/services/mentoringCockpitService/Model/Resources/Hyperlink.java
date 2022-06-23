@@ -10,18 +10,26 @@ public class Hyperlink extends Resource {
 	}
 
 	@Override
-	public String getSuggestionText(SuggestionReason reason) {
+	public String getSuggestionText(SuggestionReason reason, boolean html) {
 		switch (reason) {
 		case NOT_VIEWED:
-			return "You still haven't accessed the link " + TextFormatter.quote(TextFormatter.createHyperlink(name, url));
+			if (html) {
+				return "You still haven't accessed the link " + TextFormatter.quote(TextFormatter.createHTMLHyperlink(name, url));
+			} else {
+				return "You still haven't accessed the link " + TextFormatter.quote(TextFormatter.createChatHyperlink(name, url));
+			}
 		default:
 			return "Error";
 		}
 	}
 
 	@Override
-	public String getSuggestionItemText() {
-		return "Link " + TextFormatter.quote(TextFormatter.createHyperlink(name, url));
+	public String getSuggestionItemText(boolean html) {
+		if (html) {
+			return "Link " + TextFormatter.quote(TextFormatter.createHTMLHyperlink(name, url));
+		} else {
+			return "Link " + TextFormatter.quote(TextFormatter.createChatHyperlink(name, url));
+		}
 	}
 
 }

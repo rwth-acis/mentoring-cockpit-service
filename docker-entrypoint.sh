@@ -46,13 +46,17 @@ function set_in_service_config {
 }
 set_in_service_config lrsDomain ${LRS_DOMAIN}
 set_in_service_config lrsAuth "${LRS_AUTH}"
+set_in_service_config feedbackLRSAuth "${FEEDBACK_LRS_AUTH}"
 set_in_service_config mysqlUser ${MYSQL_USER}
 set_in_service_config mysqlPassword ${MYSQL_PASSWORD}
 set_in_service_config mysqlHost ${MYSQL_HOST}
 set_in_service_config mysqlPort ${MYSQL_PORT}
 set_in_service_config mysqlDatabase ${MYSQL_DATABASE}
-set_in_service_config lrsClientURL ${LRS_CLIENT_URL}
 set_in_service_config sparqlUrl ${SPARQL_URL}
+set_in_service_config eRecUrl ${EREC_URL}
+set_in_service_config limeUrl ${LIME_URL}
+set_in_service_config evalMethod ${EVAL_METHOD}
+set_in_service_config userEmail ${USER_EMAIL}
 
 
 # wait for any bootstrap host to be available

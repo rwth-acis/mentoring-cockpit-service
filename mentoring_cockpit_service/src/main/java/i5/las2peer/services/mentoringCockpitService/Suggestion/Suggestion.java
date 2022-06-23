@@ -13,8 +13,8 @@ public class Suggestion {
 		this.reason = reason;
 	}
 	
-	public String getSuggestionText() {
-		return suggestedResource.getSuggestionText(reason);
+	public String getSuggestionText(boolean html) {
+		return suggestedResource.getSuggestionText(reason, html);
 	}
 
 	public Resource getSuggestedResource() {

@@ -10,9 +10,7 @@ import i5.las2peer.services.mentoringCockpitService.Model.Resources.File;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Quiz;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
 import i5.las2peer.services.mentoringCockpitService.SPARQLConnection.SPARQLConnection;
-import i5.las2peer.services.mentoringCockpitService.Suggestion.MoodleSuggestionEvaluator;
-import i5.las2peer.services.mentoringCockpitService.Suggestion.Suggestion;
-import i5.las2peer.services.mentoringCockpitService.Suggestion.TextFormatter;
+import i5.las2peer.services.mentoringCockpitService.Suggestion.*;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Hyperlink;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
@@ -55,13 +53,11 @@ import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
 import net.minidev.json.parser.ParseException;
 
-import i5.las2peer.services.mentoringCockpitService.Suggestion.Emotion;
-
 
 public class ERecCourse extends Course {
 
-	public ERecCourse(String courseid, String courseURL, MentoringCockpitService service) {
-		super(courseid, courseURL, service, /*(!) todo: subsitute this with the new Suggestion Evaluator*/new MoodleSuggestionEvaluator(0, 1));
+	public ERecCourse(String courseid, String courseURL, MentoringCockpitService service, SuggestionEvaluator evaluator) {
+		super(courseid, courseURL, service, evaluator);
 	}
 	
 	@Override
@@ -114,7 +110,7 @@ public class ERecCourse extends Course {
 				
 				if (!users.containsKey(userid)) {
 					System.out.println("(!!) Complete new user is being added!:-->" + username+ "With user id" +userid );
-					users.put(userid, new User(userid, username, resources.values()));
+					users.put(userid, new User(userid, username, resources.values(), this.suggestEvaluator));
 					
 				}
 				
@@ -159,11 +155,11 @@ public class ERecCourse extends Course {
 			ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
 			ArrayList<String> suggestionTexts = new ArrayList<String>();
 			for (Suggestion suggestion : suggestions) {
-				suggestionTexts.add(suggestion.getSuggestionText());
+				suggestionTexts.add(suggestion.getSuggestionText(false));
 			}
 			
 			if (!suggestions.isEmpty()) {
-				result = "Here is a couple suggestions based on your Moodle activity:" + TextFormatter.createList(suggestionTexts) + "\n Would you like another suggestion?";
+				result = "Here is a couple suggestions based on your Moodle activity:" + TextFormatter.createChatList(suggestionTexts) + "\n Would you like another suggestion?";
 			} else {
 				result = "No suggestions available";
 			}
@@ -269,7 +265,7 @@ public class ERecCourse extends Course {
 
 
     @Override
-	public String getSuggestion(String userid, int numOfSuggestions) {
+	public String getSuggestion(String userid, int numOfSuggestions, boolean html) {
 
 		String result = "";
 		if (users.containsKey(userid)) {
@@ -277,11 +273,11 @@ public class ERecCourse extends Course {
 			ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
 			ArrayList<String> suggestionTexts = new ArrayList<String>();
 			for (Suggestion suggestion : suggestions) {
-				suggestionTexts.add(suggestion.getSuggestionText());
+				suggestionTexts.add(suggestion.getSuggestionText(false));
 			}
 			
 			if (!suggestions.isEmpty()) {
-				result = "Here is a couple suggestions based on your Moodle activity:" + TextFormatter.createList(suggestionTexts) + "\n Would you like another suggestion?";
+				result = "Here is a couple suggestions based on your Moodle activity:" + TextFormatter.createChatList(suggestionTexts) + "\n Would you like another suggestion?";
 			} else {
 				result = "No suggestions available";
 			}
@@ -292,12 +288,12 @@ public class ERecCourse extends Course {
         }
 
 	@Override
-	public String getThemeSuggestions(String shortid) {
+	public String getThemeSuggestions(String shortid, boolean html) {
 		String themeid = "http://halle/domainmodel/" + shortid;
 		String result = "";
 		if (themes.containsKey(themeid)) {
-			String resourceText = themes.get(themeid).getResourceSuggestions();
-			String subthemeText = themes.get(themeid).getThemeSuggestions();
+			String resourceText = themes.get(themeid).getResourceSuggestions(html);
+			String subthemeText = themes.get(themeid).getThemeSuggestions(html);
 			
 			if (!resourceText.equals("")) {
 				result = result + "The following resources are related to the theme " + TextFormatter.quote(themes.get(themeid).getName()) + ":" + resourceText;

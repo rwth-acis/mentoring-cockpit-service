@@ -10,18 +10,26 @@ public class File extends Resource {
 	}
 
 	@Override
-	public String getSuggestionText(SuggestionReason reason) {
+	public String getSuggestionText(SuggestionReason reason, boolean html) {
 		switch (reason) {
 		case NOT_VIEWED:
-			return "There is this file :page_facing_up: " + TextFormatter.quote(TextFormatter.createHyperlink(name, url));
+			if (html) {
+				return "There is this file :page_facing_up: " + TextFormatter.quote(TextFormatter.createHTMLHyperlink(name, url));
+			} else {
+				return "There is this file :page_facing_up: " + TextFormatter.quote(TextFormatter.createChatHyperlink(name, url));
+			}
 		default:
 			return "Error";
 		}
 	}
 
 	@Override
-	public String getSuggestionItemText() {
-		return "File " + TextFormatter.quote(TextFormatter.createHyperlink(name, url));
+	public String getSuggestionItemText(boolean html) {
+		if (html) {
+			return "File " + TextFormatter.quote(TextFormatter.createHTMLHyperlink(name, url));
+		} else {
+			return "File " + TextFormatter.quote(TextFormatter.createChatHyperlink(name, url));
+		}
 	}
 
 }

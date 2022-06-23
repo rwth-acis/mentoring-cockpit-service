@@ -41,31 +41,39 @@ public class Theme {
 		subthemes.put(theme.getThemeid(), theme);
 	}
 	
-	public String getResourceSuggestions() {
+	public String getResourceSuggestions(boolean html) {
 		ArrayList<String> items = new ArrayList<String>();
 		for (ThemeResourceLink link : resourceLinks.values()) {
-			items.add(link.getSuggestionText());
+			items.add(link.getSuggestionText(html));
 		}
 		if (!items.isEmpty()) {
-			return TextFormatter.createList(items);
+			if (html) {
+				return TextFormatter.createHTMLList(items);
+			} else {
+				return TextFormatter.createChatList(items);
+			}
 		} else {
 			return "";
 		}
 		
 	}
 	
-	public String getResourceTextForCompletable() {
-		return resourceLinks.entrySet().iterator().next().getValue().getSuggestionText();
+	public String getResourceTextForCompletable(boolean html) {
+		return resourceLinks.entrySet().iterator().next().getValue().getSuggestionText(html);
 		
 	}
 	
-	public String getThemeSuggestions() {
+	public String getThemeSuggestions(boolean html) {
 		ArrayList<String> names = new ArrayList<String>();
 		for (Theme subtheme : subthemes.values()) {
 			names.add(subtheme.getName());
 		}
 		if (!names.isEmpty()) {
-			return TextFormatter.createList(names);
+			if (html) {
+				return TextFormatter.createHTMLList(names);
+			} else {
+				return TextFormatter.createChatList(names);
+			}
 		} else {
 			return "";
 		}

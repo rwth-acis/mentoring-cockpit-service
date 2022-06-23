@@ -39,10 +39,7 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 
 import javax.ws.rs.core.UriBuilder;
 import i5.las2peer.services.mentoringCockpitService.SPARQLConnection.SPARQLConnection;
-import i5.las2peer.services.mentoringCockpitService.Suggestion.Emotion;
-import i5.las2peer.services.mentoringCockpitService.Suggestion.TextFormatter;
-
-
+import i5.las2peer.services.mentoringCockpitService.Suggestion.*;
 
 
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -105,28 +102,29 @@ public class MentoringCockpitService extends RESTService {
 	private static String UPLOAD_FOLDER = "/opt/feedback/";
 	private List<String> feedbackAccessAllowed = new ArrayList<>();
 
+	// LRS
 	private String lrsDomain;
+	private String lrsStatementURL;
 	private String lrsAuth;
+	private String lrsClientURL;
+	private String feedbackLRSAuth;
+
+	// MySQL DB
 	private String mysqlUser;
 	private String mysqlPassword;
 	private String mysqlHost;
 	private String mysqlPort;
 	private String mysqlDatabase;
+
+	// other URLs
 	public String sparqlUrl;
-	private static String userEmail;
-	private String lrsClientURL;
+	private String eRecUrl;
+	private String limeUrl;
+
+	private String userEmail;
 	public HashMap<String, Course> courses;
-	
-	
-
-	// TODO: Maybe move to environment
-	private String feedbackLRSAuth = "Basic OTRjMjYxNjdmYzY1MzFmNmM1M2RjZDEyYzJjOWI1OGNiZDc5ZGFkYzo3YWY3ZDFhN2MxYzliYTIyNzMyMDk3NTNhN2E0YjEwNjNiYjYyZjUx";
-	private String feedbackLRSDomain = "https://lrs.tech4comp.dbis.rwth-aachen.de";
-	private static String kubeErecUrl = "http://137.226.232.75:32111/static/";
-	private static String localErecUrl = "http://host.docker.internal:5002/static/";
-	private static String localLimeUrl = "http://host.docker.internal:5000/get_link";
-	private static String kubeLimeUrl = "http://137.226.232.75:32113/get_link";
-
+	private String evalMethod;
+	private SuggestionEvaluator suggestEvaluator;
 
 
 	/**
@@ -140,8 +138,15 @@ public class MentoringCockpitService extends RESTService {
 		feedbackAccessAllowed.add("neumann");
 		// set field values
 		setFieldValues();
-		userEmail = "askabot@fakemail.de"; //TODO: remove this
+		if (this.evalMethod.equals("ERec")) {
+			this.suggestEvaluator = new ERecSuggestionEvaluator(0, 1);
+		} else {
+			this.suggestEvaluator = new MoodleSuggestionEvaluator(0, 1);
+		}
+		this.lrsStatementURL = this.lrsDomain + "/api/statements/aggregate?";
+		this.lrsClientURL = this.lrsDomain + "/api/v2/client/";
 		courses = new HashMap<String, Course>();
+
 		System.out.println("Creating course...");
 		createCourses();
 	}
@@ -440,7 +445,7 @@ public class MentoringCockpitService extends RESTService {
 	@Path("/tmitocarFeedback")
 	@Produces(MediaType.TEXT_PLAIN)
 	public Response tmitocarFeedbackStatements() {
-		TMitocarLRSFeedbackProcessing processing = new TMitocarLRSFeedbackProcessing(feedbackLRSAuth, feedbackLRSDomain);
+		TMitocarLRSFeedbackProcessing processing = new TMitocarLRSFeedbackProcessing(feedbackLRSAuth, lrsDomain);
 		processing.process();
 		
 		File statementsFile = new File("AllStatements.csv");
@@ -770,7 +775,7 @@ public class MentoringCockpitService extends RESTService {
 			String auth = Base64.getEncoder().encodeToString((clientKey + ":" + clientSecret).getBytes());
 
 			try {
-				URL url = new URL(lrsDomain + "pipeline=" + pipeline);
+				URL url = new URL(lrsStatementURL + "pipeline=" + pipeline);
 				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 				conn.setRequestMethod("GET");
 				conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
@@ -815,8 +820,7 @@ public class MentoringCockpitService extends RESTService {
 			con.close();
 
 			try {
-				String clientURL = lrsClientURL;
-				url = new URL(clientURL);
+				url = new URL(lrsClientURL);
 				HttpURLConnection conn = null;
 				conn = (HttpURLConnection) url.openConnection();
 				conn.setDoOutput(true);
@@ -883,7 +887,7 @@ public class MentoringCockpitService extends RESTService {
 			while(rs.next()) {
 				String courseid = rs.getString("COURSELINK");
 				System.out.println("(!) Creating course : " + courseid);
-				Course course = new MoodleCourse(courseid, courseid, this);
+				Course course = new MoodleCourse(courseid, courseid, this, this.suggestEvaluator);
 				courses.put(courseid, course);
 			}
 			System.out.println("Course list: " + courses.toString());
@@ -1031,7 +1035,7 @@ public class MentoringCockpitService extends RESTService {
 				String line = null;
 				StringBuilder sb = new StringBuilder ();
 				String res = null;
-				URL url = UriBuilder.fromPath(kubeErecUrl+"emotion/speech/")
+				URL url = UriBuilder.fromPath(this.service.eRecUrl+"/static/emotion/speech/")
 							.build()
 							.toURL();
 				//DEBUG: System.out.println("Attempting connection with url:" + url.toString());
@@ -1072,35 +1076,29 @@ public class MentoringCockpitService extends RESTService {
 					angry, sad, happy, ps(pleasently surprised), neutral*/
 					String emotion = bodyObj2.getAsString("emotion");
 					String max = bodyObj2.getAsString("max_emotion");
-					Emotion maxEmotion = Emotion.UNDEFINED; 
-					//todo: update switch statement to a self-evaluating function
 					System.out.println("Emotion: The maximal value from the emotion prediction was: "+ max);
-						if (max.equals("happy")){
+					Emotion maxEmotion = switch (max) {
+						case "happy" -> {
 							System.out.println("happy!");
-							maxEmotion = Emotion.HAPPY;
+							yield Emotion.HAPPY;
 						}
-						else if (max.equals("angry")){
-							System.out.println("angry!");
-							maxEmotion = Emotion.ANGRY; 
-						}
-						else if (max.equals("ps")){
+						case "ps" -> {
 							System.out.println("ps!");
-							maxEmotion = Emotion.PS;
+							yield Emotion.PS;
 						}
-						else if (max.equals("sad")){
+						case "sad" -> {
 							System.out.println("sad!");
-							maxEmotion = Emotion.SAD; 
+							yield Emotion.SAD;
 						}
-						else if (max.equals("neutral")){
+						case "neutral" -> {
 							System.out.println("neutral!");
-							maxEmotion = Emotion.NEUTRAL; 
+							yield Emotion.NEUTRAL;
 						}
-						else{
+						default -> {
 							System.out.println("default case:!");
-							maxEmotion = Emotion.UNDEFINED; 
+							yield Emotion.UNDEFINED;
 						}
-					
-					
+					};
 
 					JSONObject emotionArray = (JSONObject) parser.parse(emotion);
 					double valence = bodyObj2.getAsNumber("valence").doubleValue();
@@ -1131,8 +1129,7 @@ public class MentoringCockpitService extends RESTService {
 							}
 						}
 						//trigger past suggestions, call function from erec with userid, numOfSuggestions, valence
-						//todo: change the Path string to an enviromental variable to control on deployment
-						url = UriBuilder.fromPath("http://137.226.232.75:32113/getLowest")
+						url = UriBuilder.fromPath(this.service.limeUrl + "/getLowest")
 					 			.build()
 								.toURL();
 						System.out.println("-DEBUG: Attempting connection with Emotion Recognition Service with :" + url.toString());
@@ -1168,7 +1165,7 @@ public class MentoringCockpitService extends RESTService {
 
 							do{
 								// resFormated = "\r\n" +key +" : "+  bodyObj3.getAsString(key)+"\r\n"+ resFormated;
-								resFormated = "\r\n" + TextFormatter.createHyperlink(key, bodyObj3.getAsString(key))+ "\r\n "+resFormated;
+								resFormated = "\r\n" + TextFormatter.createChatHyperlink(key, bodyObj3.getAsString(key))+ "\r\n "+resFormated;
 								if (keys.hasNext()){
 									key = keys.next(); 
 								}
@@ -1264,22 +1261,30 @@ public class MentoringCockpitService extends RESTService {
 	    	JSONObject returnObj = new JSONObject();
 	    	try {
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
-	    		String userid = bodyObj.getAsString("email");
-	    		String courseid = bodyObj.getAsString("courseid");
-	    		int numOfSuggestions = bodyObj.getAsNumber("numOfSuggestions").intValue();
-	    		if (courseid != null) {
+				String userid;
+				boolean html;
+				if (bodyObj.get("moodlebot") == null) {
+					userid = bodyObj.getAsString("email");
+					html = false;
+				} else {
+					userid = bodyObj.getAsString("user");
+					html = true;
+				}
+				String courseid = bodyObj.getAsString("courseid");
+				int numOfSuggestions = bodyObj.getAsNumber("numOfSuggestions").intValue();
+				if (courseid != null) {
 					System.out.println("DEBUG: CourseID is not null" + courseid);
 	    			if (service.courses.containsKey(courseid)) {
 						System.out.println("DEBUG: Service has the course initialized");
 						this.service.courses.get(courseid).update();
-		    			returnObj.put("text", this.service.courses.get(courseid).getSuggestion(userid, numOfSuggestions));
+		    			returnObj.put("text", this.service.courses.get(courseid).getSuggestion(userid, numOfSuggestions, html));
 		    		} 
 	    		} else {
 					System.out.println("DEBUG: Course ID is null");
 	    			for (Entry<String, Course> entry : this.service.courses.entrySet()) {
 	    				entry.getValue().update();
 	    				if (entry.getValue().getUsers().containsKey(userid)) {
-	    					returnObj.put("text", entry.getValue().getSuggestion(userid, numOfSuggestions));
+	    					returnObj.put("text", entry.getValue().getSuggestion(userid, numOfSuggestions, html));
 	    					break;
 	    				}
 	    			}
@@ -1322,6 +1327,12 @@ public class MentoringCockpitService extends RESTService {
 	    	try {
 	    		System.out.println("Incoming message body for suggestionByTheme:\n" + body);
 	    		JSONObject bodyObj = (JSONObject) parser.parse(body);
+				boolean html;
+				if (bodyObj.get("moodlebot") == null) {
+					html = false;
+				} else {
+					html = true;
+				}
 	    		
 //	    		JSONObject themeEntity = null;
 //	    		System.out.println("Trying to convert to JSONArray:\n" + bodyObj);
@@ -1338,8 +1349,8 @@ public class MentoringCockpitService extends RESTService {
 		    		if (service.courses.containsKey(courseid)) {
 		    			// There should be only one entity in there
 						String entityName = (String) entity.keySet().iterator().next();
-						//todo: This is the part where i could get the links to the different topics, it needed in the end
-						returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(entityName));
+						//todo (from ba_stuecker): This is the part where i could get the links to the different topics, it needed in the end
+						returnObj.put("text", this.service.courses.get(courseid).getThemeSuggestions(entityName, html));
 		    		} else {
 		    			returnObj.put("text", "Error: Course " + courseid + " not initialized!");
 		    		}
@@ -1388,7 +1399,7 @@ public class MentoringCockpitService extends RESTService {
 				String line = null;
 				StringBuilder sb = new StringBuilder ();
 				String res = null;
-				URL url = UriBuilder.fromPath(kubeLimeUrl)
+				URL url = UriBuilder.fromPath(this.service.limeUrl + "/get_link")
 							.build()
 							.toURL();
 				//DEBUG: System.out.println("Attempting connection with url:" + url.toString());
@@ -1426,7 +1437,7 @@ public class MentoringCockpitService extends RESTService {
 				}
 				else{
 					do{
-						resFormated = resFormated +"\r\n"+TextFormatter.createHyperlink(key, bodyObj2.getAsString(key));
+						resFormated = resFormated +"\r\n"+TextFormatter.createChatHyperlink(key, bodyObj2.getAsString(key));
 						key = keys.next(); 
 					}while(keys.hasNext());
 					returnObj.put("text", resFormated);

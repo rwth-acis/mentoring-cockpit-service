@@ -4,25 +4,46 @@ import java.util.ArrayList;
 
 public class TextFormatter {
 	
-	public static String createHyperlink(String text, String url) {
-		//For HTML format in chat interfaces:  return "<a href=' " + url + "'>" + text + "</a>";
+	public static String createChatHyperlink(String text, String url) {
 		return "["+text+"]"+"("+url+")";
 	}
-	
-	public static String createList(ArrayList<String> itemlist) {
+
+	public static String createHTMLHyperlink(String text, String url) {
+		return "<a href=' " + url + "'>" + text + "</a>";
+	}
+
+	public static String createChatList(ArrayList<String> itemlist) {
 		String res = "";
 		for (String item : itemlist) {
 			res = res + "\r\n" + item + "";
 		}
 		return res + "";
 	}
-	
-	public static String createOrderedList(ArrayList<String> itemlist) {
+
+	public static String createHTMLList(ArrayList<String> itemlist) {
+		String res = "<ul>";
+		for (String item : itemlist) {
+			res = res + "<li>" + item + "</li>";
+		}
+		return res + "</ul>";
+	}
+
+	public static String createOrderedHTMLList(ArrayList<String> itemlist) {
 		String res = "<ol>";
 		for (String item : itemlist) {
 			res = res + "<li>" + item + "</li>";
 		}
 		return res + "</ol>";
+	}
+
+	public static String createOrderedChatList(ArrayList<String> itemlist) {
+		String res = "";
+		int i = 1;
+		for (String item : itemlist) {
+			res = i + ". " + res + "\r\n" + item + "";
+			i++;
+		}
+		return res + "";
 	}
 	
 	public static String quote(String text) {

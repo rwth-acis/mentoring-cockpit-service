@@ -10,21 +10,17 @@ import i5.las2peer.services.mentoringCockpitService.Model.Resources.File;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Quiz;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
 import i5.las2peer.services.mentoringCockpitService.SPARQLConnection.SPARQLConnection;
-import i5.las2peer.services.mentoringCockpitService.Suggestion.MoodleSuggestionEvaluator;
-import i5.las2peer.services.mentoringCockpitService.Suggestion.Suggestion;
-import i5.las2peer.services.mentoringCockpitService.Suggestion.TextFormatter;
+import i5.las2peer.services.mentoringCockpitService.Suggestion.*;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.Hyperlink;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
-import i5.las2peer.services.mentoringCockpitService.Suggestion.ERecSuggestionEvaluator;
-import i5.las2peer.services.mentoringCockpitService.Suggestion.Emotion;
 
 
 public class MoodleCourse extends Course {
 
-	public MoodleCourse(String courseid, String courseURL, MentoringCockpitService service) {
-		super(courseid, courseURL, service, new ERecSuggestionEvaluator(0, 1));
+	public MoodleCourse(String courseid, String courseURL, MentoringCockpitService service, SuggestionEvaluator evaluator) {
+		super(courseid, courseURL, service, evaluator);
 	}
 	
 	@Override
@@ -57,7 +53,7 @@ public class MoodleCourse extends Course {
 	protected void updateProfiles(long since) {
 		try {
 			JSONArray updates = SPARQLConnection.getInstance().getUpdates(since, courseid); // This is where the error is, the updates don´t contain also the new users!!!
-			//Addding new users to the Course
+			// Adding new users to the Course
 			//DEBUG: System.out.println("Update profiles with updates: " + updates);
 			for (int i = 0; i < updates.size(); i++) {
 				JSONObject obj = (JSONObject) updates.get(i);
@@ -72,7 +68,7 @@ public class MoodleCourse extends Course {
 				//Adding resources to individual users
 				if (!users.containsKey(userid)) {
 					//System.out.println("-DEBUG:  Complete new user is being added!:-->" + username+ "With user id" +userid );
-					users.put(userid, new User(userid, username, resources.values()));
+					users.put(userid, new User(userid, username, resources.values(), this.suggestEvaluator));
 					//System.out.println("-DEBUG: Attempting to add resource to the user: "+ resourceid+ " and resource type "+ resourcetype);
 					
 				}
@@ -121,7 +117,7 @@ public class MoodleCourse extends Course {
 	}
 	
 	@Override
-	public String getSuggestion(String userid, int numOfSuggestions) {
+	public String getSuggestion(String userid, int numOfSuggestions, boolean html) {
 		String result = "";
 		if (users.containsKey(userid)) {
 			//System.out.println("-DEBUG: Attempting to update Suggestions for user: "+ userid);
@@ -131,16 +127,24 @@ public class MoodleCourse extends Course {
 			ArrayList<String> suggestionTexts = new ArrayList<String>();
 			//todo: Change the text formating in order to deliver more aesthetical text
 			for (Suggestion suggestion : suggestions) {
-				suggestionTexts.add(suggestion.getSuggestionText());
+				suggestionTexts.add(suggestion.getSuggestionText(html));
 			}
 			
 			if (!suggestions.isEmpty()) {
-				result = "Here is a couple suggestions based on your Moodle activity:" + TextFormatter.createList(suggestionTexts) + "\n Would you like another suggestion?";
+				if (html) {
+					result = "Here is a couple suggestions based on your Moodle activity:" + TextFormatter.createHTMLList(suggestionTexts) + "\n Would you like another suggestion?";
+				} else {
+					result = "Here is a couple suggestions based on your Moodle activity:" + TextFormatter.createChatList(suggestionTexts) + "\n Would you like another suggestion?";
+				}
 			} else {
 				result = "No suggestions available";
 			}
 		} else {
-			result = "Error: User not initialized! Try interacting with the first resource in the course :smile: "+ "[Moodle Course]"+"("+courseid+")";
+			if (html) {
+				result = "Error: User not initialized!";
+			} else {
+				result = "Error: User not initialized! Try interacting with the first resource in the course :smile: "+ "[Moodle Course]"+"("+courseid+")";
+			}
 		}
 		return result;
 	}
@@ -156,8 +160,6 @@ public class MoodleCourse extends Course {
 
 	 public String getSuggestionFuture(String userid, double valence, Emotion maxEmotion, int numOfSuggestions) {
 
-
-
 		String result = "";
 		if (users.containsKey(userid)) {
 			//update current emotion for the user
@@ -169,19 +171,17 @@ public class MoodleCourse extends Course {
 			ArrayList<Suggestion> suggestions =  users.get(userid).getSuggestion(numOfSuggestions);
 			ArrayList<String> suggestionTexts = new ArrayList<String>();
 			for (Suggestion suggestion : suggestions) {
-				suggestionTexts.add(suggestion.getSuggestionText());
+				suggestionTexts.add(suggestion.getSuggestionText(false));
 			}
 			
 			if (!suggestions.isEmpty()) {
-				result = TextFormatter.emotion(users.get(userid).getEmotion(), users.get(userid).getValence(),TextFormatter.createList(suggestionTexts));
+				result = TextFormatter.emotion(users.get(userid).getEmotion(), users.get(userid).getValence(),TextFormatter.createChatList(suggestionTexts));
 			} else {
 				result = "There are currently no suggestions avaliable for you, try interacting with some Moodle items, or responding some Item questionnaires and come back! :space_invader: ";
 			}
 		} else {
 			result = "Error: User not initialized! Try interacting with the first resource in the course :smile: "+ "[Moodle Course]"+"("+courseid+")";
 		}
-
-
 
         return result; 
 	}
@@ -192,12 +192,12 @@ public class MoodleCourse extends Course {
 	 public String getSuggestionPast(String userid,double valence, int numOfSuggestions){return "The getSuggestionPast function was triggered in the moodle course ";}
 
 	@Override
-	public String getThemeSuggestions(String shortid) {
+	public String getThemeSuggestions(String shortid, boolean html) {
 		String themeid = "http://halle/domainmodel/" + shortid;
 		String result = "";
 		if (themes.containsKey(themeid)) {
-			String resourceText = themes.get(themeid).getResourceSuggestions();
-			String subthemeText = themes.get(themeid).getThemeSuggestions();
+			String resourceText = themes.get(themeid).getResourceSuggestions(html);
+			String subthemeText = themes.get(themeid).getThemeSuggestions(html);
 			
 			if (!resourceText.equals("")) {
 				result = result + "The following resources are related to the theme " + TextFormatter.quote(themes.get(themeid).getName()) + ":" + resourceText;

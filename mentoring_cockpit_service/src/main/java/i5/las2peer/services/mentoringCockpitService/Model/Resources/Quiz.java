@@ -9,7 +9,11 @@ public class Quiz extends CompletableResource {
 	}
 
 	@Override
-	public String getSuggestionItemText() {
-		return  TextFormatter.quote(TextFormatter.createHyperlink(name, url));
+	public String getSuggestionItemText(boolean html) {
+		if (html) {
+			return  TextFormatter.quote(TextFormatter.createHTMLHyperlink(name, url));
+		} else {
+			return  TextFormatter.quote(TextFormatter.createChatHyperlink(name, url));
+		}
 	}
 }

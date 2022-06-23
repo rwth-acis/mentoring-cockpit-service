@@ -15,9 +15,9 @@ public abstract class Resource {
 		this.type = type;
 	}
 	
-	public abstract String getSuggestionText(SuggestionReason reason);
+	public abstract String getSuggestionText(SuggestionReason reason, boolean html);
 	
-	public abstract String getSuggestionItemText();
+	public abstract String getSuggestionItemText(boolean html);
 	
 	public String getId() {
 		return id;

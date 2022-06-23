@@ -23,14 +23,16 @@ public abstract class Course {
 	protected long lastUpdated = 0;
 	protected ArrayList<Resource> newResources;
 	protected ArrayList<Resource> firstResources;
+	protected SuggestionEvaluator suggestEvaluator;
 	
-	public Course(String courseid, String courseURL, MentoringCockpitService service, SuggestionEvaluator suggestionEvaluator) {
+	public Course(String courseid, String courseURL, MentoringCockpitService service, SuggestionEvaluator evaluator) {
 		this.courseid = courseid;
 		this.courseURL = courseURL;
 		this.users = new HashMap<String, User>();
 		this.resources = new HashMap<String, Resource>();
 		this.themes = new HashMap<String, Theme>();
 		this.service = service;
+		this.suggestEvaluator = evaluator;
 		SPARQLConnection.startConnection(service.sparqlUrl);
 		this.newResources = new ArrayList<Resource>();
 		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
@@ -66,15 +68,17 @@ public abstract class Course {
 	
 	protected abstract void createInteractions(long since);
 	
-	public abstract String getSuggestion(String userid, int numOfSuggestions);
-	
+//	public abstract String getSuggestion(String userid, int numOfSuggestions);
+
+	public abstract String getSuggestion(String userid, int numOfSuggestions, boolean html);
+
 	public abstract String getSuggestionFuture(String userid, double valence,Emotion maxEmotion, int numOfSuggestions);
 
 	public abstract String getSuggestionPast(String userid, double valence, int numOfSuggestions);
 
 	public abstract void updateEmotion(String userid, double valence);
 
-	public abstract String getThemeSuggestions(String themeid);
+	public abstract String getThemeSuggestions(String themeid, boolean html);
 	
 	public String getCourseid() {
 		return courseid;

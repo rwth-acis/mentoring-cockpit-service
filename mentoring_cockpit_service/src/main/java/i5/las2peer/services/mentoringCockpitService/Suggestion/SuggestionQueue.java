@@ -25,7 +25,7 @@ public class SuggestionQueue {
 		System.out.println("DEBUG --- SIZE: " + suggestionList.size());
 		System.out.println("DEBUG --- LIST: " + suggestionList);
 		for (Suggestion i : suggestionList){
-			System.out.println(i.getSuggestionText());
+			System.out.println(i.getSuggestionText(false));
 			System.out.println(i.getPriority());
 		}
 		ArrayList<Suggestion> suggestions = new ArrayList<Suggestion>();
