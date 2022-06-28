@@ -32,8 +32,6 @@ export SERVICE=${SERVICE_NAME}.${SERVICE_CLASS}@${SERVICE_VERSION}
     echo "Mandatory variable MYSQL_PORT is not set. Add -e MYSQL_PORT=mysqlPort to your arguments." && exit 1
 [[ -z "${MYSQL_DATABASE}" ]] && \
     echo "Mandatory variable MYSQL_DATABASE is not set. Add -e MYSQL_DATABASE=mysqlDatabase to your arguments." && exit 1
-[[ -z "${LRS_CLIENT_URL}" ]] && \
-    echo "Mandatory variable LRS_CLIENT_URL is not set. Add -e MYSQL_DATABASE=mysqlDatabase to your arguments." && exit 1
 [[ -z "${SPARQL_URL}" ]] && \
     echo "Mandatory variable SPARQL_URL is not set. Add -e MYSQL_DATABASE=mysqlDatabase to your arguments." && exit 1
 
