@@ -14,7 +14,7 @@ public class File extends Resource {
 		switch (reason) {
 		case NOT_VIEWED:
 			if (html) {
-				return "There is this file :page_facing_up: " + TextFormatter.quote(TextFormatter.createHTMLHyperlink(name, url));
+				return "There is this file " + TextFormatter.quote(TextFormatter.createHTMLHyperlink(name, url));
 			} else {
 				return "There is this file :page_facing_up: " + TextFormatter.quote(TextFormatter.createChatHyperlink(name, url));
 			}

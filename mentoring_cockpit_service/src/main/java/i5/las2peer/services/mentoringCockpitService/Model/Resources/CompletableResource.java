@@ -30,7 +30,7 @@ public abstract class CompletableResource extends Resource {
 		switch(reason) {
 			case NOT_COMPLETED:
 				if (html) {
-					return "Here is this quiz :bar_chart: " +  " " + TextFormatter.quote(TextFormatter.createHTMLHyperlink(name, url));
+					return "Here is this quiz " +  " " + TextFormatter.quote(TextFormatter.createHTMLHyperlink(name, url));
 				} else {
 					return "Here is this quiz :bar_chart: " +  " " + TextFormatter.quote(TextFormatter.createChatHyperlink(name, url));
 				}
