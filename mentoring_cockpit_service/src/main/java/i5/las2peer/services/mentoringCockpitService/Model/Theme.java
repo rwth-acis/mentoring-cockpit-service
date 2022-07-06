@@ -53,6 +53,8 @@ public class Theme {
 				return TextFormatter.createChatList(items);
 			}
 		} else {
+			System.out.println("No ressources to theme " + this.name + " (id: " + this.themeid + ") found.\n" +
+					"Theme has resources: " + this.resourceLinks);
 			return "";
 		}
 		

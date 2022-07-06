@@ -112,7 +112,7 @@ public class SPARQLConnection {
 				String type = obj.getAsString("type");
 				System.out.println("(!!!!: Attempting to add RESOURCE: "+ id+ "type:" +type);
 
-				if (resourceIds.contains(id) || type.equals("post") || type.equals("forum")||type.equals("quiz")||type.equals("file")) {
+				if (resourceIds.contains(id) || type.equals("post") || type.equals("forum")||type.equals("quiz")||type.equals("file")||type.equals("hyperlink")) {
 					if (type.equals("post")) {
 						id = id.split("#parent")[0];
 					}
@@ -132,8 +132,6 @@ public class SPARQLConnection {
 			}
 
 			String response = sparqlUpdate(query + "}\r\n}");
-			System.out.println("Attempting to add resources to sparql :"+ query);
-			System.out.println("(!!): Response from sparql after attempting to update resources: "+ response);
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -185,9 +183,6 @@ public class SPARQLConnection {
 			for (int i = 0; i < bindingsArray.size(); i++) {
 				JSONObject bindingObj = (JSONObject) bindingsArray.get(i);
 
-				System.out.println("(!!!!): Adding a resouce to ResourceID: "+ bindingObj.get("resourceid"));
-
-
 				// String x = ((JSONObject) bindingObj.get("resourceid")).getAsString("value");
 				// fixedSyntaxResourceId = x.substring(0,x.length()-)+"B"+x.substring(3);
 
@@ -226,9 +221,6 @@ public class SPARQLConnection {
 
 
 			String response = sparqlUpdate(query + "}}");
-			System.out.println("(!!!!) Attempting to add interactions is the query being sent to SPARQL:"+ query);
-			System.out.println("(!!): Response from sparql after attempting to update interactions: "+ response);
-
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -299,7 +291,7 @@ public class SPARQLConnection {
 			JSONObject obj = (JSONObject) bindings.get(i);
 			interactions.add(((JSONObject) obj.get("interaction")).getAsString("value"));
 		}
-		System.out.println("--DEBUG: REturning interaction from spaqrl for user and resource with query: "+query+ interactions);
+		//DEBUG System.out.println("--DEBUG: REturning interaction from spaqrl for user and resource with query: "+query+ interactions);
 		return interactions;
 	}
 	
@@ -355,6 +347,7 @@ public class SPARQLConnection {
 		return result;
 	}
 	
+	// !!!Should not be used anymore, since it collects all themes, not only those of a course!!!
 	public JSONArray getThemes() {
 		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
 				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
@@ -368,7 +361,22 @@ public class SPARQLConnection {
 		
 		return getBindings(sparqlQuery(query));
 	}
-	
+
+	public JSONArray getThemes(String id) {
+		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" +
+				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" +
+				"	\r\n" +
+				"    SELECT ?themeid ?name WHERE {\r\n" +
+				"  		GRAPH <%s> {\r\n" +
+				"           <" + id + "> ulo:hasTheme ?themeid .  \r\n" +
+				"  			?themeid rdfs:label ?name .  \r\n" +
+				"		}\r\n" +
+				"    }";
+
+		return getBindings(sparqlQuery(query));
+	}
+
+	@Deprecated
 	public JSONArray getThemeStructure() {
 		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
 				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
@@ -381,18 +389,61 @@ public class SPARQLConnection {
 		
 		return getBindings(sparqlQuery(query));
 	}
-	
+
+	public JSONArray getThemeStructure(String id) {
+		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" +
+				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" +
+				"	\r\n" +
+				"    SELECT ?supertheme ?subtheme WHERE {\r\n" +
+				"  		GRAPH <%s> {\r\n" +
+							"<" + id + "> ulo:hasTheme ?supertheme . \r\n" +
+							"<" + id + "> ulo:hasTheme ?subtheme . \r\n" +
+				"  			?supertheme ulo:relatedTo ?subtheme .  \r\n" +
+				"		}\r\n" +
+				"    }";
+
+		return getBindings(sparqlQuery(query));
+	}
+
+	@Deprecated
 	public JSONArray getThemesInfo() {
 		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
 				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" + 
-				"    SELECT ?themeid ?resourceid ?infoType ?infoVal WHERE {\r\n" + 
+				"    SELECT ?themeid ?resourceid ?infoType ?infoVal WHERE {\r\n" +
 				"  		GRAPH <%s> {\r\n" + 
 				"    		?themeid ulo:discusses ?s1 .\r\n" + 
 				"  			?s1 ulo:discussResource ?resourceid .\r\n" + 
-				"    		?s1 ?infoType ?infoVal .\r\n" + 
+				"    		?s1 ?infoType ?infoVal .\r\n" +
 				"  		} \r\n" + 
 				"    } ";
 		
+		return getBindings(sparqlQuery(query));
+	}
+	public JSONArray getThemesInfo(String id) {
+		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" +
+				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" +
+				"    SELECT ?themeid ?resourceid ?infoType ?infoVal WHERE {\r\n" +
+				"  		GRAPH <%s> {\r\n" +
+							"<" + id + "> ulo:hasTheme ?themeid .\r\n" +
+				"    		?themeid ulo:discusses ?s1 .\r\n" +
+				"  			?s1 ulo:discussResource ?resourceid .\r\n" +
+				"    		?s1 ?infoType ?infoVal .\r\n" +
+				"  		} \r\n" +
+				"    } ";
+
+		return getBindings(sparqlQuery(query));
+	}
+
+	public JSONArray getResourceInfo(String resId) {
+		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" +
+				"PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\r\n" +
+				"    SELECT ?resourceName ?resourceType WHERE {\r\n" +
+				"  		GRAPH <%s> {\r\n" +
+							"<" + resId + "> rdfs:label ?resourceName .\r\n" +
+							"<" + resId + "> a ?resourceType .\r\n" +
+				"  		} \r\n" +
+				"    } ";
+
 		return getBindings(sparqlQuery(query));
 	}
 	

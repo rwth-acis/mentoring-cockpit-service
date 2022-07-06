@@ -4,6 +4,7 @@ package i5.las2peer.services.mentoringCockpitService.Model;
 import java.time.Instant;
 import java.util.ArrayList;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import i5.las2peer.services.mentoringCockpitService.MentoringCockpitService;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.CompletableResource;
 import i5.las2peer.services.mentoringCockpitService.Model.Resources.File;
@@ -77,17 +78,13 @@ public class MoodleCourse extends Course {
 				if (!resources.containsKey(resourceid)) {
 					// System.out.println("!!!: Resource was not in the hashlist before: "+ resourceid);
 					if (resourcetype.contains("file")) {
-						//System.out.println("Resource is a file");
 						resource = new File(resourceid, resourcename, resourceid);
 					} else if (resourcetype.contains("hyperlink")) {
-						//System.out.println("Resource is a link");
 						resource = new Hyperlink(resourceid, resourcename, resourceid);
 					} else if (resourcetype.contains("quiz")) {
-						//System.out.println("Resource is a quiz");
 						resource = new Quiz(resourceid, resourcename, resourceid);
 					}
 					if (resource != null) {
-						//System.out.println("Adding a new resource:" + resourceid);
 						resources.put(resourceid, resource);
 						newResources.add(resource);
 						// if(since == 0){
@@ -96,21 +93,18 @@ public class MoodleCourse extends Course {
 						// }
 					}
 				} else {
-					//System.out.println("(!!): Resource was already in the hashlist");
-					//System.out.println("(!!!!!): Adding resource to the UPDATESET");
 					resource = resources.get(resourceid);
 				}
 				if (resource != null) {
-					//System.out.println("(!!!): Adding updates to the user: "+ users.get(userid));
 					users.get(userid).getUpdateSet().add(resource);
 				}
 			}
 
 			//System.out.println(("-DEBUG:  Showing all the users in the course: "+ courseid));
-			for(String key: users.keySet()) {
-				//System.out.print(key);
-				//System.out.print(", ");
-			  }
+//			for(String key: users.keySet()) {
+//				//System.out.print(key);
+//				//System.out.print(", ");
+//			  }
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -259,6 +253,11 @@ public class MoodleCourse extends Course {
 		for (byte b : pipeline.toString().getBytes()) {
 			sb.append("%" + String.format("%02X", b));
 		}
+
+		//DEBUG:
+		//System.out.println("(!!!!) Requesting user with pipeline:\n" + pipeline);
+		//System.out.println("(!!!!) Requesting user with pipeline (bytes):\n" + sb.toString());
+
 		//Establishing connection with the Learning Record Store"
 		String res = service.LRSconnect(sb.toString());
 		
@@ -272,9 +271,7 @@ public class MoodleCourse extends Course {
 				userObj.put("courseid", courseid);
 				usersArray.add(userObj);
 			}
-			//DEBUG: System.out.println("Add users to SPARQL: " + usersArray);
 			SPARQLConnection.getInstance().addUser(usersArray);
-			System.out.println("DEBUG:Users where added succesfully to the SPARql update");
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("DEBUG: Creation of users did not conclude correctly");
@@ -319,15 +316,19 @@ public class MoodleCourse extends Course {
 			sb.append("%" + String.format("%02X", b));
 		}
 
-		//System.out.println("(!!!!) Requesting resource with pipeline:\n" + pipeline);
+//		DEBUG:
+//		System.out.println("(!!!!) Requesting resource with pipeline:\n" + pipeline);
+//		System.out.println("(!!!!) Requesting resource with pipeline (bytes):\n" + sb.toString());
+
 
 
 		String res = service.LRSconnect(sb.toString());
-		
+
 		
 		try {
 			JSONParser parser = new JSONParser(JSONParser.MODE_PERMISSIVE);
 			JSONArray data = (JSONArray) parser.parse(res);
+
 			JSONArray resourcesArray = new JSONArray();
 			for (int i = 0; i < data.size(); i++) {
 				JSONObject resourceObj = (JSONObject) data.get(i);
@@ -347,7 +348,6 @@ public class MoodleCourse extends Course {
 				resourceObj.put("courseid", courseid);
 				resourcesArray.add(resourceObj);
 			}
-			System.out.println("(!!!!): Adding resources to sparl with resources array: " + resourcesArray.toString());	
 			SPARQLConnection.getInstance().addResources(resourcesArray);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -359,7 +359,7 @@ public class MoodleCourse extends Course {
 		
 		// First, create all themes
 		try {
-			JSONArray bindingsArray = SPARQLConnection.getInstance().getThemes();
+			JSONArray bindingsArray = SPARQLConnection.getInstance().getThemes(this.courseid);
 
 			for (int i = 0; i < bindingsArray.size(); i++) {
 				JSONObject bindingObj = (JSONObject) bindingsArray.get(i);
@@ -374,7 +374,7 @@ public class MoodleCourse extends Course {
 		
 		// Then, create theme structure
 		try {
-			JSONArray bindingsArray = SPARQLConnection.getInstance().getThemeStructure();
+			JSONArray bindingsArray = SPARQLConnection.getInstance().getThemeStructure(this.courseid);
 			for (int i = 0; i < bindingsArray.size(); i++) {
 				JSONObject bindingObj = (JSONObject) bindingsArray.get(i);
 				JSONObject subjectObj = (JSONObject) bindingObj.get("supertheme");
@@ -390,23 +390,47 @@ public class MoodleCourse extends Course {
 		
 		// Finally, assign resources and resource information
 		try {
-			JSONArray bindingsArray = SPARQLConnection.getInstance().getThemesInfo();
+			JSONArray bindingsArray = SPARQLConnection.getInstance().getThemesInfo(this.courseid);
 			for (int i = 0; i < bindingsArray.size(); i++) {
 				JSONObject bindingObj = (JSONObject) bindingsArray.get(i);
+
 				String themeid = ((JSONObject) bindingObj.get("themeid")).getAsString("value");
 				String resourceid = ((JSONObject) bindingObj.get("resourceid")).getAsString("value");
-				if (resources.containsKey(resourceid)) {
-					if (!themes.get(themeid).getResourceLinks().containsKey(resourceid)) {
-						themes.get(themeid).getResourceLinks().put(resourceid, new ThemeResourceLink(resources.get(resourceid)));
-						if (resources.get(resourceid) instanceof CompletableResource) {
-							((CompletableResource)resources.get(resourceid)).addTheme(themes.get(themeid));
+
+				// create and add resource to the MoodleCourse, if not existent
+				if (!resources.containsKey(resourceid)){
+					JSONArray resInfArray = SPARQLConnection.getInstance().getResourceInfo(resourceid);
+					for (Object o : resInfArray) {
+						JSONObject resInf = (JSONObject) o;
+						String resourceType = ((JSONObject) resInf.get("resourceType")).getAsString("value");
+
+						// avoid forum posts and use more specific resourceType following ulo:resources in the array
+						if (!(resourceType == null || resourceType.equals("http://uni-leipzig.de/tech4comp/ontology/post") || resourceType.equals("http://uni-leipzig.de/tech4comp/ontology/resource"))) {
+							String resourceName = ((JSONObject) resInf.get("resourceName")).getAsString("value");
+							Resource newRes = switch (resourceType) {
+								case "ulo:file", "http://uni-leipzig.de/tech4comp/ontology/file" -> new File(resourceid, resourceName, resourceid);
+								case "ulo:quiz", "http://uni-leipzig.de/tech4comp/ontology/quiz" -> new Quiz(resourceid, resourceName, resourceid);
+								case "ulo:hyperlink", "http://uni-leipzig.de/tech4comp/ontology/hyperlink" -> new Hyperlink(resourceid, resourceName, resourceid);
+								default -> {
+									System.out.println("Resource " + resourceid + " has an unknown type (" + resourceType + "). Creating a hyperlink object for it...");
+									yield new Hyperlink(resourceid, resourceName, resourceid);
+								}
+							};
+
+							resources.put(resourceid, newRes);
 						}
 					}
-					
-					String infoType = ((JSONObject) bindingObj.get("infoType")).getAsString("value");
-					String infoVal = ((JSONObject) bindingObj.get("infoVal")).getAsString("value");
-					themes.get(themeid).getResourceLinks().get(resourceid).addInfo(infoType, infoVal);
 				}
+				if (!themes.get(themeid).getResourceLinks().containsKey(resourceid)) {
+					themes.get(themeid).getResourceLinks().put(resourceid, new ThemeResourceLink(resources.get(resourceid)));
+					if (resources.get(resourceid) instanceof CompletableResource) {
+						((CompletableResource)resources.get(resourceid)).addTheme(themes.get(themeid));
+					}
+				}
+
+				String infoType = ((JSONObject) bindingObj.get("infoType")).getAsString("value");
+				String infoVal = ((JSONObject) bindingObj.get("infoVal")).getAsString("value");
+				themes.get(themeid).getResourceLinks().get(resourceid).addInfo(infoType, infoVal);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
