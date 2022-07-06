@@ -34,6 +34,8 @@ export SERVICE=${SERVICE_NAME}.${SERVICE_CLASS}@${SERVICE_VERSION}
     echo "Mandatory variable MYSQL_DATABASE is not set. Add -e MYSQL_DATABASE=mysqlDatabase to your arguments." && exit 1
 [[ -z "${SPARQL_URL}" ]] && \
     echo "Mandatory variable SPARQL_URL is not set. Add -e MYSQL_DATABASE=mysqlDatabase to your arguments." && exit 1
+[[ -z "${USER_EMAIL}" ]] && \
+    echo "Mandatory variable USER_EMAIL is not set. Add -e USER_EMAIL=askabot@fakemail.de to your arguments." && exit 1
 
 # optional variables
 [[ -z "${SERVICE_PASSPHRASE}" ]] && export SERVICE_PASSPHRASE='mentoring'
