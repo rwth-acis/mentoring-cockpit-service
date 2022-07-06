@@ -767,7 +767,7 @@ public class MentoringCockpitService extends RESTService {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
 		//If Client exists in LRS
 		if(!(clientId).equals("noClientExists")) {
 			clientKey = (String) ((JSONObject) clientId).get("basic_key");
@@ -795,7 +795,6 @@ public class MentoringCockpitService extends RESTService {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			//DEBUG: System.out.println("Got LRS response: " + response.toString());
 			return response.toString();
 		}
 		else {
@@ -949,7 +948,7 @@ public class MentoringCockpitService extends RESTService {
 				//DEBUG System.out.println("-DEBUG:"+courseid);
 
 				if (courseid != null) {
-					System.out.println("DEBUG: courseid is not null" + courseid);
+					System.out.println("DEBUG: courseid is not null " + courseid);
 	    			if (service.courses.containsKey(courseid)) {
 						
 						if(this.service.courses.get(courseid).getUsers().containsKey(userid)){
