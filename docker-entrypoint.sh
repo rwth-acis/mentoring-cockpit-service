@@ -37,6 +37,10 @@ export SERVICE=${SERVICE_NAME}.${SERVICE_CLASS}@${SERVICE_VERSION}
 [[ -z "${USER_EMAIL}" ]] && \
     echo "Mandatory variable USER_EMAIL is not set. Add -e USER_EMAIL=askabot@fakemail.de to your arguments." && exit 1
 
+# ISSUE #6
+[[ -z "${USER_EMAIL}" ]] && \
+    echo "Mandatory variable MOODLE_TOKEN is not set. Add -e MOODLE_TOKEN=beautifulMoodleToken to your arguments." && exit 1
+
 # optional variables
 [[ -z "${SERVICE_PASSPHRASE}" ]] && export SERVICE_PASSPHRASE='mentoring'
 
@@ -57,6 +61,9 @@ set_in_service_config eRecUrl ${EREC_URL}
 set_in_service_config limeUrl ${LIME_URL}
 set_in_service_config evalMethod ${EVAL_METHOD}
 set_in_service_config userEmail ${USER_EMAIL}
+
+# ISSUE #6
+set_in_service_config moodleToken ${MOODLE_TOKEN}
 
 
 # wait for any bootstrap host to be available

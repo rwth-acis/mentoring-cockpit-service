@@ -53,6 +53,8 @@ public class MoodleCourse extends Course {
 	
 	protected void updateProfiles(long since) {
 		try {
+			//DEBUG
+//			System.out.println("Requesting user for course " + courseid + " with time " + since + ". Got users back");
 			JSONArray updates = SPARQLConnection.getInstance().getUpdates(since, courseid); // This is where the error is, the updates don´t contain also the new users!!!
 			// Adding new users to the Course
 			//DEBUG: System.out.println("Update profiles with updates: " + updates);
@@ -61,7 +63,9 @@ public class MoodleCourse extends Course {
 				String userid = ((JSONObject) obj.get("userid")).getAsString("value");
 				
 				userid = userid.replace("https://moodle.tech4comp.dbis.rwth-aachen.de/user/profile.php?id=", "");
-				//DEBUG: System.out.println("(!!) Going through user: --->" + userid);
+				//DEBUG:
+//				System.out.println("(!!) Going through user: --->" + obj);
+
 				String username = ((JSONObject) obj.get("username")).getAsString("value");
 				String resourceid = ((JSONObject) obj.get("resourceid")).getAsString("value");
 				String resourcename = ((JSONObject) obj.get("resourcename")).getAsString("value");
@@ -73,7 +77,7 @@ public class MoodleCourse extends Course {
 					//System.out.println("-DEBUG: Attempting to add resource to the user: "+ resourceid+ " and resource type "+ resourcetype);
 					
 				}
-				
+
 				Resource resource = null;
 				if (!resources.containsKey(resourceid)) {
 					// System.out.println("!!!: Resource was not in the hashlist before: "+ resourceid);
@@ -254,9 +258,9 @@ public class MoodleCourse extends Course {
 			sb.append("%" + String.format("%02X", b));
 		}
 
-		//DEBUG:
-		//System.out.println("(!!!!) Requesting user with pipeline:\n" + pipeline);
-		//System.out.println("(!!!!) Requesting user with pipeline (bytes):\n" + sb.toString());
+		// DEBUG:
+//		System.out.println("(!!!!) Requesting user with pipeline:\n" + pipeline);
+//		System.out.println("(!!!!) Requesting user with pipeline (bytes):\n" + sb.toString());
 
 		//Establishing connection with the Learning Record Store"
 		String res = service.LRSconnect(sb.toString());
@@ -271,7 +275,15 @@ public class MoodleCourse extends Course {
 				userObj.put("courseid", courseid);
 				usersArray.add(userObj);
 			}
+			// Add users to triplestore and this course
 			SPARQLConnection.getInstance().addUser(usersArray);
+			for (int i = 0; i < usersArray.size(); i++) {
+				String id = ((JSONObject) usersArray.get(i)).getAsString("_id");
+				String name = ((JSONObject) usersArray.get(i)).getAsString("name");
+				if (!this.users.containsKey(id)) {
+					this.users.put(id, new User(id, name, resources.values(), this.suggestEvaluator));
+				}
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("DEBUG: Creation of users did not conclude correctly");

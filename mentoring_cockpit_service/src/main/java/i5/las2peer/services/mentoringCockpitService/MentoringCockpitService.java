@@ -126,6 +126,9 @@ public class MentoringCockpitService extends RESTService {
 	private String evalMethod;
 	private SuggestionEvaluator suggestEvaluator;
 
+	//temporarily solution to issue #6
+	private String moodleToken;
+
 
 	/**
 	 * 
@@ -1267,6 +1270,34 @@ public class MentoringCockpitService extends RESTService {
 					html = false;
 				} else {
 					userid = bodyObj.getAsString("user");
+
+					//temporary solution to get the mail of the user which is used as ID in the triplestore (Issue #6)
+					try {
+						URL url = new URL("https://moodle.tech4comp.dbis.rwth-aachen.de/webservice/rest/server.php?wstoken="
+								+ this.service.moodleToken
+								+ "&moodlewsrestformat=json&wsfunction=core_user_get_users_by_field&field=id&values[0]="
+								+ userid);
+						HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+						conn.setRequestMethod("POST");
+						conn.setUseCaches(false);
+
+						InputStream is = conn.getInputStream();
+						BufferedReader rd = new BufferedReader(new InputStreamReader(is));
+						String line;
+						StringBuilder response = new StringBuilder();
+						while ((line = rd.readLine()) != null) {
+							response.append(line);
+						}
+						rd.close();
+						JSONObject obj = (JSONObject) ((JSONArray) JSONValue.parse(response.toString())).get(0);
+
+						userid = obj.getAsString("email");
+					} catch (MalformedURLException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+
 					html = true;
 				}
 				String courseid = bodyObj.getAsString("courseid");

@@ -110,7 +110,7 @@ public class SPARQLConnection {
 				JSONObject obj = (JSONObject) objects.get(i);
 				String id = obj.getAsString("_id");
 				String type = obj.getAsString("type");
-				System.out.println("(!!!!: Attempting to add RESOURCE: "+ id+ "type:" +type);
+//				System.out.println("(!!!!: Attempting to add RESOURCE: "+ id+ "type:" +type);
 
 				if (resourceIds.contains(id) || type.equals("post") || type.equals("forum")||type.equals("quiz")||type.equals("file")||type.equals("hyperlink")) {
 					if (type.equals("post")) {
@@ -247,7 +247,6 @@ public class SPARQLConnection {
 				"    FILTER (xsd:integer(?timestamp) > " + since + ").\r\n" + 
 				"  }\r\n" + 
 				"}";
-		
 		return getBindings(sparqlQuery(query));
 	}
 	// public JSONArray getLastInteraction(String courseid, String userid) { // The idea is to get the last interaction of every element
