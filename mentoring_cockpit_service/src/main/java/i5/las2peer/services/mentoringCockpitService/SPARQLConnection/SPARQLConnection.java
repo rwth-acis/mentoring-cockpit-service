@@ -40,7 +40,7 @@ public class SPARQLConnection {
 		String query = "PREFIX ulo: <http://uni-leipzig.de/tech4comp/ontology/>\r\n" + 
 				"PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\r\n" + 
 				"SELECT ?timestamp WHERE {\r\n" + 
-				"    GRAPH <https://triplestore.tech4comp.dbis.rwth-aachen.de/LMSData/data> {\r\n" + 
+				"    GRAPH <%s> {\r\n" +
 				"        <" + courseid + "> ulo:hasResource ?resource .\r\n" + 
 				"        ?b ulo:interactionResource ?resource .\r\n" + 
 				"  	     ?b ulo:timestamp ?timestamp .\r\n" + 
@@ -323,7 +323,7 @@ public class SPARQLConnection {
 			"PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\r\n" + 
 			"\r\n" + 
 			"SELECT DISTINCT ?cognitiveLoad WHERE {\r\n" + 
-			"  GRAPH <https://triplestore.tech4comp.dbis.rwth-aachen.de/LMSData/data> {\r\n" + 
+			"  GRAPH <%s> {\r\n" +
 			"    ?b a ulo:resource .\r\n" + 
 			"  	?b ulo:cognitiveLoad ?cognitiveLoad .\r\n" +
 			"  	?b ulo:url "+'"'+resourceid+'"'+".\r\n" +  
