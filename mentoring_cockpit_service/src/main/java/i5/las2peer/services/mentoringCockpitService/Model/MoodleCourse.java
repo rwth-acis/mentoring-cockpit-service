@@ -6,13 +6,9 @@ import java.util.ArrayList;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import i5.las2peer.services.mentoringCockpitService.MentoringCockpitService;
-import i5.las2peer.services.mentoringCockpitService.Model.Resources.CompletableResource;
-import i5.las2peer.services.mentoringCockpitService.Model.Resources.File;
-import i5.las2peer.services.mentoringCockpitService.Model.Resources.Quiz;
-import i5.las2peer.services.mentoringCockpitService.Model.Resources.Resource;
+import i5.las2peer.services.mentoringCockpitService.Model.Resources.*;
 import i5.las2peer.services.mentoringCockpitService.SPARQLConnection.SPARQLConnection;
 import i5.las2peer.services.mentoringCockpitService.Suggestion.*;
-import i5.las2peer.services.mentoringCockpitService.Model.Resources.Hyperlink;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import net.minidev.json.parser.JSONParser;
@@ -87,6 +83,8 @@ public class MoodleCourse extends Course {
 						resource = new Hyperlink(resourceid, resourcename, resourceid);
 					} else if (resourcetype.contains("quiz")) {
 						resource = new Quiz(resourceid, resourcename, resourceid);
+					} else if (resourcetype.contains("assignment")) {
+						resource = new Assignment(resourceid, resourcename, resourceid);
 					}
 					if (resource != null) {
 						resources.put(resourceid, resource);
@@ -344,8 +342,10 @@ public class MoodleCourse extends Course {
 			JSONArray resourcesArray = new JSONArray();
 			for (int i = 0; i < data.size(); i++) {
 				JSONObject resourceObj = (JSONObject) data.get(i);
-				if (resourceObj.getAsString("_id").contains("quiz") && !resourceObj.getAsString("name").contains("attempt")) {
+				if ((resourceObj.getAsString("_id").contains("quiz") || resourceObj.getAsString("_id").contains("/hvp/")) && !resourceObj.getAsString("name").contains("attempt")) {
 					resourceObj.put("type", "quiz");
+				} else if (resourceObj.getAsString("_id").contains("/assign/")) {
+					resourceObj.put("type", "assignment");
 				} else if (resourceObj.getAsString("_id").contains("resource")) {
 					resourceObj.put("type", "file");
 				} else if (resourceObj.getAsString("_id").contains("url")) {
@@ -423,6 +423,7 @@ public class MoodleCourse extends Course {
 								case "ulo:file", "http://uni-leipzig.de/tech4comp/ontology/file" -> new File(resourceid, resourceName, resourceid);
 								case "ulo:quiz", "http://uni-leipzig.de/tech4comp/ontology/quiz" -> new Quiz(resourceid, resourceName, resourceid);
 								case "ulo:hyperlink", "http://uni-leipzig.de/tech4comp/ontology/hyperlink" -> new Hyperlink(resourceid, resourceName, resourceid);
+								case "ulo:assignment", "http://uni-leipzig.de/tech4comp/ontology/assignment" -> new Assignment(resourceid, resourceName, resourceid);
 								default -> {
 									System.out.println("Resource " + resourceid + " has an unknown type (" + resourceType + "). Creating a hyperlink object for it...");
 									yield new Hyperlink(resourceid, resourceName, resourceid);

@@ -71,7 +71,8 @@ public class SPARQLConnection {
 				"    	ulo:pages rdfs:subclassOf ulo:information .\r\n" + 
 				"    	ulo:file rdfs:subclassOf ulo:resource .\r\n" + 
 				"    	ulo:hyperlink rdfs:subclassOf ulo:resource .\r\n" + 
-				"    	ulo:quiz rdfs:subclassOf ulo:resource .\r\n" + 
+				"    	ulo:quiz rdfs:subclassOf ulo:resource .\r\n" +
+				"       ulo:assignment rdfs:subclassOf ulo:resource .\r\n" +
 				"    	ulo:forum rdfs:subclassOf ulo:resource .\r\n" + 
 				"    	ulo:post rdfs:subclassOf ulo:resource .\r\n" + 
 				"    	ulo:student rdfs:subclassOf ulo:user .\r\n" + 
@@ -112,7 +113,7 @@ public class SPARQLConnection {
 				String type = obj.getAsString("type");
 //				System.out.println("(!!!!: Attempting to add RESOURCE: "+ id+ "type:" +type);
 
-				if (resourceIds.contains(id) || type.equals("post") || type.equals("forum")||type.equals("quiz")||type.equals("file")||type.equals("hyperlink")) {
+				if (resourceIds.contains(id) || type.equals("post") || type.equals("forum")||type.equals("quiz")||type.equals("file")||type.equals("hyperlink")||type.equals("assignment")) {
 					if (type.equals("post")) {
 						id = id.split("#parent")[0];
 					}
