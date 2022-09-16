@@ -1,0 +1,24 @@
+version: '3'
+services:
+    mentoring-cockpit-service:
+        container_name: mentoring-cockpit-service
+        image: mentoring-cockpit-service:develop
+        environment:
+            NODE_ID_SEED: '1'
+            LRS_DOMAIN: "https://lrs.tech4comp.dbis.rwth-aachen.de/" 
+            LRS_AUTH: "Basic OTRjMjYxNjdmYzY1MzFmNmM1M2RjZDEyYzJjOWI1OGNiZDc5ZGFkYzo3YWY3ZDFhN2MxYzliYTIyNzMyMDk3NTNhN2E0YjEwNjNiYjYyZjUx"
+            MYSQL_USER: root
+            MYSQL_PASSWORD: "password"
+            MYSQL_HOST: localhost
+            MYSQL_PORT: 3306
+            MYSQL_DATABASE: MCS_DB
+        ports:
+            - '8080:8080'
+            - '9011:9011'
+    mcs_db:
+        container_name: mcs_db
+        image: mysql:5.7
+        environment:
+            MYSQL_ROOT_PASSWORD: "password"
+        ports:
+            - "3306"
